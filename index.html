@@ -1,0 +1,3701 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docenti</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts for e-Sign Cursive Styles -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+
+  <!-- PDF-Lib: Modern build with Encryption/Password support -->
+  <script src="pdf-lib.min.js"></script>
+  <script>
+    if (typeof PDFLib === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/@cantoo/pdf-lib@2.11.1/dist/pdf-lib.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- DocxMerger: Word merger -->
+  <script src="docx-merger.min.js"></script>
+  <script>
+    if (typeof DocxMerger === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/docx-merger@1.2.2/dist/docx-merger.js"><\/script>');
+    }
+  </script>
+
+  <!-- JSZip: ZIP archive manipulation -->
+  <script src="jszip.min.js"></script>
+  <script>
+    if (typeof JSZip === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- PDF.js & Worker for rendering thumbnails, extraction, and editing -->
+  <script src="pdf.worker.min.js"></script>
+  <script>
+    if (typeof pdfjsWorker === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"><\/script>');
+    }
+  </script>
+  <script src="pdf.min.js"></script>
+  <script>
+    if (typeof pdfjsLib === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
+    }
+  </script>
+
+  <style>
+    .dragover {
+      border-color: #2563eb !important;
+      background-color: #eff6ff !important;
+    }
+    .page-card {
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+    }
+    .page-card:hover {
+      transform: translateY(-2px);
+    }
+    .page-card.dragging {
+      opacity: 0.4;
+      border: 2px dashed #4f46e5 !important;
+    }
+    .page-card.drag-target {
+      border: 2px solid #2563eb !important;
+      box-shadow: 0 0 0 3px rgba(229, 50, 45, 0.25);
+    }
+    .sig-font-1 {
+      font-family: 'Dancing Script', cursive, 'Brush Script MT';
+    }
+    .sig-font-2 {
+      font-family: 'Caveat', cursive, 'Segoe Script';
+    }
+  </style>
+</head>
+<body class="bg-[#f7f7f9] text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation Bar (iLovePDF Style) -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <!-- Left: Logo & Nav items -->
+      <div class="flex items-center gap-8">
+        <!-- Logo -->
+        <a href="javascript:void(0)" onclick="selectTool('pdf_merge')" class="flex items-center group cursor-pointer" title="Docenti">
+          <img src="Docenti.png" alt="Docenti" class="h-10 sm:h-11 w-auto object-contain transition-transform group-hover:scale-105">
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden lg:flex items-center gap-1 font-bold text-xs uppercase tracking-wider text-slate-700">
+          <button onclick="selectTool('pdf_merge')" id="nav_pdf_merge" class="nav-item px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
+            Gabungkan PDF
+          </button>
+          <button onclick="selectTool('pdf_split')" id="nav_pdf_split" class="nav-item px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
+            Pisahkan PDF
+          </button>
+          <button onclick="selectTool('pdf_compress')" id="nav_pdf_compress" class="nav-item px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
+            Kompres PDF
+          </button>
+
+          <!-- Dropdown: Konversi PDF -->
+          <div class="relative group">
+            <button class="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
+              <span>Konversi PDF</span>
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="absolute left-0 top-full pt-1.5 hidden group-hover:block z-50 min-w-[240px]">
+              <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-2 space-y-1">
+                <button onclick="selectTool('pdf_to_word')" class="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-slate-50 flex items-center gap-3 transition-colors">
+                  <div class="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <div>
+                    <div class="font-bold text-xs text-slate-800">PDF ke Word</div>
+                    <div class="text-[11px] text-slate-400 normal-case font-normal">Konversi PDF ke dokumen .docx</div>
+                  </div>
+                </button>
+                <button onclick="selectTool('word_merge')" class="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-slate-50 flex items-center gap-3 transition-colors">
+                  <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg shrink-0">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6a2 2 0 0 0-2 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <div>
+                    <div class="font-bold text-xs text-slate-800">Gabungkan Word</div>
+                    <div class="text-[11px] text-slate-400 normal-case font-normal">Satukan beberapa berkas .docx</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Semua Fitur PDF (Mega dropdown) -->
+          <div class="relative group">
+            <button class="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
+              <span>Semua Fitur PDF</span>
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="absolute left-0 top-full pt-1.5 hidden group-hover:block z-50 w-[580px]">
+              <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 grid grid-cols-2 gap-3 text-slate-700">
+                <!-- Group 1: Organisasi & Perbaikan -->
+                <div class="space-y-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 py-1">Organisasi Halaman</div>
+                  <button onclick="selectTool('pdf_organize')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
+                    <svg class="w-4 h-4 text-purple-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span>Hapus & Atur Halaman</span>
+                  </button>
+                  <button onclick="selectTool('pdf_rotate')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
+                    <svg class="w-4 h-4 text-purple-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    <span>Putar PDF</span>
+                  </button>
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 pt-2 pb-1">Optimasi & Perbaikan</div>
+                  <button onclick="selectTool('pdf_repair')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
+                    <svg class="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <span>Perbaiki PDF (Repair)</span>
+                  </button>
+                </div>
+                <!-- Group 2: Edit & Keamanan -->
+                <div class="space-y-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 py-1">Edit & Format</div>
+                  <button onclick="selectTool('pdf_edit')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
+                    <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <span>Edit & Coret PDF</span>
+                  </button>
+                  <button onclick="selectTool('pdf_page_number')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
+                    <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+                    <span>Nomor Halaman</span>
+                  </button>
+                  <button onclick="selectTool('pdf_watermark')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
+                    <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    <span>Tanda Air (Watermark)</span>
+                  </button>
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 pt-2 pb-1">Keamanan & e-Sign</div>
+                  <button onclick="selectTool('pdf_protect')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
+                    <svg class="w-4 h-4 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Proteksi Sandi</span>
+                  </button>
+                  <button onclick="selectTool('pdf_unlock')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
+                    <svg class="w-4 h-4 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                    <span>Buka PDF Terkunci</span>
+                  </button>
+                  <button onclick="selectTool('pdf_esign')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
+                    <svg class="w-4 h-4 text-indigo-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/></svg>
+                    <span>Tanda Tangan (e-Sign)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      <!-- Right: Mobile Menu Button -->
+      <div class="flex items-center gap-3">
+        <button onclick="toggleMobileMenu()" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-700">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobileMenu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1 text-xs font-bold uppercase tracking-wider text-slate-700">
+      <button onclick="selectTool('pdf_merge'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Gabungkan PDF</button>
+      <button onclick="selectTool('pdf_split'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Pisahkan PDF</button>
+      <button onclick="selectTool('pdf_compress'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Kompres PDF</button>
+      <button onclick="selectTool('pdf_to_word'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-blue-600">PDF ke Word</button>
+      <button onclick="selectTool('word_merge'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-indigo-600">Gabungkan Word</button>
+      <button onclick="selectTool('pdf_organize'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Hapus & Atur Halaman</button>
+      <button onclick="selectTool('pdf_edit'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Edit & Coret PDF</button>
+      <button onclick="selectTool('pdf_page_number'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Nomor Halaman</button>
+      <button onclick="selectTool('pdf_watermark'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Tanda Air (Watermark)</button>
+      <button onclick="selectTool('pdf_rotate'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Putar PDF</button>
+      <button onclick="selectTool('pdf_protect'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Proteksi Sandi</button>
+      <button onclick="selectTool('pdf_unlock'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Buka PDF Terkunci</button>
+      <button onclick="selectTool('pdf_esign'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Tanda Tangan (e-Sign)</button>
+      <button onclick="selectTool('pdf_repair'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Perbaiki PDF</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 sm:py-12 flex flex-col justify-center">
+
+    <!-- Status / Notification Alert Banner -->
+    <div id="statusBox" class="hidden mb-6 p-4 rounded-2xl text-sm font-medium shadow-xs transition-all"></div>
+
+    <!-- Hidden Generic File Inputs -->
+    <input type="file" id="genericFileInput" class="hidden">
+    <input type="file" id="imageAnnotationInput" accept="image/png,image/jpeg" class="hidden">
+    <input type="file" id="signatureImageInput" accept="image/png,image/jpeg" class="hidden">
+
+    <!-- ========================================== -->
+    <!-- HERO CLEAN STAGE (POLOS SEPERTI iLovePDF)  -->
+    <!-- ========================================== -->
+    <div id="heroDropArea" class="py-12 sm:py-20 text-center space-y-7 rounded-3xl border-2 border-transparent transition-all duration-200">
+      <div class="space-y-3">
+        <h1 id="heroTitle" class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
+          Gabungkan PDF
+        </h1>
+        <p id="heroSubtitle" class="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
+          Gabungkan dan satukan beberapa file PDF dalam urutan yang Anda inginkan secara cepat dan mudah.
+        </p>
+      </div>
+
+      <!-- Prominent Central Red CTA Button -->
+      <div class="pt-2">
+        <button id="heroSelectBtn" onclick="triggerHeroFileInput()" class="bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-[0.98] text-white font-bold text-xl sm:text-2xl px-12 py-5 sm:py-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-150 inline-flex items-center gap-3.5 cursor-pointer">
+          <svg class="w-7 h-7 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span id="heroBtnText">Pilih file PDF</span>
+        </button>
+      </div>
+
+      <p class="text-sm text-slate-400 font-medium">
+        atau letakkan berkas di sini
+      </p>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION A: FILE LIST (FOR MERGE & CONVERT) -->
+    <!-- ========================================== -->
+    <div id="fileListCard" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-4 hidden">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div class="flex items-center gap-3">
+          <h2 id="fileListTitle" class="font-bold text-slate-900 text-base sm:text-lg">Berkas Terpilih</h2>
+          <span id="fileCountBadge" class="bg-slate-100 text-slate-700 text-xs px-2.5 py-0.5 rounded-full font-semibold">0 berkas</span>
+          <span id="totalSizeBadge" class="text-xs text-slate-400">Total: 0 KB</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl transition-colors">
+            + Tambah Berkas
+          </button>
+          <button id="clearAllBtn" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition-colors">
+            Hapus Semua
+          </button>
+        </div>
+      </div>
+
+      <!-- File Items Container -->
+      <ul id="fileList" class="divide-y divide-slate-100 max-h-[380px] overflow-y-auto pr-1"></ul>
+
+      <!-- Action bar for merge -->
+      <div id="mergeActionContainer" class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex-1 max-w-sm w-full">
+          <label for="outputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama File Hasil Unduhan:</label>
+          <input type="text" id="outputFileName" value="hasil_gabungan.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800" placeholder="Nama file keluaran">
+        </div>
+        <div class="sm:self-end w-full sm:w-auto">
+          <button id="mergeBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            <span id="mergeBtnText">Gabungkan & Unduh Dokumen</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action bar for convert -->
+      <div id="convertActionContainer" class="pt-4 border-t border-slate-100 hidden flex flex-col gap-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+          <div class="space-y-1.5">
+            <span class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Mode Konversi Dokumen Word:</span>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 text-xs sm:text-sm">
+              <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                <input type="radio" name="pdfToWordMode" value="smart" checked class="text-blue-600 focus:ring-blue-500">
+                <span><strong>Rekonstruksi Cerdas</strong> (Teks, Tabel & Gambar Dapat Diedit)</span>
+              </label>
+              <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                <input type="radio" name="pdfToWordMode" value="visual" class="text-blue-600 focus:ring-blue-500">
+                <span><strong>Presisi Visual 100%</strong> (Halaman HD Persis Asli)</span>
+              </label>
+            </div>
+            <p class="text-xs text-slate-500">Mengekstrak gambar logo nyata, menyusun tabel bergaris terpisah, dan merapikan susunan teks ke tengah (center-aligned).</p>
+          </div>
+          <button id="convertAllBtn" class="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span id="convertAllBtnText">Konversi Semua ke Word (.docx)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION B: ATUR & HAPUS HALAMAN PDF       -->
+    <!-- ========================================== -->
+    <div id="organizeSection" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-6 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 id="organizeDocTitle" class="font-bold text-slate-900 text-base sm:text-lg truncate max-w-md">Dokumen PDF</h2>
+            <span id="organizeDocSize" class="text-xs text-slate-400 font-medium">0 KB</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span id="organizeBadgeTotal" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">0 Halaman Asli</span>
+            <span id="organizeBadgeActive" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">0 Halaman Aktif</span>
+            <span id="organizeBadgeDeleted" class="hidden px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200">0 Dihapus</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="restoreAllPagesBtn" class="hidden text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl transition-colors">
+            Pulihkan Semua Halaman
+          </button>
+          <button onclick="resetCurrentWorkingPdf()" class="text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition-colors">
+            Pilih PDF Lain
+          </button>
+        </div>
+      </div>
+
+      <!-- Instruction note with code icons -->
+      <div class="bg-slate-50 border border-slate-200/70 rounded-2xl p-3.5 text-xs text-slate-600 flex items-center gap-2.5">
+        <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span><strong>Petunjuk:</strong> Pindahkan urutan halaman menggunakan tombol panah atau <strong>drag & drop</strong> kartu halaman. Gunakan tombol hapus untuk membuang halaman, dan tombol putar untuk memutar orientasi.</span>
+      </div>
+
+      <!-- Page Grid -->
+      <div id="organizeGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[520px] overflow-y-auto p-1"></div>
+
+      <!-- Bottom Save Action -->
+      <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex-1 max-w-sm w-full">
+          <label for="organizeOutputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama File Hasil Unduhan:</label>
+          <input type="text" id="organizeOutputFileName" value="hasil_diedit.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
+        </div>
+        <button id="saveOrganizedPdfBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span id="saveOrganizedPdfBtnText">Simpan & Unduh PDF Baru</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION C: EDIT PDF CANVAS INTERACTION     -->
+    <!-- ========================================== -->
+    <div id="editPdfSection" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-5 hidden">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <h2 class="font-bold text-slate-900 text-base sm:text-lg">Edit & Anotasi Halaman PDF</h2>
+          <p class="text-xs text-slate-400">Tambahkan tulisan, bentuk kotak, catatan memo, atau gambar.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="resetCurrentWorkingPdf()" class="text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors">
+            Pilih PDF Lain
+          </button>
+        </div>
+      </div>
+
+      <!-- Interactive Toolbar with code SVG icons -->
+      <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button onclick="setEditTool('pen')" id="toolPen" class="px-3 py-1.5 rounded-xl font-semibold bg-[#2563eb] text-white flex items-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span>Pensil</span>
+          </button>
+          <button onclick="setEditTool('text')" id="toolText" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+            <span>Teks</span>
+          </button>
+          <button onclick="setEditTool('rect')" id="toolRect" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+            <span>Kotak</span>
+          </button>
+          <button onclick="setEditTool('circle')" id="toolCircle" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+            <span>Lingkaran</span>
+          </button>
+          <button onclick="setEditTool('note')" id="toolNote" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span>Catatan</span>
+          </button>
+          <button onclick="triggerImageAnnotationUpload()" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>Sisip Gambar</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1">
+            <button onclick="setEditColor('#dc2626')" class="w-6 h-6 rounded-full bg-red-600 border border-white ring-1 ring-slate-300"></button>
+            <button onclick="setEditColor('#2563eb')" class="w-6 h-6 rounded-full bg-blue-600 border border-white ring-1 ring-slate-300"></button>
+            <button onclick="setEditColor('#16a34a')" class="w-6 h-6 rounded-full bg-emerald-600 border border-white ring-1 ring-slate-300"></button>
+            <button onclick="setEditColor('#000000')" class="w-6 h-6 rounded-full bg-black border border-white ring-1 ring-slate-300"></button>
+            <button onclick="setEditColor('#eab308')" class="w-6 h-6 rounded-full bg-yellow-400 border border-white ring-1 ring-slate-300"></button>
+          </div>
+          <select id="editStrokeWidth" onchange="setEditStrokeWidth(this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs">
+            <option value="2">Halus (2px)</option>
+            <option value="4" selected>Sedang (4px)</option>
+            <option value="8">Tebal (8px)</option>
+          </select>
+          <button onclick="clearEditCanvasCurrentPage()" class="text-xs text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg">
+            Hapus Coretan
+          </button>
+        </div>
+      </div>
+
+      <!-- Page Switcher Bar -->
+      <div class="flex items-center justify-between flex-wrap gap-2 text-xs bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
+        <button onclick="changeEditPage(-1)" id="editPrevPageBtn" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 font-semibold flex items-center gap-1 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          <span>Sebelumnya</span>
+        </button>
+
+        <div class="flex items-center gap-2 font-medium text-slate-700">
+          <span>Halaman:</span>
+          <div class="flex items-center gap-1">
+            <input type="number" id="editPageJumpInput" min="1" max="1" value="1" onchange="jumpToEditPage(this.value)" class="w-16 px-2.5 py-1 text-center font-bold text-slate-900 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none shadow-xs text-xs">
+            <span class="text-slate-500">dari <strong id="totalEditPageNum" class="text-slate-900">1</strong></span>
+          </div>
+          <select id="editPageSelect" onchange="jumpToEditPage(this.value)" class="px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-blue-600 focus:outline-none cursor-pointer">
+            <option value="1">Hal. 1</option>
+          </select>
+        </div>
+
+        <button onclick="changeEditPage(1)" id="editNextPageBtn" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 font-semibold flex items-center gap-1 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">
+          <span>Berikutnya</span>
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+
+      <!-- Interactive Canvas Stage -->
+      <div class="relative overflow-auto max-h-[600px] flex justify-center bg-slate-100/70 p-4 rounded-2xl border">
+        <div id="editCanvasWrapper" class="relative shadow-md bg-white">
+          <canvas id="editPdfBgCanvas" class="block"></canvas>
+          <canvas id="editDrawCanvas" class="absolute inset-0 cursor-crosshair"></canvas>
+        </div>
+      </div>
+
+      <!-- Save Output Bar -->
+      <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex-1 max-w-sm w-full">
+          <label for="editOutputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama File Hasil Unduhan:</label>
+          <input type="text" id="editOutputFileName" value="hasil_diedit.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
+        </div>
+        <button onclick="saveEditedPdf()" id="saveEditedPdfBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span>Simpan & Unduh PDF Hasil Edit</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION D: SINGLE ACTION SECTION           -->
+    <!-- (Split, Compress, Repair, Page Number, etc)-->
+    <!-- ========================================== -->
+    <div id="singlePdfActionSection" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-6 hidden">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div>
+          <h2 id="singleActionTitle" class="font-bold text-slate-900 text-base sm:text-lg">Pengaturan Dokumen PDF</h2>
+          <p id="singleActionFileName" class="text-xs text-slate-400 font-medium">nama_file.pdf</p>
+        </div>
+        <button onclick="resetCurrentWorkingPdf()" class="text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors">
+          Pilih PDF Lain
+        </button>
+      </div>
+
+      <!-- 1. Form Split PDF -->
+      <div id="formSplit" class="space-y-4 hidden">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Pilih Metode Pemisahan:</label>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <label class="p-4 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+            <input type="radio" name="splitMode" value="range" checked onchange="toggleSplitInputs()" class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Ekstrak Rentang Halaman</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">Ambil halaman tertentu misal: 1-3, 5</span>
+          </label>
+          <label class="p-4 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+            <input type="radio" name="splitMode" value="all" onchange="toggleSplitInputs()" class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Pecah Semua Halaman</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">Setiap halaman menjadi file PDF terpisah (ZIP)</span>
+          </label>
+          <label class="p-4 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+            <input type="radio" name="splitMode" value="every_n" onchange="toggleSplitInputs()" class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Pecah per N Halaman</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">Bagi dokumen berkala setiap N halaman (ZIP)</span>
+          </label>
+        </div>
+        <div id="splitRangeInputContainer" class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <label for="splitPageRanges" class="block text-xs font-bold text-slate-700">Masukkan Nomor Halaman / Rentang:</label>
+          <input type="text" id="splitPageRanges" value="1" placeholder="Contoh: 1-3, 5, 8-10" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#2563eb]">
+          <p class="text-[11px] text-slate-400">Total halaman tersedia: <span id="splitTotalPagesNotice" class="font-bold">0</span> halaman.</p>
+        </div>
+        <div id="splitEveryNContainer" class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 hidden">
+          <label for="splitEveryNVal" class="block text-xs font-bold text-slate-700">Pecah setiap berapa halaman?</label>
+          <input type="number" id="splitEveryNVal" value="2" min="1" class="w-32 px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl">
+        </div>
+      </div>
+
+      <!-- 2. Form Kompres PDF -->
+      <div id="formCompress" class="space-y-4 hidden">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Pilih Tingkat Kompresi:</label>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <label class="p-4 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+            <input type="radio" name="compressLevel" value="extreme" class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Kompresi Kuat (Ekstrem)</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">Ukuran sangat kecil untuk upload ketat / email</span>
+          </label>
+          <label class="p-4 border-2 border-blue-600 rounded-2xl cursor-pointer transition-all block bg-blue-50/30">
+            <input type="radio" name="compressLevel" value="recommended" checked class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Rekomendasi (Seimbang)</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">Kualitas visual tetap jelas & ukuran berkurang</span>
+          </label>
+          <label class="p-4 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+            <input type="radio" name="compressLevel" value="lossless" class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Optimasi Struktur (Lossless)</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">Membersihkan metadata tanpa menurunkan resolusi</span>
+          </label>
+        </div>
+        <div id="compressResultBox" class="hidden p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-2xl text-xs space-y-1">
+          <p class="font-bold text-sm">Berhasil Mengompres PDF!</p>
+          <p id="compressResultDetails"></p>
+        </div>
+      </div>
+
+      <!-- 3. Form Perbaiki PDF (Repair) -->
+      <div id="formRepair" class="space-y-4 hidden">
+        <div class="p-5 bg-emerald-50/60 border border-emerald-200 rounded-2xl space-y-2 text-xs text-emerald-900">
+          <p class="font-bold text-sm">Rekonstruksi & Pemulihan PDF</p>
+          <p class="leading-relaxed">Sistem akan memeriksa tabel indeks XREF dokumen yang rusak, memulihkan stream halaman yang sehat, dan menyusun ulang ke dalam standar PDF 1.7 yang valid.</p>
+        </div>
+      </div>
+
+      <!-- 4. Form Nomor Halaman -->
+      <div id="formPageNumber" class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs hidden">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Posisi Nomor Halaman:</label>
+          <select id="pageNumPosition" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm">
+            <option value="bottom-center">Bawah Tengah (Rekomendasi)</option>
+            <option value="bottom-right">Bawah Kanan</option>
+            <option value="bottom-left">Bawah Kiri</option>
+            <option value="top-center">Atas Tengah</option>
+            <option value="top-right">Atas Kanan</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Format Penomoran:</label>
+          <select id="pageNumFormat" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm">
+            <option value="standard">Halaman 1, Halaman 2...</option>
+            <option value="n_of_total">1 dari X, 2 dari X...</option>
+            <option value="n_only">1, 2, 3...</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="pageNumSkipFirst" checked class="rounded text-blue-600">
+            <span class="font-medium text-slate-700">Lewati halaman pertama (halaman sampul/cover)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 5. Form Tanda Air (Watermark) -->
+      <div id="formWatermark" class="space-y-5 text-xs hidden">
+        <!-- Watermark Type Selector (Text vs Image) -->
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-slate-700">Tipe Tanda Air:</span>
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+            <button type="button" onclick="setWatermarkType('text')" id="wmTypeTextBtn" class="px-3.5 py-1.5 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+              <span>Teks</span>
+            </button>
+            <button type="button" onclick="setWatermarkType('image')" id="wmTypeImageBtn" class="px-3.5 py-1.5 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>Gambar / Logo</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section A: Text Watermark Controls -->
+        <div id="wmTextControls" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block font-bold text-slate-700 mb-1">Teks Tanda Air:</label>
+            <input type="text" id="watermarkText" value="CONFIDENTIAL" placeholder="Contoh: CONFIDENTIAL, DRAF, RAHASIA" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Ukuran Font:</label>
+            <input type="number" id="watermarkSize" value="48" min="12" max="140" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Warna Teks:</label>
+            <select id="watermarkColor" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none cursor-pointer">
+              <option value="gray">Abu-abu (Standar)</option>
+              <option value="red">Merah Peringatan</option>
+              <option value="blue">Biru Elegan</option>
+              <option value="black">Hitam</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Section B: Image Watermark Controls -->
+        <div id="wmImageControls" class="space-y-3 hidden">
+          <div class="p-4 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 overflow-hidden">
+                <img id="wmImageThumbnail" class="w-full h-full object-contain hidden" alt="Thumbnail" />
+                <svg id="wmImageIconPlaceholder" class="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <div>
+                <div class="font-bold text-slate-800 text-xs" id="wmImageNameLabel">Belum ada gambar yang dipilih</div>
+                <div class="text-[11px] text-slate-400">Mendukung format PNG transparan, JPG, WebP</div>
+              </div>
+            </div>
+            <button type="button" onclick="document.getElementById('watermarkImageFileInput').click()" class="px-4 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition-colors shadow-xs cursor-pointer">
+              Pilih Berkas Gambar
+            </button>
+            <input type="file" id="watermarkImageFileInput" accept="image/png,image/jpeg,image/webp" class="hidden">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Skala Ukuran Gambar (%): <span id="wmImageScaleVal" class="text-blue-600 font-bold">40%</span></label>
+              <input type="range" id="watermarkImageScale" value="40" min="10" max="100" oninput="document.getElementById('wmImageScaleVal').textContent = this.value + '%'" class="w-full accent-blue-600">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section C: Placement / Position & Rotation (Shared) -->
+        <div class="pt-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <!-- 3x3 Position Grid Selector -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-2">Posisi / Letak Tanda Air:</label>
+            <div class="inline-grid grid-cols-3 gap-1.5 p-2 bg-slate-100 border border-slate-200 rounded-2xl w-48 h-48">
+              <button type="button" onclick="selectWatermarkPosition('top-left')" data-wm-pos="top-left" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kiri Atas">KA</button>
+              <button type="button" onclick="selectWatermarkPosition('top-center')" data-wm-pos="top-center" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Tengah Atas">TA</button>
+              <button type="button" onclick="selectWatermarkPosition('top-right')" data-wm-pos="top-right" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kanan Atas">KnA</button>
+
+              <button type="button" onclick="selectWatermarkPosition('center-left')" data-wm-pos="center-left" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kiri Tengah">KT</button>
+              <button type="button" onclick="selectWatermarkPosition('center')" data-wm-pos="center" class="wm-pos-btn rounded-xl border-2 border-blue-600 bg-blue-600 text-white shadow-xs text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer" title="Tengah">Tengah</button>
+              <button type="button" onclick="selectWatermarkPosition('center-right')" data-wm-pos="center-right" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kanan Tengah">KnT</button>
+
+              <button type="button" onclick="selectWatermarkPosition('bottom-left')" data-wm-pos="bottom-left" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kiri Bawah">KB</button>
+              <button type="button" onclick="selectWatermarkPosition('bottom-center')" data-wm-pos="bottom-center" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Tengah Bawah">TB</button>
+              <button type="button" onclick="selectWatermarkPosition('bottom-right')" data-wm-pos="bottom-right" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kanan Bawah">KnB</button>
+            </div>
+            <p class="text-[11px] text-slate-500 font-medium mt-1.5" id="wmPosDescription">Posisi aktif: Tengah Halaman</p>
+          </div>
+
+          <!-- Rotation, Opacity, and Margin -->
+          <div class="space-y-3.5">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Sudut Rotasi:</label>
+              <select id="watermarkAngle" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none cursor-pointer">
+                <option value="45">Diagonal Miring (45 Derajat)</option>
+                <option value="0">Horizontal Lurus (0 Derajat)</option>
+                <option value="-45">Diagonal Terbalik (-45 Derajat)</option>
+                <option value="90">Vertikal Tegak (90 Derajat)</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="font-bold text-slate-700">Transparansi / Opasitas:</label>
+                <span id="wmOpacityVal" class="text-blue-600 font-bold">25%</span>
+              </div>
+              <input type="range" id="watermarkOpacity" value="25" min="5" max="95" oninput="document.getElementById('wmOpacityVal').textContent = this.value + '%'" class="w-full accent-blue-600">
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Jarak Tepi (Margin px):</label>
+              <input type="number" id="watermarkMargin" value="40" min="10" max="150" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Form Putar PDF (Rotate) -->
+      <div id="formRotate" class="space-y-4 hidden">
+        <!-- Pilihan Target Halaman -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Halaman yang Ingin Diputar:</label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+            <button type="button" onclick="setRotateScope('all')" id="rotScopeAll" class="rot-scope-btn py-2.5 px-3 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 font-bold text-center transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              <span>Semua Halaman</span>
+            </button>
+            <button type="button" onclick="setRotateScope('custom')" id="rotScopeCustom" class="rot-scope-btn py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium text-center transition-all flex items-center justify-center gap-2 hover:bg-slate-50 cursor-pointer">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span>Halaman Tertentu</span>
+            </button>
+            <button type="button" onclick="setRotateScope('interactive')" id="rotScopeInteractive" class="rot-scope-btn py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium text-center transition-all flex items-center justify-center gap-2 hover:bg-slate-50 cursor-pointer">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span>Satu per Satu (Visual)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pilihan Arah Putar Standar (Untuk Semua & Halaman Tertentu) -->
+        <div id="rotGlobalAngleSection" class="space-y-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Pilih Arah Putar:</label>
+          <div class="grid grid-cols-3 gap-3 text-xs">
+            <button type="button" onclick="selectRotateAngle(90)" id="rotBtn90" class="rot-btn py-3 px-4 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 font-semibold text-center flex flex-col items-center gap-1.5 transition-all cursor-pointer">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M21 13a9 9 0 1 1-3-7.7L21 8"/></svg>
+              <span>90° (Kanan)</span>
+            </button>
+            <button type="button" onclick="selectRotateAngle(180)" id="rotBtn180" class="rot-btn py-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium text-center flex flex-col items-center gap-1.5 transition-all cursor-pointer hover:bg-slate-50">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+              <span>180° (Balik)</span>
+            </button>
+            <button type="button" onclick="selectRotateAngle(270)" id="rotBtn270" class="rot-btn py-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium text-center flex flex-col items-center gap-1.5 transition-all cursor-pointer hover:bg-slate-50">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+              <span>270° (Kiri)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Input Rentang Halaman Kustom (Hanya Tampil di Mode 'custom') -->
+        <div id="rotCustomInputArea" class="hidden p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+          <label for="rotCustomPagesInput" class="block text-xs font-bold text-slate-700">Nomor Halaman yang Ingin Diputar:</label>
+          <input type="text" id="rotCustomPagesInput" placeholder="Contoh: 1, 3, 5-7" class="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:outline-none font-medium text-slate-800">
+          <p class="text-[11px] text-slate-500">Total halaman dokumen: <span id="rotTotalPagesNotice" class="font-bold text-blue-600">0</span> halaman. Halaman yang tidak dicantumkan akan tetap pada orientasi aslinya.</p>
+        </div>
+
+        <!-- Grid Pratinjau Satu per Satu (Hanya Tampil di Mode 'interactive') -->
+        <div id="rotInteractiveArea" class="hidden space-y-3 pt-1">
+          <div class="flex flex-wrap items-center justify-between gap-2 p-3 bg-blue-50/70 rounded-xl border border-blue-100">
+            <div class="text-xs text-blue-900 font-semibold flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>Klik tombol putar pada halaman yang ingin Anda ubah:</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="rotateAllPagesInteractive(90)" class="text-xs px-2.5 py-1.5 rounded-lg bg-white border border-blue-200 text-blue-700 font-bold hover:bg-blue-600 hover:text-white transition-colors flex items-center gap-1 cursor-pointer">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M21 13a9 9 0 1 1-3-7.7L21 8"/></svg>
+                <span>Putar Semua +90°</span>
+              </button>
+              <button type="button" onclick="rotateAllPagesInteractive(-90)" class="text-xs px-2.5 py-1.5 rounded-lg bg-white border border-blue-200 text-blue-700 font-bold hover:bg-blue-600 hover:text-white transition-colors flex items-center gap-1 cursor-pointer">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+                <span>Putar Semua -90°</span>
+              </button>
+              <button type="button" onclick="resetAllPagesInteractive()" class="text-xs px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-100 transition-colors cursor-pointer">
+                Reset (0°)
+              </button>
+            </div>
+          </div>
+
+          <!-- Visual Grid Container -->
+          <div id="rotPagesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[460px] overflow-y-auto p-3 border border-slate-200 rounded-xl bg-slate-50/60">
+            <!-- Dynamically populated page cards -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. Form Proteksi Sandi -->
+      <div id="formProtect" class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs hidden">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Kata Sandi Baru:</label>
+          <input type="password" id="protectPassword" placeholder="Masukkan password kuat" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Ulangi Kata Sandi:</label>
+          <input type="password" id="protectPasswordConfirm" placeholder="Konfirmasi password" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm">
+        </div>
+      </div>
+
+      <!-- 8. Form Buka PDF Terkunci -->
+      <div id="formUnlock" class="space-y-3 text-xs hidden">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Masukkan Kata Sandi Dokumen Saat Ini:</label>
+          <input type="password" id="unlockPassword" placeholder="Ketik kata sandi untuk menghapus proteksi" class="w-full max-w-md bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm">
+        </div>
+        <p class="text-[11px] text-slate-400">Proteksi sandi akan dihilangkan secara permanen dan menghasilkan berkas PDF bersih bebas kunci.</p>
+      </div>
+
+      <!-- Bottom Single Action Bar -->
+      <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex-1 max-w-sm w-full">
+          <label for="singleOutputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama File Hasil Unduhan:</label>
+          <input type="text" id="singleOutputFileName" value="hasil_proses.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
+        </div>
+        <button id="singleActionExecuteBtn" onclick="executeSingleAction()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span id="singleActionBtnText">Proses & Unduh Dokumen</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION E: e-SIGN STAGE                    -->
+    <!-- ========================================== -->
+    <div id="esignSection" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-6 hidden">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <h2 class="font-bold text-slate-900 text-base sm:text-lg">Tanda Tangan Elektronik (e-Sign)</h2>
+          <p class="text-xs text-slate-400">Buat tanda tangan dan atur posisinya secara presisi pada halaman PDF.</p>
+        </div>
+        <button onclick="resetCurrentWorkingPdf()" class="text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors">
+          Pilih PDF Lain
+        </button>
+      </div>
+
+      <!-- Signature Creator Card -->
+      <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="text-xs font-bold text-slate-700 uppercase">Metode Tanda Tangan:</span>
+          <div class="flex items-center gap-1.5 text-xs">
+            <button onclick="setSignMode('draw')" id="signModeDraw" class="font-semibold px-3 py-1.5 rounded-lg bg-[#2563eb] text-white flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <span>Gambar</span>
+            </button>
+            <button onclick="setSignMode('type')" id="signModeType" class="font-medium px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+              <span>Ketik Nama</span>
+            </button>
+            <button onclick="setSignMode('upload')" id="signModeUpload" class="font-medium px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Unggah</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode 1: Draw Pad -->
+        <div id="signDrawPadContainer" class="space-y-2">
+          <div class="relative w-full bg-white border border-slate-300 rounded-xl overflow-hidden shadow-inner">
+            <canvas id="signDrawCanvas" width="800" height="200" class="w-full block cursor-crosshair touch-none bg-white" style="height: 160px;"></canvas>
+            <div id="signDrawHint" class="absolute top-2 left-3 text-[11px] text-slate-400 select-none pointer-events-none">
+              Goreskan tanda tangan Anda di area ini...
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-[11px] text-slate-400">Tanda tangan akan langsung tampil pada pratinjau di bawah</span>
+            <button onclick="clearSignatureCanvas()" class="text-xs text-red-600 hover:bg-red-50 font-semibold px-2.5 py-1 rounded-lg transition-colors">
+              Hapus Goresan
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode 2: Typed Name -->
+        <div id="signTypeContainer" class="space-y-3 hidden">
+          <input type="text" id="typedSignatureInput" placeholder="Ketik nama lengkap Anda..." value="John Doe" class="w-full px-3.5 py-2.5 border rounded-xl text-sm font-medium">
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <button type="button" onclick="selectTypedFont('sig-font-1')" id="fontBtn1" class="p-3 border-2 border-blue-600 bg-blue-50 text-blue-800 rounded-xl text-center sig-font-1 text-xl">
+              Gaya Tulisan 1
+            </button>
+            <button type="button" onclick="selectTypedFont('sig-font-2')" id="fontBtn2" class="p-3 border bg-white rounded-xl text-center sig-font-2 text-xl">
+              Gaya Tulisan 2
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode 3: Image Upload -->
+        <div id="signUploadContainer" class="p-6 border-2 border-dashed rounded-xl text-center space-y-2 hidden">
+          <p class="text-xs text-slate-500">Unggah foto atau stempel tanda tangan (PNG transparan disarankan)</p>
+          <button onclick="document.getElementById('signatureImageInput').click()" class="px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold hover:bg-slate-50">
+            Pilih File Gambar
+          </button>
+          <div id="signatureImagePreviewName" class="text-xs font-medium text-emerald-600 mt-2"></div>
+        </div>
+      </div>
+
+      <!-- PDF Page Preview with Placement Box -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between flex-wrap gap-2 text-xs bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
+          <button onclick="changeEsignPage(-1)" id="esignPrevPageBtn" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 font-semibold flex items-center gap-1 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            <span>Sebelumnya</span>
+          </button>
+
+          <div class="flex items-center gap-2 font-medium text-slate-700">
+            <span>Tempatkan di Halaman:</span>
+            <div class="flex items-center gap-1">
+              <input type="number" id="esignPageJumpInput" min="1" max="1" value="1" onchange="jumpToEsignPage(this.value)" class="w-16 px-2.5 py-1 text-center font-bold text-slate-900 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none shadow-xs text-xs">
+              <span class="text-slate-500">dari <strong id="totalEsignPageNum" class="text-slate-900">1</strong></span>
+            </div>
+            <select id="esignPageSelect" onchange="jumpToEsignPage(this.value)" class="px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-blue-600 focus:outline-none cursor-pointer">
+              <option value="1">Hal. 1</option>
+            </select>
+          </div>
+
+          <button onclick="changeEsignPage(1)" id="esignNextPageBtn" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 font-semibold flex items-center gap-1 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">
+            <span>Berikutnya</span>
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
+        <!-- Quick Size & Boundary Helper Toolbar -->
+        <div class="flex items-center justify-between flex-wrap gap-3 text-xs bg-white p-3 rounded-xl border border-slate-200">
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-slate-700">Ukuran Tanda Tangan:</span>
+            <div class="flex items-center gap-2">
+              <input type="range" id="sigScaleSlider" min="40" max="250" value="100" oninput="setSignatureScaleFromSlider(this.value)" class="w-28 sm:w-36 accent-blue-600 cursor-pointer">
+              <span id="sigScaleLabel" class="text-blue-600 font-mono font-bold w-12">100%</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="autoFitSignatureBox()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-slate-700 font-bold transition-colors flex items-center gap-1.5 cursor-pointer" title="Sesuaikan kotak agar pas presisi dengan goresan tanda tangan">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+              <span>Rapatkan Kotak (Auto-Fit)</span>
+            </button>
+            <span class="text-[11px] text-slate-400 hidden md:inline">&bull; Bebas digeser melewati batas halaman</span>
+          </div>
+        </div>
+
+        <!-- Draggable Box Stage -->
+        <div class="relative overflow-auto max-h-[550px] flex justify-center bg-slate-100 p-8 rounded-2xl border">
+          <div id="esignCanvasWrapper" class="relative shadow-md bg-white select-none">
+            <canvas id="esignPageCanvas" class="block"></canvas>
+            <div id="signatureDraggableBox" class="absolute border-2 border-dashed border-blue-600 bg-blue-500/10 cursor-move flex items-center justify-center p-1.5 rounded select-none group shadow-sm hover:border-blue-700" style="left: 100px; top: 100px; width: 180px; height: 90px;">
+              <img id="sigBoxImg" class="w-full h-full object-contain pointer-events-none hidden" alt="Signature Preview" />
+              <span id="sigBoxText" class="text-xs font-bold text-blue-700 pointer-events-none">Tanda Tangan</span>
+              <div id="sigResizeHandle" class="absolute -right-2 -bottom-2 w-5 h-5 bg-blue-600 border-2 border-white rounded-full cursor-nwse-resize shadow-md hover:scale-125 transition-transform" title="Tarik untuk memperbesar / memperkecil ukuran tanda tangan"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Save Bar -->
+      <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex-1 max-w-sm w-full">
+          <label for="esignOutputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama File Hasil Unduhan:</label>
+          <input type="text" id="esignOutputFileName" value="hasil_tertandatangani.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
+        </div>
+        <button onclick="applySignatureAndDownload()" id="saveEsignPdfBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span>Bubuhkan Tanda Tangan & Unduh</span>
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-6 px-4 mt-auto">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs text-slate-500">
+      <div class="flex items-center gap-2">
+        <img src="Docenti.png" alt="Docenti" class="h-6 w-auto object-contain">
+      </div>
+      <span class="hidden sm:inline text-slate-300">&bull;</span>
+      <div class="flex items-center gap-1.5 font-medium text-slate-600">
+        <span>Made with</span>
+        <svg class="w-3.5 h-3.5 text-blue-600 fill-current inline-block" viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span>by</span>
+        <a href="https://oktovaaaaa.id" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 font-bold hover:underline transition-colors">
+          oktovaaaaa
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // ==========================================
+    // 1. TOOL CATALOG & NAVIGATION CONFIGURATION
+    // (Clean, Zero-Emoji Catalog)
+    // ==========================================
+    const TOOLS = {
+      pdf_merge: {
+        title: 'Gabungkan PDF',
+        subtitle: 'Gabungkan dan satukan beberapa file PDF dalam urutan yang Anda inginkan secara cepat dan mudah.',
+        btnLabel: 'Pilih beberapa file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: true,
+        type: 'multi_pdf'
+      },
+      pdf_split: {
+        title: 'Pisahkan PDF',
+        subtitle: 'Pisahkan satu halaman atau ekstrak seluruh halaman dokumen PDF menjadi berkas terpisah.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
+      },
+      pdf_compress: {
+        title: 'Kompres PDF',
+        subtitle: 'Perkecil ukuran dokumen PDF tanpa mengurangi kualitas visual untuk memudahkan pengiriman.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
+      },
+      pdf_to_word: {
+        title: 'Konverter PDF ke Word',
+        subtitle: 'Ubah dokumen PDF Anda menjadi Word (.docx) yang dapat diedit dengan tabel dan gambar asli.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: true,
+        type: 'multi_pdf'
+      },
+      word_merge: {
+        title: 'Gabungkan Dokumen Word',
+        subtitle: 'Satukan beberapa dokumen Microsoft Word (.docx) menjadi satu dokumen utuh dengan pemisah halaman otomatis.',
+        btnLabel: 'Pilih file Word (.docx)',
+        accept: '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        multiple: true,
+        type: 'multi_word'
+      },
+      pdf_organize: {
+        title: 'Hapus & Atur Halaman PDF',
+        subtitle: 'Hapus halaman yang tidak diinginkan dan susun ulang posisi halaman PDF secara visual.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'organize'
+      },
+      pdf_edit: {
+        title: 'Edit & Anotasi PDF',
+        subtitle: 'Tambahkan teks, catatan memo, bentuk kotak, coretan pensil, atau sisipkan gambar ke dokumen PDF Anda.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
+      },
+      pdf_page_number: {
+        title: 'Tambah Nomor Halaman',
+        subtitle: 'Beri penomoran otomatis pada setiap halaman dokumen PDF dengan pilihan posisi dan format.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
+      },
+      pdf_watermark: {
+        title: 'Tambah Tanda Air (Watermark)',
+        subtitle: 'Sisipkan teks cap tanda air dengan kontrol kemiringan sudut, transparansi, dan ukuran.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
+      },
+      pdf_rotate: {
+        title: 'Putar Orientasi PDF',
+        subtitle: 'Putar orientasi halaman PDF Anda hingga 90, 180, atau 270 derajat searah jarum jam.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
+      },
+      pdf_protect: {
+        title: 'Proteksi Kata Sandi',
+        subtitle: 'Kunci dokumen PDF Anda dengan enkripsi kata sandi kuat agar aman dari akses tidak berwenang.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
+      },
+      pdf_unlock: {
+        title: 'Buka PDF Terkunci',
+        subtitle: 'Hapus proteksi kata sandi dari file PDF untuk menyimpan salinan dokumen yang bebas kunci.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
+      },
+      pdf_esign: {
+        title: 'Tanda Tangan Elektronik (e-Sign)',
+        subtitle: 'Bubuhkan tanda tangan digital pada PDF: goreskan tangan, ketik tulisan sambung, atau unggah cap tanda tangan.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
+      },
+      pdf_repair: {
+        title: 'Perbaiki PDF (Repair)',
+        subtitle: 'Analisis dan rekonstruksi berkas PDF yang rusak, corrupt, atau tidak bisa dibuka kembali.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
+      }
+    };
+
+    let currentMode = 'pdf_merge';
+
+    // State Storage
+    let pdfFiles = [];
+    let wordFiles = [];
+    let convertPdfFiles = [];
+
+    // Current working single PDF file
+    let currentWorkingPdf = null;
+    let currentWorkingPdfDoc = null; // pdfjs doc
+    let currentWorkingPdfBytes = null; // Uint8Array
+
+    // Organize State
+    let organizePages = [];
+
+    // Edit Canvas State
+    let currentEditPage = 1;
+    let totalEditPages = 1;
+    let currentEditTool = 'pen';
+    let currentEditColor = '#dc2626';
+    let currentEditStrokeWidth = 4;
+    let pageCanvasLayers = {};
+
+    // Rotate State
+    let currentRotateAngle = 90;
+    let currentRotateScope = 'all';
+    let pageRotations = [];
+
+    // e-Sign State
+    let currentEsignPage = 1;
+    let totalEsignPages = 1;
+    let currentSignMode = 'draw';
+    let selectedTypedFont = 'sig-font-1';
+    let sigBoxPosition = { x: 100, y: 100, width: 180, height: 90 };
+    let uploadedSignatureImageBytes = null;
+    let currentSignatureAspect = 2.0;
+
+    // ==========================================
+    // 2. STAGE & NAVIGATION CONTROLLERS
+    // ==========================================
+    function selectTool(toolId) {
+      if (!TOOLS[toolId]) toolId = 'pdf_merge';
+      currentMode = toolId;
+      hideStatus();
+
+      const tool = TOOLS[toolId];
+      document.getElementById('heroTitle').textContent = tool.title;
+      document.getElementById('heroSubtitle').textContent = tool.subtitle;
+      document.getElementById('heroBtnText').textContent = tool.btnLabel;
+      document.title = 'Docenti';
+
+      // Update active navigation state
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('text-[#2563eb]');
+      });
+      const activeNav = document.getElementById('nav_' + toolId);
+      if (activeNav) activeNav.classList.add('text-[#2563eb]');
+
+      // Check whether files are already loaded for this tool
+      const hasFiles = (tool.type === 'multi_pdf' && currentMode === 'pdf_merge' && pdfFiles.length > 0) ||
+                       (tool.type === 'multi_word' && wordFiles.length > 0) ||
+                       (tool.type === 'multi_pdf' && currentMode === 'pdf_to_word' && convertPdfFiles.length > 0) ||
+                       (tool.type !== 'multi_pdf' && tool.type !== 'multi_word' && currentWorkingPdf !== null);
+
+      if (!hasFiles) {
+        showHeroStage();
+      } else {
+        renderActiveToolWorkspace();
+      }
+    }
+
+    function showHeroStage() {
+      document.getElementById('heroDropArea').classList.remove('hidden');
+      document.getElementById('fileListCard').classList.add('hidden');
+      document.getElementById('organizeSection').classList.add('hidden');
+      document.getElementById('editPdfSection').classList.add('hidden');
+      document.getElementById('singlePdfActionSection').classList.add('hidden');
+      document.getElementById('esignSection').classList.add('hidden');
+    }
+
+    function renderActiveToolWorkspace() {
+      document.getElementById('heroDropArea').classList.add('hidden');
+      document.getElementById('fileListCard').classList.add('hidden');
+      document.getElementById('organizeSection').classList.add('hidden');
+      document.getElementById('editPdfSection').classList.add('hidden');
+      document.getElementById('singlePdfActionSection').classList.add('hidden');
+      document.getElementById('esignSection').classList.add('hidden');
+
+      const tool = TOOLS[currentMode];
+
+      if (tool.type === 'multi_pdf' || tool.type === 'multi_word') {
+        document.getElementById('fileListCard').classList.remove('hidden');
+        document.getElementById('mergeActionContainer').classList.toggle('hidden', currentMode === 'pdf_to_word');
+        document.getElementById('convertActionContainer').classList.toggle('hidden', currentMode !== 'pdf_to_word');
+
+        if (currentMode === 'word_merge') {
+          document.getElementById('outputFileName').value = 'hasil_gabungan.docx';
+          document.getElementById('fileListTitle').textContent = 'Dokumen Word Terpilih';
+        } else if (currentMode === 'pdf_merge') {
+          document.getElementById('outputFileName').value = 'hasil_gabungan.pdf';
+          document.getElementById('fileListTitle').textContent = 'Dokumen PDF Terpilih';
+        } else {
+          document.getElementById('fileListTitle').textContent = 'Dokumen PDF untuk Konversi';
+        }
+        renderList();
+
+      } else if (tool.type === 'organize') {
+        document.getElementById('organizeSection').classList.remove('hidden');
+        if (currentWorkingPdf) {
+          document.getElementById('organizeDocTitle').textContent = currentWorkingPdf.name;
+          document.getElementById('organizeDocSize').textContent = formatSize(currentWorkingPdf.size);
+          document.getElementById('organizeOutputFileName').value = currentWorkingPdf.name.replace(/\.pdf$/i, '') + '_diatur.pdf';
+          renderOrganizeGrid();
+          updateOrganizeBadges();
+        }
+
+      } else if (currentMode === 'pdf_edit') {
+        document.getElementById('editPdfSection').classList.remove('hidden');
+        if (currentWorkingPdf) {
+          initEditPdfCanvas();
+        }
+
+      } else if (currentMode === 'pdf_esign') {
+        document.getElementById('esignSection').classList.remove('hidden');
+        if (currentWorkingPdf) {
+          initEsignSection();
+        }
+
+      } else {
+        // Single action forms (split, compress, repair, page_number, watermark, rotate, protect, unlock)
+        document.getElementById('singlePdfActionSection').classList.remove('hidden');
+        document.getElementById('singleActionTitle').textContent = tool.title;
+        if (currentWorkingPdf) {
+          document.getElementById('singleActionFileName').textContent = currentWorkingPdf.name + ' (' + formatSize(currentWorkingPdf.size) + ')';
+          document.getElementById('singleOutputFileName').value = currentWorkingPdf.name.replace(/\.pdf$/i, '') + '_' + currentMode.replace('pdf_', '') + '.pdf';
+        }
+
+        // Hide all subforms then show the relevant one
+        ['formSplit', 'formCompress', 'formRepair', 'formPageNumber', 'formWatermark', 'formRotate', 'formProtect', 'formUnlock'].forEach(id => {
+          document.getElementById(id).classList.add('hidden');
+        });
+
+        if (currentMode === 'pdf_split') {
+          document.getElementById('formSplit').classList.remove('hidden');
+          document.getElementById('singleActionBtnText').textContent = 'Pisahkan & Unduh PDF';
+          if (currentWorkingPdfDoc) document.getElementById('splitTotalPagesNotice').textContent = currentWorkingPdfDoc.numPages;
+        } else if (currentMode === 'pdf_compress') {
+          document.getElementById('formCompress').classList.remove('hidden');
+          document.getElementById('singleActionBtnText').textContent = 'Kompres & Unduh PDF';
+        } else if (currentMode === 'pdf_repair') {
+          document.getElementById('formRepair').classList.remove('hidden');
+          document.getElementById('singleActionBtnText').textContent = 'Perbaiki & Unduh PDF';
+        } else if (currentMode === 'pdf_page_number') {
+          document.getElementById('formPageNumber').classList.remove('hidden');
+          document.getElementById('singleActionBtnText').textContent = 'Beri Nomor Halaman & Unduh';
+        } else if (currentMode === 'pdf_watermark') {
+          document.getElementById('formWatermark').classList.remove('hidden');
+          document.getElementById('singleActionBtnText').textContent = 'Sisipkan Tanda Air & Unduh';
+        } else if (currentMode === 'pdf_rotate') {
+          document.getElementById('formRotate').classList.remove('hidden');
+          document.getElementById('singleActionBtnText').textContent = 'Putar Halaman & Unduh';
+          if (currentWorkingPdfDoc) {
+            const totPages = currentWorkingPdfDoc.numPages;
+            const notEl = document.getElementById('rotTotalPagesNotice');
+            if (notEl) notEl.textContent = totPages;
+            if (!pageRotations || pageRotations.length !== totPages) {
+              pageRotations = new Array(totPages).fill(0);
+            }
+            if (currentRotateScope === 'interactive') {
+              renderRotateGrid();
+            }
+          }
+        } else if (currentMode === 'pdf_protect') {
+          document.getElementById('formProtect').classList.remove('hidden');
+          document.getElementById('singleActionBtnText').textContent = 'Enkripsi & Kunci PDF';
+        } else if (currentMode === 'pdf_unlock') {
+          document.getElementById('formUnlock').classList.remove('hidden');
+          document.getElementById('singleActionBtnText').textContent = 'Buka Sandi & Unduh Salinan';
+        }
+      }
+    }
+
+    function toggleMobileMenu() {
+      document.getElementById('mobileMenu').classList.toggle('hidden');
+    }
+
+    function resetCurrentWorkingPdf() {
+      currentWorkingPdf = null;
+      currentWorkingPdfDoc = null;
+      currentWorkingPdfBytes = null;
+      organizePages = [];
+      pageRotations = [];
+      pageCanvasLayers = {};
+      showHeroStage();
+    }
+
+    // ==========================================
+    // 3. FILE INGESTION CONTROLLERS
+    // ==========================================
+    const heroDropArea = document.getElementById('heroDropArea');
+    const genericFileInput = document.getElementById('genericFileInput');
+
+    function triggerHeroFileInput() {
+      const tool = TOOLS[currentMode] || TOOLS.pdf_merge;
+      genericFileInput.accept = tool.accept;
+      genericFileInput.multiple = tool.multiple;
+      genericFileInput.click();
+    }
+
+    genericFileInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      handleIncomingFiles(files);
+      genericFileInput.value = '';
+    });
+
+    // Drag and drop event listeners on Hero area & Window
+    ['dragenter', 'dragover'].forEach(evt => {
+      window.addEventListener(evt, (e) => {
+        e.preventDefault();
+        heroDropArea.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(evt => {
+      window.addEventListener(evt, (e) => {
+        e.preventDefault();
+        heroDropArea.classList.remove('dragover');
+      });
+    });
+
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      heroDropArea.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) {
+        handleIncomingFiles(files);
+      }
+    });
+
+    async function handleIncomingFiles(files) {
+      if (!files || files.length === 0) return;
+      hideStatus();
+
+      const tool = TOOLS[currentMode];
+
+      if (tool.type === 'multi_word') {
+        const docxList = files.filter(f => f.name.toLowerCase().endsWith('.docx'));
+        if (docxList.length === 0) {
+          showStatus('Silakan pilih berkas dokumen Microsoft Word (.docx)', 'error');
+          return;
+        }
+        wordFiles.push(...docxList);
+        renderActiveToolWorkspace();
+
+      } else if (tool.type === 'multi_pdf') {
+        const validPdf = files.filter(f => f.name.toLowerCase().endsWith('.pdf'));
+        if (validPdf.length === 0) {
+          showStatus('Silakan pilih berkas dokumen PDF yang valid', 'error');
+          return;
+        }
+        if (currentMode === 'pdf_to_word') {
+          convertPdfFiles.push(...validPdf);
+        } else {
+          pdfFiles.push(...validPdf);
+        }
+        renderActiveToolWorkspace();
+
+      } else {
+        const valid = files.find(f => f.name.toLowerCase().endsWith('.pdf'));
+        if (!valid) {
+          showStatus('Pilih 1 berkas PDF yang valid', 'error');
+          return;
+        }
+        await loadSingleWorkingPdf(valid);
+      }
+    }
+
+    async function safeLoadPdfDocument(bytes, options = {}) {
+      const opts = Object.assign({ ignoreEncryption: true }, options);
+      return await PDFLib.PDFDocument.load(bytes, opts);
+    }
+
+    function getWorkingPdfBytesCopy() {
+      if (!currentWorkingPdfBytes) throw new Error('Tidak ada berkas PDF yang sedang dimuat');
+      return currentWorkingPdfBytes.slice(0);
+    }
+
+    async function loadSingleWorkingPdf(file) {
+      currentWorkingPdf = file;
+      showStatus('Memuat berkas "' + file.name + '"...');
+
+      try {
+        const rawBuf = await file.arrayBuffer();
+        currentWorkingPdfBytes = new Uint8Array(rawBuf);
+
+        // Try loading with PDF.js for visual rendering
+        try {
+          currentWorkingPdfDoc = await pdfjsLib.getDocument({ data: currentWorkingPdfBytes.slice(0) }).promise;
+          organizePages = [];
+          pageRotations = [];
+          for (let i = 0; i < currentWorkingPdfDoc.numPages; i++) {
+            organizePages.push({ originalIndex: i, isDeleted: false, rotation: 0 });
+            pageRotations.push(0);
+          }
+          totalEditPages = currentWorkingPdfDoc.numPages;
+          totalEsignPages = currentWorkingPdfDoc.numPages;
+          currentEditPage = 1;
+          currentEsignPage = 1;
+        } catch (pdfJsErr) {
+          const errMsg = (pdfJsErr && (pdfJsErr.message || pdfJsErr.name) ? (pdfJsErr.message + ' ' + pdfJsErr.name) : '').toLowerCase();
+          const isPasswordErr = errMsg.includes('password') || pdfJsErr.name === 'PasswordException';
+
+          if (isPasswordErr) {
+            currentWorkingPdfDoc = null;
+            if (currentMode === 'pdf_unlock') {
+              // Expected in unlock mode: user uploaded a locked PDF to unlock it!
+              hideStatus();
+              renderActiveToolWorkspace();
+              return;
+            } else {
+              throw new Error('Dokumen ini diproteksi kata sandi. Silakan gunakan menu "Buka PDF Terkunci" terlebih dahulu untuk membuka proteksinya.');
+            }
+          } else {
+            throw pdfJsErr;
+          }
+        }
+
+        hideStatus();
+        renderActiveToolWorkspace();
+      } catch (err) {
+        console.error(err);
+        showStatus('Gagal membaca PDF: ' + (err.message || 'Periksa apakah berkas valid'), 'error');
+      }
+    }
+
+    // Helper: Format file size
+    function formatSize(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    // ==========================================
+    // 4. MULTI-FILE LIST (MERGE & PDF TO WORD)
+    // ==========================================
+    function renderList() {
+      const fileListCard = document.getElementById('fileListCard');
+      const fileList = document.getElementById('fileList');
+      const fileCountBadge = document.getElementById('fileCountBadge');
+      const totalSizeBadge = document.getElementById('totalSizeBadge');
+
+      let files = [];
+      if (currentMode === 'pdf_merge') files = pdfFiles;
+      else if (currentMode === 'word_merge') files = wordFiles;
+      else if (currentMode === 'pdf_to_word') files = convertPdfFiles;
+
+      if (files.length === 0) {
+        showHeroStage();
+        return;
+      }
+
+      fileListCard.classList.remove('hidden');
+      const totalBytes = files.reduce((acc, f) => acc + (f.size || 0), 0);
+      fileCountBadge.textContent = files.length + ' berkas';
+      totalSizeBadge.textContent = 'Total: ' + formatSize(totalBytes);
+      fileList.innerHTML = '';
+
+      files.forEach((file, index) => {
+        const li = document.createElement('li');
+        li.className = 'py-3.5 flex items-center justify-between gap-3 text-sm hover:bg-slate-50/80 px-2 rounded-xl';
+
+        let controls = '';
+        if (currentMode === 'pdf_to_word') {
+          controls = '<button onclick="convertSingleFile(' + index + ')" class="px-3 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl border border-blue-200">Konversi ke Word</button>' +
+                     '<button onclick="removeListItem(' + index + ')" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+        } else {
+          controls = '<button onclick="moveListItem(' + index + ', -1)" ' + (index === 0 ? 'disabled' : '') + ' class="p-1.5 rounded-lg hover:bg-slate-200 disabled:opacity-20 text-slate-600"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>' +
+                     '<button onclick="moveListItem(' + index + ', 1)" ' + (index === files.length - 1 ? 'disabled' : '') + ' class="p-1.5 rounded-lg hover:bg-slate-200 disabled:opacity-20 text-slate-600"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>' +
+                     '<button onclick="removeListItem(' + index + ')" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+        }
+
+        li.innerHTML = '<div class="flex items-center gap-3 truncate">' +
+                       '<span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold shrink-0">' + (index + 1) + '</span>' +
+                       '<div class="truncate">' +
+                       '<p class="font-medium text-slate-800 truncate">' + file.name + '</p>' +
+                       '<p class="text-xs text-slate-400">' + formatSize(file.size) + '</p>' +
+                       '</div>' +
+                       '</div>' +
+                       '<div class="flex items-center gap-1.5 shrink-0">' + controls + '</div>';
+        fileList.appendChild(li);
+      });
+    }
+
+    window.moveListItem = function(index, dir) {
+      let list = currentMode === 'pdf_merge' ? pdfFiles : wordFiles;
+      const target = index + dir;
+      if (target < 0 || target >= list.length) return;
+      const tmp = list[index];
+      list[index] = list[target];
+      list[target] = tmp;
+      renderList();
+    };
+
+    window.removeListItem = function(index) {
+      if (currentMode === 'pdf_merge') pdfFiles.splice(index, 1);
+      else if (currentMode === 'word_merge') wordFiles.splice(index, 1);
+      else convertPdfFiles.splice(index, 1);
+      renderList();
+    };
+
+    document.getElementById('clearAllBtn').onclick = () => {
+      if (currentMode === 'pdf_merge') pdfFiles = [];
+      else if (currentMode === 'word_merge') wordFiles = [];
+      else convertPdfFiles = [];
+      renderList();
+    };
+
+    document.getElementById('mergeBtn').onclick = async () => {
+      const files = currentMode === 'pdf_merge' ? pdfFiles : wordFiles;
+      if (files.length < 2) {
+        showStatus('Pilih minimal 2 file untuk digabungkan!', 'error');
+        return;
+      }
+      hideStatus();
+
+      if (currentMode === 'pdf_merge') {
+        try {
+          const mergedPdf = await PDFLib.PDFDocument.create();
+          for (let f of files) {
+            const buf = await f.arrayBuffer();
+            const pdf = await safeLoadPdfDocument(buf);
+            const copied = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+            copied.forEach(p => mergedPdf.addPage(p));
+          }
+          const bytes = await mergedPdf.save();
+          triggerDownload(new Blob([bytes], { type: 'application/pdf' }), document.getElementById('outputFileName').value || 'merged.pdf', '.pdf');
+          showStatus('Berhasil menggabungkan ' + files.length + ' file PDF!', 'success');
+        } catch (e) {
+          showStatus('Gagal menggabungkan PDF: ' + e.message, 'error');
+        }
+      } else {
+        try {
+          const buffers = [];
+          for (let f of files) buffers.push(await f.arrayBuffer());
+          const merger = new DocxMerger({ pageBreak: true }, buffers);
+          merger.save('blob', blob => {
+            triggerDownload(blob, document.getElementById('outputFileName').value || 'merged.docx', '.docx');
+            showStatus('Berhasil menggabungkan ' + files.length + ' dokumen Word!', 'success');
+          });
+        } catch (e) {
+          showStatus('Gagal menggabungkan Word: ' + e.message, 'error');
+        }
+      }
+    };
+
+    // ==========================================
+    // 5. ADVANCED PDF TO WORD ENGINE
+    // ==========================================
+    function escapeXml(unsafe) {
+      return String(unsafe).replace(/[<>&'"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
+    }
+
+    function imgObjToPngBytes(imgObj) {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = imgObj.width;
+        canvas.height = imgObj.height;
+        const ctx = canvas.getContext('2d');
+        let imgData;
+        const totalPixels = imgObj.width * imgObj.height;
+
+        if (imgObj.data.length === totalPixels * 4) {
+          imgData = new ImageData(new Uint8ClampedArray(imgObj.data), imgObj.width, imgObj.height);
+        } else if (imgObj.data.length === totalPixels * 3) {
+          const rgba = new Uint8ClampedArray(totalPixels * 4);
+          let s = 0, d = 0;
+          while (s < imgObj.data.length) {
+            rgba[d++] = imgObj.data[s++];
+            rgba[d++] = imgObj.data[s++];
+            rgba[d++] = imgObj.data[s++];
+            rgba[d++] = 255;
+          }
+          imgData = new ImageData(rgba, imgObj.width, imgObj.height);
+        } else {
+          const rgba = new Uint8ClampedArray(totalPixels * 4);
+          let s = 0, d = 0;
+          while (s < imgObj.data.length) {
+            const v = imgObj.data[s++];
+            rgba[d++] = v;
+            rgba[d++] = v;
+            rgba[d++] = v;
+            rgba[d++] = 255;
+          }
+          imgData = new ImageData(rgba, imgObj.width, imgObj.height);
+        }
+        ctx.putImageData(imgData, 0, 0);
+        const dataUrl = canvas.toDataURL('image/png');
+        const b64 = dataUrl.split(',')[1];
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return bytes;
+      } catch (e) {
+        console.warn('imgObjToPngBytes error:', e);
+        return null;
+      }
+    }
+
+    async function extractPageImages(page) {
+      const images = [];
+      try {
+        const ops = await page.getOperatorList();
+        let currentMatrix = [1, 0, 0, 1, 0, 0];
+        const matrixStack = [];
+
+        for (let i = 0; i < ops.fnArray.length; i++) {
+          const fn = ops.fnArray[i];
+          const args = ops.argsArray[i];
+
+          if (fn === pdfjsLib.OPS.save) {
+            matrixStack.push([...currentMatrix]);
+          } else if (fn === pdfjsLib.OPS.restore) {
+            if (matrixStack.length) currentMatrix = matrixStack.pop();
+          } else if (fn === pdfjsLib.OPS.transform) {
+            const [a1, b1, c1, d1, e1, f1] = currentMatrix;
+            const [a2, b2, c2, d2, e2, f2] = args;
+            currentMatrix = [
+              a1 * a2 + c1 * b2,
+              b1 * a2 + d1 * b2,
+              a1 * c2 + c1 * d2,
+              b1 * c2 + d1 * d2,
+              a1 * e2 + c1 * f2 + e1,
+              b1 * e2 + d1 * f2 + f1
+            ];
+          } else if (fn === pdfjsLib.OPS.paintImageXObject) {
+            const imgId = args[0];
+            const width = Math.abs(currentMatrix[0]);
+            const height = Math.abs(currentMatrix[3]);
+            const x = currentMatrix[4];
+            const y = currentMatrix[5];
+
+            const imgObj = await new Promise(resolve => {
+              let done = false;
+              if (page.objs && typeof page.objs.get === 'function') {
+                page.objs.get(imgId, obj => {
+                  if (!done) { done = true; resolve(obj); }
+                });
+              } else if (page.commonObjs && typeof page.commonObjs.get === 'function') {
+                page.commonObjs.get(imgId, obj => {
+                  if (!done) { done = true; resolve(obj); }
+                });
+              }
+              setTimeout(() => { if (!done) { done = true; resolve(null); } }, 1200);
+            });
+
+            if (imgObj && imgObj.width && imgObj.height && imgObj.data) {
+              const pngBytes = imgObjToPngBytes(imgObj);
+              if (pngBytes) {
+                images.push({
+                  id: imgId,
+                  x,
+                  y,
+                  width: width || imgObj.width,
+                  height: height || imgObj.height,
+                  bytes: pngBytes
+                });
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('extractPageImages error:', err);
+      }
+      return images;
+    }
+
+    async function buildSmartDocx(pagesElements, allImages, pageWidth = 595.28, pageHeight = 841.89) {
+      const zip = new JSZip();
+
+      let contentTypesXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+        '<Default Extension="xml" ContentType="application/xml"/>' +
+        '<Default Extension="png" ContentType="image/png"/>' +
+        '<Default Extension="jpeg" ContentType="image/jpeg"/>' +
+        '<Default Extension="jpg" ContentType="image/jpeg"/>' +
+        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+        '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+        '</Types>';
+      zip.file('[Content_Types].xml', contentTypesXml);
+
+      zip.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+        '</Relationships>');
+
+      let relsXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>';
+
+      allImages.forEach(img => {
+        const relId = 'rIdImg' + img.imgIndex;
+        const target = 'media/image' + img.imgIndex + '.png';
+        relsXml += '  <Relationship Id="' + relId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="' + target + '"/>';
+        zip.file('word/' + target, img.bytes);
+      });
+      relsXml += '</Relationships>';
+      zip.file('word/_rels/document.xml.rels', relsXml);
+
+      zip.file('word/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+        '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="24"/></w:rPr></w:rPrDefault></w:docDefaults>' +
+        '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>' +
+        '</w:styles>');
+
+      let bodyXml = '';
+
+      pagesElements.forEach((pageEls, pIdx) => {
+        for (let el of pageEls) {
+          if (el.type === 'image') {
+            const cx = Math.round(el.width * 12700);
+            const cy = Math.round(el.height * 12700);
+            const relId = 'rIdImg' + el.imgIndex;
+            bodyXml += '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="120" w:after="120"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">' +
+              '<wp:extent cx="' + cx + '" cy="' + cy + '"/>' +
+              '<wp:docPr id="' + el.imgIndex + '" name="Picture ' + el.imgIndex + '"/>' +
+              '<wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>' +
+              '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' +
+              '<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+              '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+              '<pic:nvPicPr><pic:cNvPr id="' + el.imgIndex + '" name="img_' + el.imgIndex + '.png"/><pic:cNvPicPr/></pic:nvPicPr>' +
+              '<pic:blipFill><a:blip r:embed="' + relId + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
+              '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
+              '</pic:pic>' +
+              '</a:graphicData>' +
+              '</a:graphic>' +
+              '</wp:inline></w:drawing></w:r></w:p>';
+          } else if (el.type === 'table') {
+            const numCols = Math.max(...el.rows.map(r => r.length));
+            const totalW = 8200;
+            const colW = Math.round(totalW / Math.max(numCols, 1));
+
+            bodyXml += '<w:tbl>' +
+              '<w:tblPr>' +
+              '<w:tblW w:w="' + totalW + '" w:type="dxa"/>' +
+              '<w:jc w:val="center"/>' +
+              '<w:tblBorders>' +
+              '<w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
+              '<w:left w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
+              '<w:bottom w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
+              '<w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
+              '<w:insideH w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
+              '<w:insideV w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
+              '</w:tblBorders>' +
+              '</w:tblPr>';
+
+            el.rows.forEach((row, rIdx) => {
+              bodyXml += '<w:tr>';
+              row.forEach(cell => {
+                const isHeader = (rIdx === 0);
+                bodyXml += '  <w:tc>' +
+                  '<w:tcPr><w:tcW w:w="' + colW + '" w:type="dxa"/><w:tcMar><w:top w:w="80" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tcMar></w:tcPr>' +
+                  '<w:p><w:pPr><w:jc w:val="' + (isHeader ? 'center' : 'left') + '"/></w:pPr>' +
+                  '<w:r><w:rPr>' + (cell.isBold || isHeader ? '<w:b/>' : '') + '<w:sz w:val="22"/></w:rPr>' +
+                  '<w:t xml:space="preserve">' + escapeXml(cell.text) + '</w:t>' +
+                  '</w:r>' +
+                  '</w:p>' +
+                  '</w:tc>';
+              });
+              bodyXml += '</w:tr>';
+            });
+            bodyXml += '</w:tbl>';
+          } else if (el.type === 'paragraph') {
+            const jc = el.isCentered ? '<w:jc w:val="center"/>' : '';
+            const spacing = '<w:spacing w:after="80" w:line="260" w:lineRule="auto"/>';
+            const pPr = '<w:pPr>' + jc + spacing + '</w:pPr>';
+            let runs = '';
+            el.runs.forEach(r => {
+              let rPr = '<w:rPr>';
+              if (r.isBold) rPr += '<w:b/>';
+              if (r.isItalic) rPr += '<w:i/>';
+              if (r.fontSize) rPr += '<w:sz w:val="' + Math.round(r.fontSize * 2) + '"/>';
+              rPr += '</w:rPr>';
+              runs += '<w:r>' + rPr + '<w:t xml:space="preserve">' + escapeXml(r.text) + '</w:t></w:r>';
+            });
+            bodyXml += '<w:p>' + pPr + runs + '</w:p>';
+          }
+        }
+        if (pIdx < pagesElements.length - 1) {
+          bodyXml += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+        }
+      });
+
+      const dxaWidth = Math.round(pageWidth * 20);
+      const dxaHeight = Math.round(pageHeight * 20);
+      bodyXml += '<w:sectPr><w:pgSz w:w="' + dxaWidth + '" w:h="' + dxaHeight + '"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr>';
+
+      const docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" ' +
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ' +
+        'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" ' +
+        'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" ' +
+        'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+        '<w:body>' + bodyXml + '</w:body>' +
+        '</w:document>';
+
+      zip.file('word/document.xml', docXml);
+      return await zip.generateAsync({ type: 'blob' });
+    }
+
+    async function buildVisualDocx(pagesImages) {
+      const zip = new JSZip();
+
+      let contentTypesXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+        '<Default Extension="xml" ContentType="application/xml"/>' +
+        '<Default Extension="png" ContentType="image/png"/>' +
+        '<Default Extension="jpeg" ContentType="image/jpeg"/>' +
+        '<Default Extension="jpg" ContentType="image/jpeg"/>' +
+        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+        '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+        '</Types>';
+      zip.file('[Content_Types].xml', contentTypesXml);
+
+      zip.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+        '</Relationships>');
+
+      let relsXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>';
+
+      pagesImages.forEach((img, idx) => {
+        const relId = 'rIdPageImg' + (idx + 1);
+        const target = 'media/page_' + (idx + 1) + '.png';
+        relsXml += '  <Relationship Id="' + relId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="' + target + '"/>';
+        zip.file('word/' + target, img.bytes);
+      });
+      relsXml += '</Relationships>';
+      zip.file('word/_rels/document.xml.rels', relsXml);
+
+      zip.file('word/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+        '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="22"/></w:rPr></w:rPrDefault></w:docDefaults>' +
+        '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>' +
+        '</w:styles>');
+
+      let bodyXml = '';
+      pagesImages.forEach((img, idx) => {
+        const cx = Math.round(img.width * 12700);
+        const cy = Math.round(img.height * 12700);
+        const relId = 'rIdPageImg' + (idx + 1);
+        bodyXml += '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="0"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">' +
+          '<wp:extent cx="' + cx + '" cy="' + cy + '"/>' +
+          '<wp:docPr id="' + (idx + 1) + '" name="Page ' + (idx + 1) + '"/>' +
+          '<wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>' +
+          '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' +
+          '<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+          '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+          '<pic:nvPicPr><pic:cNvPr id="' + (idx + 1) + '" name="page_' + (idx + 1) + '.png"/><pic:cNvPicPr/></pic:nvPicPr>' +
+          '<pic:blipFill><a:blip r:embed="' + relId + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
+          '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
+          '</pic:pic>' +
+          '</a:graphicData>' +
+          '</a:graphic>' +
+          '</wp:inline></w:drawing></w:r></w:p>';
+        if (idx < pagesImages.length - 1) {
+          bodyXml += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+        }
+      });
+
+      bodyXml += '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"/></w:sectPr>';
+
+      const docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" ' +
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ' +
+        'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" ' +
+        'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" ' +
+        'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+        '<w:body>' + bodyXml + '</w:body>' +
+        '</w:document>';
+
+      zip.file('word/document.xml', docXml);
+      return await zip.generateAsync({ type: 'blob' });
+    }
+
+    async function convertPdfToDocxBlob(file, mode = 'smart') {
+      const buf = await file.arrayBuffer();
+      const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+
+      if (mode === 'visual') {
+        const pagesImages = [];
+        for (let i = 1; i <= doc.numPages; i++) {
+          const page = await doc.getPage(i);
+          const viewport = page.getViewport({ scale: 2 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          const dataUrl = canvas.toDataURL('image/png');
+          const b64 = dataUrl.split(',')[1];
+          const bin = atob(b64);
+          const bytes = new Uint8Array(bin.length);
+          for (let k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k);
+
+          const pw = page.view[2] - page.view[0] || 595.28;
+          const ph = page.view[3] - page.view[1] || 841.89;
+          const displayW = 490;
+          const displayH = Math.round(displayW * (ph / pw));
+
+          pagesImages.push({
+            bytes,
+            width: displayW,
+            height: displayH
+          });
+        }
+        return await buildVisualDocx(pagesImages);
+      }
+
+      // SMART RECONSTRUCTION MODE
+      const allExtractedImages = [];
+      const pagesElements = [];
+      let globalPageW = 595.28;
+      let globalPageH = 841.89;
+
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
+        const pageWidth = page.view[2] - page.view[0] || 595.28;
+        const pageHeight = page.view[3] - page.view[1] || 841.89;
+        globalPageW = pageWidth;
+        globalPageH = pageHeight;
+
+        const pageImgs = await extractPageImages(page);
+        const tc = await page.getTextContent();
+        const items = tc.items.filter(it => it.str && it.str.trim().length > 0);
+
+        const pageEls = [];
+
+        const lines = [];
+        for (let it of items) {
+          const y = it.transform[5];
+          let line = lines.find(l => Math.abs(l.y - y) <= 4);
+          if (!line) {
+            line = { y, items: [] };
+            lines.push(line);
+          }
+          line.items.push(it);
+        }
+        lines.sort((a, b) => b.y - a.y);
+        lines.forEach(l => l.items.sort((a, b) => a.transform[4] - b.transform[4]));
+
+        let currentTable = null;
+        for (let line of lines) {
+          const segments = [];
+          let curSeg = { text: '', x: line.items[0].transform[4], items: [] };
+
+          for (let it of line.items) {
+            const itX = it.transform[4];
+            if (curSeg.items.length > 0) {
+              const lastIt = curSeg.items[curSeg.items.length - 1];
+              const gap = itX - (lastIt.transform[4] + lastIt.width);
+              if (gap > 12) {
+                segments.push(curSeg);
+                curSeg = { text: '', x: itX, items: [] };
+              }
+            }
+            curSeg.text += (curSeg.text ? ' ' : '') + it.str.trim();
+            curSeg.items.push(it);
+          }
+          if (curSeg.text) segments.push(curSeg);
+
+          if (segments.length >= 2) {
+            if (!currentTable) {
+              currentTable = { type: 'table', y: line.y, rows: [] };
+              pageEls.push(currentTable);
+            }
+            currentTable.rows.push(segments.map(s => {
+              const isBold = s.items.some(it => (it.fontName && /bold/i.test(it.fontName)) || it.height >= 13);
+              return { text: s.text, isBold, x: s.x };
+            }));
+          } else {
+            currentTable = null;
+            const minX = line.items[0].transform[4];
+            const lastIt = line.items[line.items.length - 1];
+            const maxX = lastIt.transform[4] + lastIt.width;
+            const centerX = (minX + maxX) / 2;
+            const isCentered = Math.abs(centerX - (pageWidth / 2)) < 38 && (maxX - minX < pageWidth * 0.75);
+
+            const runs = [];
+            for (let it of line.items) {
+              const isBold = (it.fontName && /bold/i.test(it.fontName)) || it.height >= 14;
+              const isItalic = Boolean(it.fontName && /italic|oblique/i.test(it.fontName));
+              runs.push({
+                text: it.str + ' ',
+                fontSize: it.height || 11,
+                isBold,
+                isItalic
+              });
+            }
+            pageEls.push({
+              type: 'paragraph',
+              y: line.y,
+              isCentered,
+              runs
+            });
+          }
+        }
+
+        for (let img of pageImgs) {
+          let dispW = Math.min(img.width, 420);
+          let dispH = img.height * (dispW / (img.width || 1));
+          if (dispH > 380) {
+            dispH = 380;
+            dispW = img.width * (dispH / (img.height || 1));
+          }
+          const imgIndex = allExtractedImages.length + 1;
+          allExtractedImages.push({
+            imgIndex,
+            bytes: img.bytes
+          });
+          pageEls.push({
+            type: 'image',
+            y: img.y + img.height,
+            width: dispW,
+            height: dispH,
+            imgIndex
+          });
+        }
+
+        pageEls.sort((a, b) => b.y - a.y);
+        pagesElements.push(pageEls);
+      }
+
+      return await buildSmartDocx(pagesElements, allExtractedImages, globalPageW, globalPageH);
+    }
+
+    function getSelectedPdfToWordMode() {
+      const checked = document.querySelector('input[name="pdfToWordMode"]:checked');
+      return checked ? checked.value : 'smart';
+    }
+
+    window.convertSingleFile = async function(idx) {
+      const f = convertPdfFiles[idx];
+      const mode = getSelectedPdfToWordMode();
+      const modeLabel = mode === 'visual' ? 'Presisi Visual HD' : 'Rekonstruksi Cerdas';
+      showStatus('Mengonversi "' + f.name + '" ke Word (' + modeLabel + ')... Mohon tunggu sebentar.');
+      try {
+        const blob = await convertPdfToDocxBlob(f, mode);
+        triggerDownload(blob, f.name.replace(/\.pdf$/i, '') + '.docx', '.docx');
+        showStatus('Berhasil mengonversi "' + f.name + '" ke dokumen Word dengan format rapi, gambar & tabel!', 'success');
+      } catch (e) {
+        showStatus('Gagal konversi: ' + e.message, 'error');
+      }
+    };
+
+    document.getElementById('convertAllBtn').onclick = async () => {
+      const mode = getSelectedPdfToWordMode();
+      showStatus('Mengonversi semua berkas ke Word (' + (mode === 'visual' ? 'Presisi Visual' : 'Rekonstruksi Cerdas') + ')...');
+      for (let f of convertPdfFiles) {
+        try {
+          const blob = await convertPdfToDocxBlob(f, mode);
+          triggerDownload(blob, f.name.replace(/\.pdf$/i, '') + '.docx', '.docx');
+          await new Promise(r => setTimeout(r, 600));
+        } catch (e) {}
+      }
+      showStatus('Selesai mengonversi semua berkas ke Word!', 'success');
+    };
+
+    // ==========================================
+    // 6. ATUR & HAPUS HALAMAN (ORGANIZE)
+    // ==========================================
+    function updateOrganizeBadges() {
+      const total = organizePages.length;
+      const active = organizePages.filter(p => !p.isDeleted).length;
+      const del = total - active;
+      document.getElementById('organizeBadgeTotal').textContent = total + ' Halaman Asli';
+      document.getElementById('organizeBadgeActive').textContent = active + ' Halaman Aktif';
+      const delBadge = document.getElementById('organizeBadgeDeleted');
+      const restoreBtn = document.getElementById('restoreAllPagesBtn');
+      if (del > 0) {
+        delBadge.classList.remove('hidden');
+        delBadge.textContent = del + ' Dihapus';
+        restoreBtn.classList.remove('hidden');
+      } else {
+        delBadge.classList.add('hidden');
+        restoreBtn.classList.add('hidden');
+      }
+    }
+
+    function renderOrganizeGrid() {
+      const grid = document.getElementById('organizeGrid');
+      grid.innerHTML = '';
+      let seq = 1;
+
+      organizePages.forEach((p, idx) => {
+        const card = document.createElement('div');
+        const isDel = p.isDeleted;
+        card.className = 'page-card relative bg-slate-50 border-2 rounded-2xl p-3 flex flex-col justify-between ' + (isDel ? 'border-red-300 opacity-40 bg-red-50/40' : 'border-slate-200 bg-white');
+
+        const top = document.createElement('div');
+        top.className = 'flex items-center justify-between text-xs mb-2';
+        top.innerHTML = '<span class="font-bold px-2 py-0.5 rounded ' + (isDel ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700') + '">' + (isDel ? '-' : seq++) + '</span><span class="text-slate-400">Hal. ' + (p.originalIndex + 1) + '</span>';
+        card.appendChild(top);
+
+        const thumb = document.createElement('div');
+        thumb.className = 'relative aspect-[3/4] bg-white rounded-xl border flex items-center justify-center overflow-hidden my-1';
+        const canvas = document.createElement('canvas');
+        canvas.className = 'max-w-full max-h-full object-contain';
+        canvas.style.transform = 'rotate(' + (p.rotation || 0) + 'deg)';
+        thumb.appendChild(canvas);
+
+        if (isDel) {
+          const ov = document.createElement('div');
+          ov.className = 'absolute inset-0 bg-red-500/20 flex items-center justify-center';
+          ov.innerHTML = '<span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">Dihapus</span>';
+          thumb.appendChild(ov);
+        }
+
+        renderThumb(p.originalIndex, canvas);
+        card.appendChild(thumb);
+
+        const act = document.createElement('div');
+        act.className = 'flex items-center justify-between pt-2 border-t text-xs';
+        if (isDel) {
+          act.innerHTML = '<button onclick="toggleDelPage(' + idx + ')" class="w-full py-1 text-emerald-700 bg-emerald-50 rounded font-semibold">Pulihkan</button>';
+        } else {
+          act.innerHTML = '<div class="flex items-center gap-1">' +
+            '<button onclick="moveOrgPage(' + idx + ', -1)" ' + (idx === 0 ? 'disabled' : '') + ' class="p-1 hover:bg-slate-100 rounded disabled:opacity-20 text-slate-600"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>' +
+            '<button onclick="moveOrgPage(' + idx + ', 1)" ' + (idx === organizePages.length - 1 ? 'disabled' : '') + ' class="p-1 hover:bg-slate-100 rounded disabled:opacity-20 text-slate-600"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>' +
+            '</div>' +
+            '<div class="flex items-center gap-1">' +
+            '<button onclick="rotOrgPage(' + idx + ')" class="p-1 text-slate-500 hover:text-purple-600 rounded hover:bg-slate-100" title="Putar 90 Derajat"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg></button>' +
+            '<button onclick="toggleDelPage(' + idx + ')" class="p-1 text-slate-400 hover:text-red-600 rounded hover:bg-slate-100" title="Hapus Halaman"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+            '</div>';
+        }
+        card.appendChild(act);
+        grid.appendChild(card);
+      });
+    }
+
+    async function renderThumb(pageIndex, canvas) {
+      if (!currentWorkingPdfDoc) return;
+      try {
+        const page = await currentWorkingPdfDoc.getPage(pageIndex + 1);
+        const vp = page.getViewport({ scale: 0.35 });
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      } catch (e) {}
+    }
+
+    window.moveOrgPage = (idx, dir) => {
+      const tgt = idx + dir;
+      if (tgt < 0 || tgt >= organizePages.length) return;
+      const tmp = organizePages[idx];
+      organizePages[idx] = organizePages[tgt];
+      organizePages[tgt] = tmp;
+      renderOrganizeGrid();
+      updateOrganizeBadges();
+    };
+
+    window.toggleDelPage = (idx) => {
+      organizePages[idx].isDeleted = !organizePages[idx].isDeleted;
+      renderOrganizeGrid();
+      updateOrganizeBadges();
+    };
+
+    window.rotOrgPage = (idx) => {
+      organizePages[idx].rotation = ((organizePages[idx].rotation || 0) + 90) % 360;
+      renderOrganizeGrid();
+    };
+
+    document.getElementById('restoreAllPagesBtn').onclick = () => {
+      organizePages.forEach(p => p.isDeleted = false);
+      renderOrganizeGrid();
+      updateOrganizeBadges();
+    };
+
+    document.getElementById('saveOrganizedPdfBtn').onclick = async () => {
+      const active = organizePages.filter(p => !p.isDeleted);
+      if (active.length === 0) {
+        showStatus('Semua halaman dihapus! Sisakan minimal 1 halaman.', 'error');
+        return;
+      }
+      try {
+        const src = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
+        const out = await PDFLib.PDFDocument.create();
+        const copied = await out.copyPages(src, active.map(p => p.originalIndex));
+        copied.forEach((cp, idx) => {
+          const rot = active[idx].rotation || 0;
+          if (rot !== 0) cp.setRotation(PDFLib.degrees((cp.getRotation().angle + rot) % 360));
+          out.addPage(cp);
+        });
+        const bytes = await out.save();
+        triggerDownload(new Blob([bytes], { type: 'application/pdf' }), document.getElementById('organizeOutputFileName').value || 'reordered.pdf', '.pdf');
+        showStatus('Berhasil menyimpan PDF baru dengan ' + active.length + ' halaman!', 'success');
+      } catch (e) {
+        showStatus('Gagal menyimpan: ' + e.message, 'error');
+      }
+    };
+
+    // ==========================================
+    // 7. EDIT CANVAS PDF
+    // ==========================================
+    let isDrawing = false;
+    let lastX = 0, lastY = 0;
+
+    function initEditPdfCanvas() {
+      document.getElementById('editOutputFileName').value = currentWorkingPdf.name.replace(/\.pdf$/i, '') + '_edited.pdf';
+
+      const select = document.getElementById('editPageSelect');
+      if (select) {
+        select.innerHTML = '';
+        for (let i = 1; i <= totalEditPages; i++) {
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = 'Hal. ' + i + ' / ' + totalEditPages;
+          select.appendChild(opt);
+        }
+      }
+
+      renderEditPage(currentEditPage);
+    }
+
+    window.jumpToEditPage = (val) => {
+      let pageNum = parseInt(val, 10);
+      if (isNaN(pageNum)) pageNum = 1;
+      pageNum = Math.max(1, Math.min(pageNum, totalEditPages));
+      currentEditPage = pageNum;
+      renderEditPage(currentEditPage);
+    };
+
+    async function renderEditPage(pageNum) {
+      if (!currentWorkingPdfDoc) return;
+      currentEditPage = pageNum;
+
+      const pageJumpInput = document.getElementById('editPageJumpInput');
+      if (pageJumpInput) {
+        pageJumpInput.value = pageNum;
+        pageJumpInput.max = totalEditPages;
+      }
+      const pageSelect = document.getElementById('editPageSelect');
+      if (pageSelect) {
+        pageSelect.value = pageNum;
+      }
+      const prevBtn = document.getElementById('editPrevPageBtn');
+      if (prevBtn) prevBtn.disabled = pageNum <= 1;
+      const nextBtn = document.getElementById('editNextPageBtn');
+      if (nextBtn) nextBtn.disabled = pageNum >= totalEditPages;
+
+      const page = await currentWorkingPdfDoc.getPage(pageNum);
+      const vp = page.getViewport({ scale: 1.2 });
+
+      const bgCanvas = document.getElementById('editPdfBgCanvas');
+      const drawCanvas = document.getElementById('editDrawCanvas');
+      const wrapper = document.getElementById('editCanvasWrapper');
+
+      bgCanvas.width = vp.width;
+      bgCanvas.height = vp.height;
+      drawCanvas.width = vp.width;
+      drawCanvas.height = vp.height;
+      wrapper.style.width = vp.width + 'px';
+      wrapper.style.height = vp.height + 'px';
+
+      await page.render({ canvasContext: bgCanvas.getContext('2d'), viewport: vp }).promise;
+
+      const drawCtx = drawCanvas.getContext('2d');
+      drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      if (pageCanvasLayers[pageNum]) {
+        const img = new Image();
+        img.onload = () => drawCtx.drawImage(img, 0, 0);
+        img.src = pageCanvasLayers[pageNum];
+      }
+
+      setupCanvasEvents(drawCanvas);
+    }
+
+    function setupCanvasEvents(canvas) {
+      canvas.onmousedown = (e) => startEditAction(e, canvas);
+      canvas.onmousemove = (e) => moveEditAction(e, canvas);
+      canvas.onmouseup = () => endEditAction(canvas);
+      canvas.onmouseleave = () => endEditAction(canvas);
+    }
+
+    function startEditAction(e, canvas) {
+      const ctx = canvas.getContext('2d');
+      lastX = e.offsetX;
+      lastY = e.offsetY;
+
+      if (currentEditTool === 'pen') {
+        isDrawing = true;
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+      } else if (currentEditTool === 'text') {
+        const text = prompt('Ketik teks yang ingin ditambahkan:');
+        if (text) {
+          ctx.font = 'bold 16px sans-serif';
+          ctx.fillStyle = currentEditColor;
+          ctx.fillText(text, lastX, lastY);
+          pageCanvasLayers[currentEditPage] = canvas.toDataURL('image/png');
+        }
+      } else if (currentEditTool === 'rect') {
+        ctx.strokeStyle = currentEditColor;
+        ctx.lineWidth = currentEditStrokeWidth;
+        ctx.strokeRect(lastX, lastY, 120, 60);
+        pageCanvasLayers[currentEditPage] = canvas.toDataURL('image/png');
+      } else if (currentEditTool === 'circle') {
+        ctx.strokeStyle = currentEditColor;
+        ctx.lineWidth = currentEditStrokeWidth;
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, 40, 0, 2 * Math.PI);
+        ctx.stroke();
+        pageCanvasLayers[currentEditPage] = canvas.toDataURL('image/png');
+      } else if (currentEditTool === 'note') {
+        const note = prompt('Ketik catatan sticky note:');
+        if (note) {
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(lastX, lastY, 160, 80);
+          ctx.strokeStyle = '#eab308';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(lastX, lastY, 160, 80);
+          ctx.fillStyle = '#713f12';
+          ctx.font = '12px sans-serif';
+          ctx.fillText(note.substring(0, 40), lastX + 10, lastY + 30);
+          pageCanvasLayers[currentEditPage] = canvas.toDataURL('image/png');
+        }
+      }
+    }
+
+    function moveEditAction(e, canvas) {
+      if (!isDrawing || currentEditTool !== 'pen') return;
+      const ctx = canvas.getContext('2d');
+      ctx.strokeStyle = currentEditColor;
+      ctx.lineWidth = currentEditStrokeWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.stroke();
+      lastX = e.offsetX;
+      lastY = e.offsetY;
+    }
+
+    function endEditAction(canvas) {
+      if (isDrawing) {
+        isDrawing = false;
+        pageCanvasLayers[currentEditPage] = canvas.toDataURL('image/png');
+      }
+    }
+
+    window.changeEditPage = (dir) => {
+      const tgt = currentEditPage + dir;
+      if (tgt < 1 || tgt > totalEditPages) return;
+      currentEditPage = tgt;
+      renderEditPage(currentEditPage);
+    };
+
+    window.setEditTool = (tool) => {
+      currentEditTool = tool;
+      ['toolPen', 'toolText', 'toolRect', 'toolCircle', 'toolNote'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.className = 'px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5';
+      });
+      const activeBtn = document.getElementById(
+        tool === 'pen' ? 'toolPen' : (tool === 'text' ? 'toolText' : (tool === 'rect' ? 'toolRect' : (tool === 'circle' ? 'toolCircle' : 'toolNote')))
+      );
+      if (activeBtn) activeBtn.className = 'px-3 py-1.5 rounded-xl font-semibold bg-blue-600 text-white flex items-center gap-1.5';
+    };
+
+    window.setEditColor = (c) => currentEditColor = c;
+    window.setEditStrokeWidth = (w) => currentEditStrokeWidth = parseInt(w);
+    window.clearEditCanvasCurrentPage = () => {
+      const c = document.getElementById('editDrawCanvas');
+      c.getContext('2d').clearRect(0, 0, c.width, c.height);
+      delete pageCanvasLayers[currentEditPage];
+    };
+
+    window.triggerImageAnnotationUpload = () => document.getElementById('imageAnnotationInput').click();
+    document.getElementById('imageAnnotationInput').onchange = (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          const c = document.getElementById('editDrawCanvas');
+          c.getContext('2d').drawImage(img, 50, 50, 150, (150 * img.height) / img.width);
+          pageCanvasLayers[currentEditPage] = c.toDataURL('image/png');
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(f);
+    };
+
+    async function saveEditedPdf() {
+      showStatus('Menerapkan coretan dan editan ke PDF...');
+      try {
+        const doc = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
+        for (let pNum in pageCanvasLayers) {
+          const pageIndex = parseInt(pNum) - 1;
+          const page = doc.getPage(pageIndex);
+          const dataUrl = pageCanvasLayers[pNum];
+          const pngBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
+          const embedded = await doc.embedPng(pngBytes);
+          page.drawImage(embedded, {
+            x: 0,
+            y: 0,
+            width: page.getWidth(),
+            height: page.getHeight()
+          });
+        }
+        const bytes = await doc.save();
+        triggerDownload(new Blob([bytes], { type: 'application/pdf' }), document.getElementById('editOutputFileName').value || 'edited.pdf', '.pdf');
+        showStatus('Berhasil menyimpan PDF hasil edit!', 'success');
+      } catch (e) {
+        showStatus('Gagal menyimpan: ' + e.message, 'error');
+      }
+    }
+
+    // ==========================================
+    // 8. SINGLE ACTION DISPATCHER
+    // ==========================================
+    async function executeSingleAction() {
+      if (currentMode === 'pdf_split') await applySplitPdf();
+      else if (currentMode === 'pdf_compress') await applyCompressPdf();
+      else if (currentMode === 'pdf_repair') await applyRepairPdf();
+      else if (currentMode === 'pdf_page_number') await applyPageNumbers();
+      else if (currentMode === 'pdf_watermark') await applyWatermark();
+      else if (currentMode === 'pdf_rotate') await applyRotate();
+      else if (currentMode === 'pdf_protect') await applyProtect();
+      else if (currentMode === 'pdf_unlock') await applyUnlock();
+    }
+
+    // Split PDF
+    window.toggleSplitInputs = function() {
+      const mode = document.querySelector('input[name="splitMode"]:checked').value;
+      document.getElementById('splitRangeInputContainer').classList.toggle('hidden', mode !== 'range');
+      document.getElementById('splitEveryNContainer').classList.toggle('hidden', mode !== 'every_n');
+    };
+
+    function parsePageRanges(rangeStr, totalPages) {
+      const indices = new Set();
+      const parts = rangeStr.split(',');
+      for (let part of parts) {
+        part = part.trim();
+        if (part.includes('-')) {
+          const [startStr, endStr] = part.split('-');
+          const start = Math.max(1, parseInt(startStr) || 1);
+          const end = Math.min(totalPages, parseInt(endStr) || totalPages);
+          for (let p = start; p <= end; p++) indices.add(p - 1);
+        } else {
+          const p = parseInt(part);
+          if (p >= 1 && p <= totalPages) indices.add(p - 1);
+        }
+      }
+      return Array.from(indices).sort((a, b) => a - b);
+    }
+
+    async function applySplitPdf() {
+      const mode = document.querySelector('input[name="splitMode"]:checked').value;
+      const totalPages = currentWorkingPdfDoc.numPages;
+      showStatus('Memisahkan dokumen PDF...');
+
+      try {
+        const srcPdf = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
+        const baseName = currentWorkingPdf.name.replace(/\.pdf$/i, '');
+
+        if (mode === 'range') {
+          const rangeStr = document.getElementById('splitPageRanges').value.trim() || '1';
+          const indices = parsePageRanges(rangeStr, totalPages);
+          if (indices.length === 0) {
+            showStatus('Rentang halaman tidak valid! Masukkan angka halaman yang benar.', 'error');
+            return;
+          }
+
+          const outPdf = await PDFLib.PDFDocument.create();
+          const copied = await outPdf.copyPages(srcPdf, indices);
+          copied.forEach(p => outPdf.addPage(p));
+          const bytes = await outPdf.save();
+          triggerDownload(new Blob([bytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value || baseName + '_split.pdf', '.pdf');
+          showStatus('Berhasil memisahkan ' + indices.length + ' halaman ke dalam berkas PDF baru!', 'success');
+
+        } else if (mode === 'all') {
+          const zip = new JSZip();
+          for (let i = 0; i < totalPages; i++) {
+            showStatus('Mengekstrak halaman ' + (i + 1) + ' dari ' + totalPages + '...');
+            const singleDoc = await PDFLib.PDFDocument.create();
+            const [copied] = await singleDoc.copyPages(srcPdf, [i]);
+            singleDoc.addPage(copied);
+            const bytes = await singleDoc.save();
+            zip.file(baseName + '_hal_' + (i + 1) + '.pdf', bytes);
+          }
+          showStatus('Mengompres hasil ke arsip ZIP...');
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          triggerDownload(zipBlob, baseName + '_semua_halaman.zip', '.zip');
+          showStatus('Berhasil memecah seluruh halaman menjadi arsip ZIP!', 'success');
+
+        } else if (mode === 'every_n') {
+          const n = parseInt(document.getElementById('splitEveryNVal').value) || 2;
+          const zip = new JSZip();
+          let chunkIndex = 1;
+
+          for (let start = 0; start < totalPages; start += n) {
+            const end = Math.min(start + n, totalPages);
+            const chunkIndices = [];
+            for (let k = start; k < end; k++) chunkIndices.push(k);
+
+            const chunkDoc = await PDFLib.PDFDocument.create();
+            const copied = await chunkDoc.copyPages(srcPdf, chunkIndices);
+            copied.forEach(p => chunkDoc.addPage(p));
+            const bytes = await chunkDoc.save();
+            zip.file(baseName + '_bagian_' + chunkIndex + '_hal_' + (start + 1) + '-' + end + '.pdf', bytes);
+            chunkIndex++;
+          }
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          triggerDownload(zipBlob, baseName + '_bagian_per_' + n + '_hal.zip', '.zip');
+          showStatus('Berhasil membagi dokumen setiap ' + n + ' halaman ke dalam ZIP!', 'success');
+        }
+
+      } catch (err) {
+        showStatus('Gagal memisahkan PDF: ' + err.message, 'error');
+      }
+    }
+
+    // Compress PDF
+    async function applyCompressPdf() {
+      const level = document.querySelector('input[name="compressLevel"]:checked').value;
+      showStatus('Mengompres dokumen PDF (' + level + ')... Mohon tunggu.');
+
+      try {
+        let compressedBytes;
+        const initialSize = currentWorkingPdf.size;
+
+        if (level === 'lossless') {
+          const doc = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
+          const cleanDoc = await PDFLib.PDFDocument.create();
+          const pages = await cleanDoc.copyPages(doc, doc.getPageIndices());
+          pages.forEach(p => cleanDoc.addPage(p));
+          compressedBytes = await cleanDoc.save({ useObjectStreams: true });
+
+        } else {
+          const quality = level === 'extreme' ? 0.35 : 0.60;
+          const scale = level === 'extreme' ? 0.9 : 1.1;
+
+          const outPdf = await PDFLib.PDFDocument.create();
+          const numPages = currentWorkingPdfDoc.numPages;
+
+          for (let i = 1; i <= numPages; i++) {
+            showStatus('Mengompres halaman (' + i + '/' + numPages + ')...');
+            const page = await currentWorkingPdfDoc.getPage(i);
+            const vp = page.getViewport({ scale: scale });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = vp.width;
+            canvas.height = vp.height;
+            const ctx = canvas.getContext('2d');
+            await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+            const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+            const jpegBytes = await fetch(jpegDataUrl).then(r => r.arrayBuffer());
+            const embeddedJpg = await outPdf.embedJpg(jpegBytes);
+
+            const newPage = outPdf.addPage([page.view[2] - page.view[0], page.view[3] - page.view[1]]);
+            newPage.drawImage(embeddedJpg, {
+              x: 0,
+              y: 0,
+              width: newPage.getWidth(),
+              height: newPage.getHeight()
+            });
+          }
+
+          compressedBytes = await outPdf.save({ useObjectStreams: true });
+        }
+
+        const finalSize = compressedBytes.length;
+        const reduction = Math.max(0, Math.round(((initialSize - finalSize) / initialSize) * 100));
+
+        const resBox = document.getElementById('compressResultBox');
+        const resDetails = document.getElementById('compressResultDetails');
+        resBox.classList.remove('hidden');
+        resDetails.innerHTML = 'Ukuran awal: <strong>' + formatSize(initialSize) + '</strong> &rarr; Ukuran baru: <strong>' + formatSize(finalSize) + '</strong> (Hemat <strong>' + reduction + '%</strong>)';
+
+        triggerDownload(new Blob([compressedBytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
+        showStatus('Selesai mengompres PDF! Berhasil menghemat ' + reduction + '% ukuran berkas.', 'success');
+
+      } catch (err) {
+        showStatus('Gagal mengompres PDF: ' + err.message, 'error');
+      }
+    }
+
+    // Repair PDF
+    async function applyRepairPdf() {
+      showStatus('Menganalisis dan merekonstruksi struktur PDF...');
+
+      try {
+        let cleanDoc = await PDFLib.PDFDocument.create();
+        let pagesCopied = 0;
+
+        try {
+          const tolerantDoc = await safeLoadPdfDocument(getWorkingPdfBytesCopy(), {
+            throwOnInvalidObject: false,
+            ignoreEncryption: true,
+            updateMetadata: false
+          });
+          const indices = tolerantDoc.getPageIndices();
+          const pages = await cleanDoc.copyPages(tolerantDoc, indices);
+          pages.forEach(p => cleanDoc.addPage(p));
+          pagesCopied = pages.length;
+        } catch (e1) {
+          console.warn('Tolerant PDF-Lib load failed, using PDF.js recovery engine...', e1);
+        }
+
+        if (pagesCopied === 0 && currentWorkingPdfDoc) {
+          for (let i = 1; i <= currentWorkingPdfDoc.numPages; i++) {
+            const page = await currentWorkingPdfDoc.getPage(i);
+            const vp = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            canvas.width = vp.width;
+            canvas.height = vp.height;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+            const imgBytes = await fetch(canvas.toDataURL('image/jpeg', 0.85)).then(r => r.arrayBuffer());
+            const jpg = await cleanDoc.embedJpg(imgBytes);
+            const newP = cleanDoc.addPage([page.view[2] - page.view[0], page.view[3] - page.view[1]]);
+            newP.drawImage(jpg, { x: 0, y: 0, width: newP.getWidth(), height: newP.getHeight() });
+          }
+        }
+
+        const bytes = await cleanDoc.save();
+        triggerDownload(new Blob([bytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
+        showStatus('Berhasil memperbaiki struktur dokumen PDF!', 'success');
+
+      } catch (err) {
+        showStatus('Gagal memperbaiki PDF: ' + err.message, 'error');
+      }
+    }
+
+    // Page Numbers
+    async function applyPageNumbers() {
+      showStatus('Menambahkan nomor halaman...');
+      try {
+        const doc = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
+        const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+        const pos = document.getElementById('pageNumPosition').value;
+        const fmt = document.getElementById('pageNumFormat').value;
+        const skipFirst = document.getElementById('pageNumSkipFirst').checked;
+        const total = doc.getPageCount();
+
+        for (let i = 0; i < total; i++) {
+          if (i === 0 && skipFirst) continue;
+          const page = doc.getPage(i);
+          const n = i + 1;
+          let label = 'Halaman ' + n;
+          if (fmt === 'n_of_total') label = n + ' dari ' + total;
+          else if (fmt === 'n_only') label = '' + n;
+
+          const size = 10;
+          const textWidth = font.widthOfTextAtSize(label, size);
+          let x = (page.getWidth() - textWidth) / 2;
+          let y = 30;
+
+          if (pos === 'bottom-right') x = page.getWidth() - textWidth - 40;
+          else if (pos === 'bottom-left') x = 40;
+          else if (pos === 'top-center') y = page.getHeight() - 40;
+          else if (pos === 'top-right') { x = page.getWidth() - textWidth - 40; y = page.getHeight() - 40; }
+
+          page.drawText(label, { x, y, size, font, color: PDFLib.rgb(0.3, 0.3, 0.3) });
+        }
+
+        const bytes = await doc.save();
+        triggerDownload(new Blob([bytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
+        showStatus('Berhasil menambahkan nomor halaman!', 'success');
+      } catch (e) {
+        showStatus('Gagal: ' + e.message, 'error');
+      }
+    }
+
+    // Watermark PDF state & functions
+    let currentWatermarkType = 'text'; // 'text' | 'image'
+    let currentWatermarkPosition = 'center';
+    let uploadedWatermarkImageBytes = null;
+    let uploadedWatermarkImageDim = null;
+
+    window.setWatermarkType = (type) => {
+      currentWatermarkType = type;
+      const isText = type === 'text';
+      document.getElementById('wmTextControls').classList.toggle('hidden', !isText);
+      document.getElementById('wmImageControls').classList.toggle('hidden', isText);
+
+      const textBtn = document.getElementById('wmTypeTextBtn');
+      const imgBtn = document.getElementById('wmTypeImageBtn');
+      if (isText) {
+        textBtn.className = 'px-3.5 py-1.5 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer';
+        imgBtn.className = 'px-3.5 py-1.5 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer';
+      } else {
+        imgBtn.className = 'px-3.5 py-1.5 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer';
+        textBtn.className = 'px-3.5 py-1.5 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer';
+      }
+    };
+
+    window.selectWatermarkPosition = (pos) => {
+      currentWatermarkPosition = pos;
+      document.querySelectorAll('.wm-pos-btn').forEach(btn => {
+        btn.className = 'wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer';
+      });
+      const active = document.querySelector('[data-wm-pos="' + pos + '"]');
+      if (active) {
+        active.className = 'wm-pos-btn rounded-xl border-2 border-blue-600 bg-blue-600 text-white shadow-xs text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer';
+      }
+
+      const descriptions = {
+        'top-left': 'Posisi aktif: Kiri Atas Halaman',
+        'top-center': 'Posisi aktif: Tengah Atas Halaman',
+        'top-right': 'Posisi aktif: Kanan Atas Halaman',
+        'center-left': 'Posisi aktif: Kiri Tengah Halaman',
+        'center': 'Posisi aktif: Tengah Halaman',
+        'center-right': 'Posisi aktif: Kanan Tengah Halaman',
+        'bottom-left': 'Posisi aktif: Kiri Bawah Halaman',
+        'bottom-center': 'Posisi aktif: Tengah Bawah Halaman',
+        'bottom-right': 'Posisi aktif: Kanan Bawah Halaman'
+      };
+      const descEl = document.getElementById('wmPosDescription');
+      if (descEl) descEl.textContent = descriptions[pos] || pos;
+    };
+
+    const wmFileInput = document.getElementById('watermarkImageFileInput');
+    if (wmFileInput) wmFileInput.onchange = (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      document.getElementById('wmImageNameLabel').textContent = f.name;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        const thumb = document.getElementById('wmImageThumbnail');
+        const icon = document.getElementById('wmImageIconPlaceholder');
+        if (thumb) {
+          thumb.src = dataUrl;
+          thumb.classList.remove('hidden');
+        }
+        if (icon) icon.classList.add('hidden');
+
+        const img = new Image();
+        img.onload = () => {
+          const offCanvas = document.createElement('canvas');
+          offCanvas.width = img.naturalWidth || img.width;
+          offCanvas.height = img.naturalHeight || img.height;
+          const ctx = offCanvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+
+          offCanvas.toBlob(async (blob) => {
+            uploadedWatermarkImageBytes = await blob.arrayBuffer();
+            uploadedWatermarkImageDim = { width: offCanvas.width, height: offCanvas.height };
+          }, 'image/png');
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(f);
+    };
+
+    async function applyWatermark() {
+      showStatus('Menyisipkan tanda air (watermark)...');
+      try {
+        const doc = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
+        const opacity = (parseInt(document.getElementById('watermarkOpacity').value) || 25) / 100;
+        const angle = parseInt(document.getElementById('watermarkAngle').value) || 0;
+        const margin = parseInt(document.getElementById('watermarkMargin').value) || 40;
+        const pos = currentWatermarkPosition || 'center';
+
+        if (currentWatermarkType === 'text') {
+          const text = document.getElementById('watermarkText').value.trim() || 'WATERMARK';
+          const size = parseInt(document.getElementById('watermarkSize').value) || 48;
+          const colorChoice = document.getElementById('watermarkColor').value || 'gray';
+          const font = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+          let colorRgb = PDFLib.rgb(0.5, 0.5, 0.5);
+          if (colorChoice === 'red') colorRgb = PDFLib.rgb(0.9, 0.1, 0.1);
+          else if (colorChoice === 'blue') colorRgb = PDFLib.rgb(0.1, 0.3, 0.9);
+          else if (colorChoice === 'black') colorRgb = PDFLib.rgb(0.0, 0.0, 0.0);
+
+          const textWidth = font.widthOfTextAtSize(text, size);
+          const textHeight = size * 0.75;
+
+          for (let i = 0; i < doc.getPageCount(); i++) {
+            const page = doc.getPage(i);
+            const pw = page.getWidth();
+            const ph = page.getHeight();
+
+            let cx, cy;
+            if (pos.includes('left')) cx = margin + textWidth / 2;
+            else if (pos.includes('right')) cx = pw - margin - textWidth / 2;
+            else cx = pw / 2;
+
+            if (pos.includes('top')) cy = ph - margin - textHeight / 2;
+            else if (pos.includes('bottom')) cy = margin + textHeight / 2;
+            else cy = ph / 2;
+
+            const rad = (angle * Math.PI) / 180;
+            const x = cx - (textWidth / 2) * Math.cos(rad) + (textHeight / 2) * Math.sin(rad);
+            const y = cy - (textWidth / 2) * Math.sin(rad) - (textHeight / 2) * Math.cos(rad);
+
+            page.drawText(text, {
+              x,
+              y,
+              size,
+              font,
+              color: colorRgb,
+              opacity,
+              rotate: PDFLib.degrees(angle)
+            });
+          }
+
+        } else {
+          // Image watermark
+          if (!uploadedWatermarkImageBytes) {
+            showStatus('Silakan pilih berkas gambar tanda air terlebih dahulu!', 'error');
+            return;
+          }
+
+          const embeddedImg = await doc.embedPng(uploadedWatermarkImageBytes);
+          const scalePercent = (parseInt(document.getElementById('watermarkImageScale').value) || 40) / 100;
+
+          for (let i = 0; i < doc.getPageCount(); i++) {
+            const page = doc.getPage(i);
+            const pw = page.getWidth();
+            const ph = page.getHeight();
+
+            const baseWidth = pw * 0.5 * scalePercent;
+            const aspectRatio = (uploadedWatermarkImageDim && uploadedWatermarkImageDim.height > 0)
+              ? (uploadedWatermarkImageDim.height / uploadedWatermarkImageDim.width)
+              : 0.5;
+            const imgW = baseWidth;
+            const imgH = baseWidth * aspectRatio;
+
+            let cx, cy;
+            if (pos.includes('left')) cx = margin + imgW / 2;
+            else if (pos.includes('right')) cx = pw - margin - imgW / 2;
+            else cx = pw / 2;
+
+            if (pos.includes('top')) cy = ph - margin - imgH / 2;
+            else if (pos.includes('bottom')) cy = margin + imgH / 2;
+            else cy = ph / 2;
+
+            const rad = (angle * Math.PI) / 180;
+            const x = cx - (imgW / 2) * Math.cos(rad) + (imgH / 2) * Math.sin(rad);
+            const y = cy - (imgW / 2) * Math.sin(rad) - (imgH / 2) * Math.cos(rad);
+
+            page.drawImage(embeddedImg, {
+              x,
+              y,
+              width: imgW,
+              height: imgH,
+              opacity,
+              rotate: PDFLib.degrees(angle)
+            });
+          }
+        }
+
+        const bytes = await doc.save();
+        triggerDownload(new Blob([bytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value || 'watermarked.pdf', '.pdf');
+        showStatus('Berhasil menyisipkan tanda air ke dokumen PDF!', 'success');
+      } catch (e) {
+        console.error(e);
+        showStatus('Gagal menyisipkan tanda air: ' + e.message, 'error');
+      }
+    }
+
+    // Rotate PDF Logic & Controllers
+    window.setRotateScope = (scope) => {
+      currentRotateScope = scope;
+      ['rotScopeAll', 'rotScopeCustom', 'rotScopeInteractive'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.className = 'rot-scope-btn py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium text-center transition-all flex items-center justify-center gap-2 hover:bg-slate-50 cursor-pointer';
+      });
+      const activeBtn = document.getElementById(scope === 'all' ? 'rotScopeAll' : scope === 'custom' ? 'rotScopeCustom' : 'rotScopeInteractive');
+      if (activeBtn) {
+        activeBtn.className = 'rot-scope-btn py-2.5 px-3 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 font-bold text-center transition-all flex items-center justify-center gap-2 cursor-pointer';
+      }
+
+      const globalAngleSection = document.getElementById('rotGlobalAngleSection');
+      const customInputSection = document.getElementById('rotCustomInputArea');
+      const interactiveSection = document.getElementById('rotInteractiveArea');
+
+      if (scope === 'all') {
+        if (globalAngleSection) globalAngleSection.classList.remove('hidden');
+        if (customInputSection) customInputSection.classList.add('hidden');
+        if (interactiveSection) interactiveSection.classList.add('hidden');
+      } else if (scope === 'custom') {
+        if (globalAngleSection) globalAngleSection.classList.remove('hidden');
+        if (customInputSection) customInputSection.classList.remove('hidden');
+        if (interactiveSection) interactiveSection.classList.add('hidden');
+      } else if (scope === 'interactive') {
+        if (globalAngleSection) globalAngleSection.classList.add('hidden');
+        if (customInputSection) customInputSection.classList.add('hidden');
+        if (interactiveSection) interactiveSection.classList.remove('hidden');
+        renderRotateGrid();
+      }
+    };
+
+    window.selectRotateAngle = (a) => {
+      currentRotateAngle = a;
+      ['rotBtn90', 'rotBtn180', 'rotBtn270'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.className = 'rot-btn py-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium text-center flex flex-col items-center gap-1.5 transition-all cursor-pointer hover:bg-slate-50';
+      });
+      const active = document.getElementById('rotBtn' + a);
+      if (active) active.className = 'rot-btn py-3 px-4 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 font-semibold text-center flex flex-col items-center gap-1.5 transition-all cursor-pointer';
+    };
+
+    function renderRotateGrid() {
+      const grid = document.getElementById('rotPagesGrid');
+      if (!grid || !currentWorkingPdfDoc) return;
+      grid.innerHTML = '';
+
+      const total = currentWorkingPdfDoc.numPages;
+      if (!pageRotations || pageRotations.length !== total) {
+        pageRotations = new Array(total).fill(0);
+      }
+
+      for (let i = 0; i < total; i++) {
+        const rot = pageRotations[i] || 0;
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl border border-slate-200 p-2.5 shadow-xs flex flex-col items-center gap-2 group hover:border-blue-300 transition-all';
+        card.id = 'rotCard_' + i;
+
+        const header = document.createElement('div');
+        header.className = 'w-full flex items-center justify-between text-[11px] font-bold text-slate-600 px-1';
+        header.innerHTML = '<span>Halaman ' + (i + 1) + '</span>' +
+          '<span id="rotBadge_' + i + '" class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ' +
+          (rot !== 0 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500') + '">' + rot + '°</span>';
+        card.appendChild(header);
+
+        const thumbBox = document.createElement('div');
+        thumbBox.className = 'w-full h-36 flex items-center justify-center overflow-hidden bg-slate-50 rounded-lg p-1 relative border border-slate-100';
+
+        const canvas = document.createElement('canvas');
+        canvas.id = 'rotCanvas_' + i;
+        canvas.className = 'max-w-full max-h-full object-contain transition-transform duration-300 shadow-xs';
+        canvas.style.transform = 'rotate(' + rot + 'deg)';
+        thumbBox.appendChild(canvas);
+        card.appendChild(thumbBox);
+
+        const btnBox = document.createElement('div');
+        btnBox.className = 'flex items-center gap-1.5 w-full justify-center pt-1';
+        btnBox.innerHTML =
+          '<button type="button" onclick="rotateSinglePage(' + i + ', -90)" class="flex-1 py-1 px-2 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer" title="Putar Kiri (-90°)">' +
+            '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>' +
+            '<span>-90°</span>' +
+          '</button>' +
+          '<button type="button" onclick="rotateSinglePage(' + i + ', 90)" class="flex-1 py-1 px-2 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer" title="Putar Kanan (+90°)">' +
+            '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M21 13a9 9 0 1 1-3-7.7L21 8"/></svg>' +
+            '<span>+90°</span>' +
+          '</button>';
+        card.appendChild(btnBox);
+
+        grid.appendChild(card);
+        renderThumb(i, canvas);
+      }
+    }
+
+    window.rotateSinglePage = (pageIdx, delta) => {
+      if (!pageRotations) pageRotations = [];
+      const current = pageRotations[pageIdx] || 0;
+      const next = (current + delta + 360) % 360;
+      pageRotations[pageIdx] = next;
+
+      const canvas = document.getElementById('rotCanvas_' + pageIdx);
+      if (canvas) canvas.style.transform = 'rotate(' + next + 'deg)';
+
+      const badge = document.getElementById('rotBadge_' + pageIdx);
+      if (badge) {
+        badge.textContent = next + '°';
+        badge.className = 'text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ' +
+          (next !== 0 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500');
+      }
+    };
+
+    window.rotateAllPagesInteractive = (delta) => {
+      if (!currentWorkingPdfDoc) return;
+      for (let i = 0; i < currentWorkingPdfDoc.numPages; i++) {
+        rotateSinglePage(i, delta);
+      }
+    };
+
+    window.resetAllPagesInteractive = () => {
+      if (!currentWorkingPdfDoc) return;
+      for (let i = 0; i < currentWorkingPdfDoc.numPages; i++) {
+        pageRotations[i] = 0;
+        const canvas = document.getElementById('rotCanvas_' + i);
+        if (canvas) canvas.style.transform = 'rotate(0deg)';
+        const badge = document.getElementById('rotBadge_' + i);
+        if (badge) {
+          badge.textContent = '0°';
+          badge.className = 'text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-slate-100 text-slate-500';
+        }
+      }
+    };
+
+    async function applyRotate() {
+      showStatus('Memutar halaman PDF...');
+      try {
+        const doc = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
+        const totalPages = doc.getPageCount();
+
+        if (currentRotateScope === 'all') {
+          for (let i = 0; i < totalPages; i++) {
+            const page = doc.getPage(i);
+            const curr = page.getRotation().angle;
+            page.setRotation(PDFLib.degrees((curr + currentRotateAngle) % 360));
+          }
+        } else if (currentRotateScope === 'custom') {
+          const inputEl = document.getElementById('rotCustomPagesInput');
+          const rangeStr = (inputEl ? inputEl.value : '').trim();
+          if (!rangeStr) {
+            showStatus('Silakan masukkan nomor halaman yang ingin diputar (contoh: 1, 3, 5-7)', 'error');
+            return;
+          }
+          const targetIndices = parsePageRanges(rangeStr, totalPages);
+          if (!targetIndices || targetIndices.length === 0) {
+            showStatus('Nomor halaman tidak valid! Masukkan angka antara 1 sampai ' + totalPages, 'error');
+            return;
+          }
+          for (let i = 0; i < totalPages; i++) {
+            if (targetIndices.includes(i)) {
+              const page = doc.getPage(i);
+              const curr = page.getRotation().angle;
+              page.setRotation(PDFLib.degrees((curr + currentRotateAngle) % 360));
+            }
+          }
+        } else if (currentRotateScope === 'interactive') {
+          let hasRotated = false;
+          for (let i = 0; i < totalPages; i++) {
+            const addRot = ((pageRotations && pageRotations[i]) || 0) % 360;
+            if (addRot !== 0) {
+              hasRotated = true;
+              const page = doc.getPage(i);
+              const curr = page.getRotation().angle;
+              page.setRotation(PDFLib.degrees((curr + addRot) % 360));
+            }
+          }
+          if (!hasRotated) {
+            showStatus('Belum ada halaman yang diputar! Klik tombol putar (+90° / -90°) pada halaman yang ingin diubah.', 'error');
+            return;
+          }
+        }
+
+        const bytes = await doc.save();
+        triggerDownload(new Blob([bytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value || 'docenti_rotated.pdf', '.pdf');
+        showStatus('Berhasil memutar halaman PDF!', 'success');
+      } catch (e) {
+        console.error(e);
+        showStatus('Gagal memutar PDF: ' + e.message, 'error');
+      }
+    }
+
+    // Protect PDF
+    async function applyProtect() {
+      const p1 = document.getElementById('protectPassword').value;
+      const p2 = document.getElementById('protectPasswordConfirm').value;
+      if (!p1) {
+        showStatus('Kata sandi tidak boleh kosong!', 'error');
+        return;
+      }
+      if (p1 !== p2) {
+        showStatus('Konfirmasi kata sandi tidak cocok!', 'error');
+        return;
+      }
+      showStatus('Mengenkripsi PDF dengan kata sandi...');
+      try {
+        const doc = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
+        await doc.encrypt({ userPassword: p1, ownerPassword: p1 });
+        const bytes = await doc.save();
+        triggerDownload(new Blob([bytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
+        showStatus('PDF berhasil dikunci dengan kata sandi!', 'success');
+      } catch (e) {
+        showStatus('Gagal memproteksi PDF: ' + e.message, 'error');
+      }
+    }
+
+    // Unlock PDF
+    async function applyUnlock() {
+      const passInput = document.getElementById('unlockPassword');
+      const pass = passInput ? passInput.value.trim() : '';
+
+      showStatus('Membuka enkripsi PDF...');
+      try {
+        let doc;
+        try {
+          doc = await safeLoadPdfDocument(getWorkingPdfBytesCopy(), { password: pass });
+        } catch (loadErr) {
+          if (!pass) {
+            showStatus('Dokumen ini diproteksi kata sandi. Silakan ketik kata sandinya pada kolom di atas.', 'error');
+            if (passInput) passInput.focus();
+            return;
+          }
+          throw loadErr;
+        }
+
+        const cleanDoc = await PDFLib.PDFDocument.create();
+        const pages = await cleanDoc.copyPages(doc, doc.getPageIndices());
+        pages.forEach(p => cleanDoc.addPage(p));
+        const bytes = await cleanDoc.save();
+
+        const outName = document.getElementById('singleOutputFileName').value || currentWorkingPdf.name.replace(/\.pdf$/i, '') + '_unlocked.pdf';
+        triggerDownload(new Blob([bytes], { type: 'application/pdf' }), outName, '.pdf');
+        showStatus('Berhasil membuka kunci PDF! Dokumen bersih tanpa kata sandi telah diunduh.', 'success');
+        if (passInput) passInput.value = '';
+      } catch (e) {
+        console.error(e);
+        const msg = (e.message || '').toLowerCase();
+        if (msg.includes('password') || msg.includes('incorrect') || msg.includes('decrypt')) {
+          showStatus('Gagal membuka PDF: Kata sandi yang Anda masukkan salah. Silakan periksa kembali.', 'error');
+        } else {
+          showStatus('Gagal membuka PDF: ' + (e.message || 'Format tidak didukung'), 'error');
+        }
+        if (passInput) passInput.focus();
+      }
+    }
+
+    // ==========================================
+    // 9. e-SIGN STAGE
+    // ==========================================
+    let isSigning = false;
+    let uploadedSignatureImageDataUrl = null;
+
+    function initEsignSection() {
+      const outInput = document.getElementById('esignOutputFileName');
+      if (outInput && currentWorkingPdf) {
+        outInput.value = currentWorkingPdf.name.replace(/\.pdf$/i, '') + '_signed.pdf';
+      }
+
+      const select = document.getElementById('esignPageSelect');
+      if (select) {
+        select.innerHTML = '';
+        for (let i = 1; i <= totalEsignPages; i++) {
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = 'Hal. ' + i + ' / ' + totalEsignPages;
+          select.appendChild(opt);
+        }
+      }
+
+      renderEsignPage(currentEsignPage);
+      initEsignDraggableBox();
+      updateSignatureBoxPreview();
+    }
+
+    async function renderEsignPage(pageNum) {
+      if (!currentWorkingPdfDoc) return;
+      currentEsignPage = pageNum;
+
+      const pageJumpInput = document.getElementById('esignPageJumpInput');
+      if (pageJumpInput) {
+        pageJumpInput.value = pageNum;
+        pageJumpInput.max = totalEsignPages;
+      }
+      const pageSelect = document.getElementById('esignPageSelect');
+      if (pageSelect) {
+        pageSelect.value = pageNum;
+      }
+      const prevBtn = document.getElementById('esignPrevPageBtn');
+      if (prevBtn) prevBtn.disabled = pageNum <= 1;
+      const nextBtn = document.getElementById('esignNextPageBtn');
+      if (nextBtn) nextBtn.disabled = pageNum >= totalEsignPages;
+
+      const page = await currentWorkingPdfDoc.getPage(pageNum);
+      const vp = page.getViewport({ scale: 1.1 });
+
+      const canvas = document.getElementById('esignPageCanvas');
+      const wrapper = document.getElementById('esignCanvasWrapper');
+
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      wrapper.style.width = vp.width + 'px';
+      wrapper.style.height = vp.height + 'px';
+
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    }
+
+    window.changeEsignPage = (dir) => {
+      const tgt = currentEsignPage + dir;
+      if (tgt < 1 || tgt > totalEsignPages) return;
+      currentEsignPage = tgt;
+      renderEsignPage(currentEsignPage);
+    };
+
+    window.jumpToEsignPage = (val) => {
+      let pageNum = parseInt(val, 10);
+      if (isNaN(pageNum)) pageNum = 1;
+      pageNum = Math.max(1, Math.min(pageNum, totalEsignPages));
+      currentEsignPage = pageNum;
+      renderEsignPage(currentEsignPage);
+    };
+
+    window.setSignMode = (mode) => {
+      currentSignMode = mode;
+
+      ['signModeDraw', 'signModeType', 'signModeUpload'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.className = 'font-medium px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center gap-1 cursor-pointer';
+      });
+
+      const activeBtn = document.getElementById(
+        mode === 'draw' ? 'signModeDraw' : (mode === 'type' ? 'signModeType' : 'signModeUpload')
+      );
+      if (activeBtn) activeBtn.className = 'font-semibold px-3 py-1.5 rounded-lg bg-blue-600 text-white flex items-center gap-1 cursor-pointer';
+
+      const drawPad = document.getElementById('signDrawPadContainer');
+      const typeCont = document.getElementById('signTypeContainer');
+      const uploadCont = document.getElementById('signUploadContainer');
+
+      if (drawPad) drawPad.classList.toggle('hidden', mode !== 'draw');
+      if (typeCont) typeCont.classList.toggle('hidden', mode !== 'type');
+      if (uploadCont) uploadCont.classList.toggle('hidden', mode !== 'upload');
+
+      updateSignatureBoxPreview();
+    };
+
+    // Calculate exact canvas coordinates using CSS client rect scaling
+    function getSignCanvasPoint(e) {
+      const pad = document.getElementById('signDrawCanvas');
+      if (!pad) return { x: 0, y: 0 };
+      const rect = pad.getBoundingClientRect();
+      const scaleX = pad.width / (rect.width || 1);
+      const scaleY = pad.height / (rect.height || 1);
+      let clientX, clientY;
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    const signPad = document.getElementById('signDrawCanvas');
+
+    function startSign(e) {
+      isSigning = true;
+      const pad = document.getElementById('signDrawCanvas');
+      if (!pad) return;
+      const ctx = pad.getContext('2d');
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#000000';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      const pt = getSignCanvasPoint(e);
+      ctx.beginPath();
+      ctx.moveTo(pt.x, pt.y);
+
+      const hint = document.getElementById('signDrawHint');
+      if (hint) hint.classList.add('hidden');
+    }
+
+    function moveSign(e) {
+      if (!isSigning) return;
+      if (e.cancelable && e.type && e.type.startsWith('touch')) e.preventDefault();
+      const pad = document.getElementById('signDrawCanvas');
+      if (!pad) return;
+      const ctx = pad.getContext('2d');
+      const pt = getSignCanvasPoint(e);
+      ctx.lineTo(pt.x, pt.y);
+      ctx.stroke();
+    }
+
+    function endSign() {
+      if (isSigning) {
+        isSigning = false;
+        updateSignatureBoxPreview();
+      }
+    }
+
+    if (signPad) {
+      signPad.addEventListener('mousedown', startSign);
+      signPad.addEventListener('mousemove', moveSign);
+      window.addEventListener('mouseup', endSign);
+
+      signPad.addEventListener('touchstart', startSign, { passive: false });
+      signPad.addEventListener('touchmove', moveSign, { passive: false });
+      window.addEventListener('touchend', endSign);
+    }
+
+    window.clearSignatureCanvas = () => {
+      const pad = document.getElementById('signDrawCanvas');
+      if (!pad) return;
+      const ctx = pad.getContext('2d');
+      ctx.clearRect(0, 0, pad.width, pad.height);
+      const hint = document.getElementById('signDrawHint');
+      if (hint) hint.classList.remove('hidden');
+      updateSignatureBoxPreview();
+    };
+
+    function isCanvasBlank(canvas) {
+      if (!canvas || canvas.width === 0 || canvas.height === 0) return true;
+      const ctx = canvas.getContext('2d');
+      try {
+        const pixelBuffer = new Uint32Array(
+          ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+        );
+        return !pixelBuffer.some(color => color !== 0);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function getTrimmedSignatureCanvas(canvas) {
+      if (!canvas || canvas.width === 0 || canvas.height === 0) return canvas;
+      const ctx = canvas.getContext('2d');
+      try {
+        const width = canvas.width;
+        const height = canvas.height;
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+
+        let minX = width, minY = height, maxX = 0, maxY = 0;
+        let hasPixels = false;
+
+        for (let y = 0; y < height; y++) {
+          const rowOffset = y * width * 4;
+          for (let x = 0; x < width; x++) {
+            const idx = rowOffset + x * 4;
+            const alpha = data[idx + 3];
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            // Non-transparent and not white background
+            if (alpha > 15 && (r < 245 || g < 245 || b < 245)) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+              hasPixels = true;
+            }
+          }
+        }
+
+        if (!hasPixels) return canvas;
+
+        const pad = 10;
+        minX = Math.max(0, minX - pad);
+        minY = Math.max(0, minY - pad);
+        maxX = Math.min(width - 1, maxX + pad);
+        maxY = Math.min(height - 1, maxY + pad);
+
+        const trimW = Math.max(1, maxX - minX + 1);
+        const trimH = Math.max(1, maxY - minY + 1);
+
+        const trimmedCanvas = document.createElement('canvas');
+        trimmedCanvas.width = trimW;
+        trimmedCanvas.height = trimH;
+        const trimmedCtx = trimmedCanvas.getContext('2d');
+        trimmedCtx.drawImage(canvas, minX, minY, trimW, trimH, 0, 0, trimW, trimH);
+
+        return trimmedCanvas;
+      } catch (e) {
+        return canvas;
+      }
+    }
+
+    function autoFitSignatureBox() {
+      const box = document.getElementById('signatureDraggableBox');
+      if (!box) return;
+      const aspect = currentSignatureAspect || 2.0;
+      const curW = box.offsetWidth || 180;
+      const newH = Math.max(20, Math.round(curW / aspect));
+      box.style.height = newH + 'px';
+      sigBoxPosition.height = newH;
+    }
+    window.autoFitSignatureBox = autoFitSignatureBox;
+
+    function setSignatureScaleFromSlider(val) {
+      const box = document.getElementById('signatureDraggableBox');
+      const label = document.getElementById('sigScaleLabel');
+      if (label) label.textContent = val + '%';
+      if (!box) return;
+
+      const baseWidth = 180;
+      const aspect = currentSignatureAspect || 2.0;
+      const newW = Math.max(40, Math.round(baseWidth * (val / 100)));
+      const newH = Math.max(20, Math.round(newW / aspect));
+
+      box.style.width = newW + 'px';
+      box.style.height = newH + 'px';
+      sigBoxPosition.width = newW;
+      sigBoxPosition.height = newH;
+    }
+    window.setSignatureScaleFromSlider = setSignatureScaleFromSlider;
+
+    function updateSignatureBoxPreview() {
+      const boxImg = document.getElementById('sigBoxImg');
+      const boxText = document.getElementById('sigBoxText');
+      if (!boxImg || !boxText) return;
+
+      if (currentSignMode === 'draw') {
+        const pad = document.getElementById('signDrawCanvas');
+        if (pad && !isCanvasBlank(pad)) {
+          const trimmed = getTrimmedSignatureCanvas(pad);
+          currentSignatureAspect = (trimmed.width && trimmed.height) ? (trimmed.width / trimmed.height) : 2.0;
+          boxImg.src = trimmed.toDataURL('image/png');
+          boxImg.classList.remove('hidden');
+          boxText.classList.add('hidden');
+          autoFitSignatureBox();
+        } else {
+          boxImg.classList.add('hidden');
+          boxText.classList.remove('hidden');
+        }
+      } else if (currentSignMode === 'type') {
+        const textInput = document.getElementById('typedSignatureInput');
+        const text = (textInput ? textInput.value : '').trim() || 'John Doe';
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = 600;
+        offCanvas.height = 200;
+        const ctx = offCanvas.getContext('2d');
+        ctx.font = selectedTypedFont === 'sig-font-1' ? '60px "Dancing Script", cursive' : '64px "Caveat", cursive';
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 300, 100);
+
+        const trimmed = getTrimmedSignatureCanvas(offCanvas);
+        currentSignatureAspect = (trimmed.width && trimmed.height) ? (trimmed.width / trimmed.height) : 2.0;
+        boxImg.src = trimmed.toDataURL('image/png');
+        boxImg.classList.remove('hidden');
+        boxText.classList.add('hidden');
+        autoFitSignatureBox();
+      } else if (currentSignMode === 'upload') {
+        if (uploadedSignatureImageDataUrl) {
+          boxImg.src = uploadedSignatureImageDataUrl;
+          boxImg.classList.remove('hidden');
+          boxText.classList.add('hidden');
+          const img = new Image();
+          img.onload = () => {
+            if (img.naturalWidth && img.naturalHeight) {
+              currentSignatureAspect = img.naturalWidth / img.naturalHeight;
+              autoFitSignatureBox();
+            }
+          };
+          img.src = uploadedSignatureImageDataUrl;
+        } else {
+          boxImg.classList.add('hidden');
+          boxText.classList.remove('hidden');
+        }
+      }
+    }
+
+    const typedSigInput = document.getElementById('typedSignatureInput');
+    if (typedSigInput) {
+      typedSigInput.addEventListener('input', updateSignatureBoxPreview);
+    }
+
+    window.selectTypedFont = (fontClass) => {
+      selectedTypedFont = fontClass;
+      ['fontBtn1', 'fontBtn2'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.className = 'p-3 border bg-white rounded-xl text-center ' + (id === 'fontBtn1' ? 'sig-font-1' : 'sig-font-2') + ' text-xl cursor-pointer';
+      });
+      const activeBtn = document.getElementById(fontClass === 'sig-font-1' ? 'fontBtn1' : 'fontBtn2');
+      if (activeBtn) activeBtn.className = 'p-3 border-2 border-blue-600 bg-blue-50 text-blue-800 rounded-xl text-center ' + fontClass + ' text-xl cursor-pointer';
+      updateSignatureBoxPreview();
+    };
+
+    const sigImgInput = document.getElementById('signatureImageInput');
+    if (sigImgInput) {
+      sigImgInput.onchange = (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const nameLabel = document.getElementById('signatureImagePreviewName');
+        if (nameLabel) nameLabel.textContent = 'File terpilih: ' + f.name;
+
+        const r1 = new FileReader();
+        r1.onload = ev => uploadedSignatureImageBytes = ev.target.result;
+        r1.readAsArrayBuffer(f);
+
+        const r2 = new FileReader();
+        r2.onload = ev => {
+          uploadedSignatureImageDataUrl = ev.target.result;
+          updateSignatureBoxPreview();
+        };
+        r2.readAsDataURL(f);
+      };
+    }
+
+    function initEsignDraggableBox() {
+      const box = document.getElementById('signatureDraggableBox');
+      const wrapper = document.getElementById('esignCanvasWrapper');
+      const resizeHandle = document.getElementById('sigResizeHandle');
+      if (!box || !wrapper) return;
+
+      let isDragging = false;
+      let isResizing = false;
+      let startX = 0, startY = 0, initialLeft = 0, initialTop = 0, startW = 0, startH = 0;
+
+      sigBoxPosition.width = box.offsetWidth || 160;
+      sigBoxPosition.height = box.offsetHeight || 80;
+
+      function onStartDrag(clientX, clientY, e) {
+        if (e.target === resizeHandle) return;
+        isDragging = true;
+        startX = clientX;
+        startY = clientY;
+        initialLeft = box.offsetLeft;
+        initialTop = box.offsetTop;
+        if (e.preventDefault && e.cancelable) e.preventDefault();
+      }
+
+      function onStartResize(clientX, clientY, e) {
+        isResizing = true;
+        startX = clientX;
+        startY = clientY;
+        startW = box.offsetWidth;
+        startH = box.offsetHeight;
+        if (e.stopPropagation) e.stopPropagation();
+        if (e.preventDefault && e.cancelable) e.preventDefault();
+      }
+
+      function onMove(clientX, clientY, e) {
+        if (isResizing) {
+          const dw = clientX - startX;
+          const aspect = currentSignatureAspect || (startW / (startH || 1));
+          const newW = Math.max(40, startW + dw);
+          const newH = Math.max(20, Math.round(newW / aspect));
+
+          box.style.width = newW + 'px';
+          box.style.height = newH + 'px';
+          sigBoxPosition.width = newW;
+          sigBoxPosition.height = newH;
+
+          const slider = document.getElementById('sigScaleSlider');
+          const label = document.getElementById('sigScaleLabel');
+          if (slider && label) {
+            const pct = Math.round((newW / 180) * 100);
+            slider.value = pct;
+            label.textContent = pct + '%';
+          }
+
+          if (e.preventDefault && e.cancelable) e.preventDefault();
+          return;
+        }
+        if (isDragging) {
+          const dx = clientX - startX;
+          const dy = clientY - startY;
+          let newX = initialLeft + dx;
+          let newY = initialTop + dy;
+
+          // Free boundary dragging: allow moving past the canvas edges!
+          // Leave at least 25px within reach so user can always drag back
+          newX = Math.max(-box.offsetWidth + 25, Math.min(newX, wrapper.clientWidth - 25));
+          newY = Math.max(-box.offsetHeight + 25, Math.min(newY, wrapper.clientHeight - 25));
+
+          box.style.left = newX + 'px';
+          box.style.top = newY + 'px';
+          sigBoxPosition.x = newX;
+          sigBoxPosition.y = newY;
+          if (e.preventDefault && e.cancelable) e.preventDefault();
+        }
+      }
+
+      function onEnd() {
+        isDragging = false;
+        isResizing = false;
+      }
+
+      box.onmousedown = (e) => onStartDrag(e.clientX, e.clientY, e);
+      if (resizeHandle) {
+        resizeHandle.onmousedown = (e) => onStartResize(e.clientX, e.clientY, e);
+      }
+      window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY, e));
+      window.addEventListener('mouseup', onEnd);
+
+      box.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length > 0) {
+          if (e.target === resizeHandle) {
+            onStartResize(e.touches[0].clientX, e.touches[0].clientY, e);
+          } else {
+            onStartDrag(e.touches[0].clientX, e.touches[0].clientY, e);
+          }
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchmove', (e) => {
+        if ((isDragging || isResizing) && e.touches && e.touches.length > 0) {
+          onMove(e.touches[0].clientX, e.touches[0].clientY, e);
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchend', onEnd);
+    }
+
+    async function getSignatureImageBytes() {
+      if (currentSignMode === 'draw') {
+        const pad = document.getElementById('signDrawCanvas');
+        if (!pad || isCanvasBlank(pad)) throw new Error('Silakan buat tanda tangan Anda terlebih dahulu!');
+        const trimmed = getTrimmedSignatureCanvas(pad);
+        const dataUrl = trimmed.toDataURL('image/png');
+        return await fetch(dataUrl).then(r => r.arrayBuffer());
+      } else if (currentSignMode === 'upload') {
+        if (!uploadedSignatureImageBytes && !uploadedSignatureImageDataUrl) throw new Error('Silakan pilih berkas gambar tanda tangan!');
+        if (uploadedSignatureImageDataUrl) {
+          return await fetch(uploadedSignatureImageDataUrl).then(r => r.arrayBuffer());
+        }
+        return uploadedSignatureImageBytes;
+      } else {
+        const textInput = document.getElementById('typedSignatureInput');
+        const text = (textInput ? textInput.value : '').trim() || 'John Doe';
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = 600;
+        offCanvas.height = 200;
+        const ctx = offCanvas.getContext('2d');
+        ctx.font = selectedTypedFont === 'sig-font-1' ? '60px "Dancing Script", cursive' : '64px "Caveat", cursive';
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 300, 100);
+        const trimmed = getTrimmedSignatureCanvas(offCanvas);
+        return await fetch(trimmed.toDataURL('image/png')).then(r => r.arrayBuffer());
+      }
+    }
+
+    async function applySignatureAndDownload() {
+      showStatus('Menerapkan tanda tangan ke dokumen PDF...');
+      try {
+        const sigBytes = await getSignatureImageBytes();
+        const doc = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
+        const embeddedImg = await doc.embedPng(sigBytes);
+
+        const pageIndex = currentEsignPage - 1;
+        const page = doc.getPage(pageIndex);
+
+        const canvas = document.getElementById('esignPageCanvas');
+        const scaleX = page.getWidth() / canvas.width;
+        const scaleY = page.getHeight() / canvas.height;
+
+        const pdfX = sigBoxPosition.x * scaleX;
+        const pdfWidth = sigBoxPosition.width * scaleX;
+        const pdfHeight = sigBoxPosition.height * scaleY;
+        const pdfY = page.getHeight() - (sigBoxPosition.y * scaleY) - pdfHeight;
+
+        page.drawImage(embeddedImg, {
+          x: pdfX,
+          y: pdfY,
+          width: pdfWidth,
+          height: pdfHeight
+        });
+
+        const bytes = await doc.save();
+        triggerDownload(new Blob([bytes], { type: 'application/pdf' }), document.getElementById('esignOutputFileName').value || 'signed.pdf', '.pdf');
+        showStatus('Berhasil membubuhkan tanda tangan ke dokumen PDF!', 'success');
+      } catch (e) {
+        showStatus('Gagal membubuhkan tanda tangan: ' + e.message, 'error');
+      }
+    }
+
+    // ==========================================
+    // 10. COMMON HELPERS
+    // ==========================================
+    function triggerDownload(blob, filename, requiredExt) {
+      if (!filename || typeof filename !== 'string' || filename.trim() === '') filename = 'hasil_dokumen';
+      if (requiredExt && !filename.toLowerCase().endsWith(requiredExt.toLowerCase())) filename += requiredExt;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function showStatus(text, type = 'info') {
+      const box = document.getElementById('statusBox');
+      box.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'bg-red-50', 'text-red-800', 'border-red-200', 'bg-blue-50', 'text-blue-800', 'border-blue-200');
+      if (type === 'success') box.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
+      else if (type === 'error') box.classList.add('bg-red-50', 'text-red-800', 'border', 'border-red-200');
+      else box.classList.add('bg-blue-50', 'text-blue-800', 'border', 'border-blue-200');
+      box.textContent = text;
+      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideStatus() {
+      document.getElementById('statusBox').classList.add('hidden');
+    }
+
+    function init() {
+      selectTool('pdf_merge');
+    }
+
+    init();
+  </script>
+</body>
+</html>
