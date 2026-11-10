@@ -308,14 +308,14 @@
             <div class="flex flex-col sm:flex-row sm:items-center gap-3 text-xs sm:text-sm">
               <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-800">
                 <input type="radio" name="pdfToWordMode" value="smart" checked class="text-blue-600 focus:ring-blue-500">
-                <span><strong>Rekonstruksi Cerdas</strong> (Teks, Tabel & Gambar Dapat Diedit)</span>
+                <span><strong>Rekonstruksi Cerdas Pro</strong> (Teks, Kodingan, Tabel & Gambar Dapat Diedit)</span>
               </label>
               <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-800">
                 <input type="radio" name="pdfToWordMode" value="visual" class="text-blue-600 focus:ring-blue-500">
-                <span><strong>Presisi Visual 100%</strong> (Halaman HD Persis Asli)</span>
+                <span><strong>Presisi Visual 100%</strong> (Identik Persis Asli Tanpa Pergeseran)</span>
               </label>
             </div>
-            <p class="text-xs text-slate-500">Mengekstrak gambar logo nyata, menyusun tabel bergaris terpisah, dan merapikan susunan teks ke tengah (center-aligned).</p>
+            <p class="text-xs text-slate-500"><strong>Rekonstruksi Cerdas:</strong> Menjaga format kodingan (font Consolas & spasi indentasi), mengekstrak semua foto/gambar lengkap, dan teks bersih tanpa karakter aneh. <strong>Presisi Visual 100%:</strong> Tampilan dokumen Word 100% sama persis dengan PDF asli.</p>
           </div>
           <button id="convertAllBtn" class="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -1592,52 +1592,109 @@
     };
 
     // ==========================================
-    // 5. ADVANCED PDF TO WORD ENGINE
+    // 5. ADVANCED HIGH-FIDELITY PDF TO WORD ENGINE
     // ==========================================
-    function escapeXml(unsafe) {
-      return String(unsafe).replace(/[<>&'"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
+
+    function sanitizeXmlAndDecodeLigatures(str) {
+      if (!str) return '';
+      return String(str)
+        // Typography & Ligatures normalization
+        .replace(/\uFB00/g, 'ff')
+        .replace(/\uFB01/g, 'fi')
+        .replace(/\uFB02/g, 'fl')
+        .replace(/\uFB03/g, 'ffi')
+        .replace(/\uFB04/g, 'ffl')
+        .replace(/[\u201C\u201D]/g, '"')
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\u2013\u2014\u2212]/g, '-')
+        .replace(/\u2026/g, '...')
+        .replace(/[\u00A0\u2002\u2003\u2009\u202F]/g, ' ')
+        .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+        // Programming ligatures mappings
+        .replace(/[\uE100-\uE11F]/g, '')
+        // Clean out illegal XML 1.0 control characters (prevents Word file corruption)
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F\uE000-\uF8FF]/g, '')
+        // XML escaping
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
     }
 
-    function imgObjToPngBytes(imgObj) {
+    function canvasToPngBytes(canvas) {
       try {
-        const canvas = document.createElement('canvas');
-        canvas.width = imgObj.width;
-        canvas.height = imgObj.height;
-        const ctx = canvas.getContext('2d');
-        let imgData;
-        const totalPixels = imgObj.width * imgObj.height;
-
-        if (imgObj.data.length === totalPixels * 4) {
-          imgData = new ImageData(new Uint8ClampedArray(imgObj.data), imgObj.width, imgObj.height);
-        } else if (imgObj.data.length === totalPixels * 3) {
-          const rgba = new Uint8ClampedArray(totalPixels * 4);
-          let s = 0, d = 0;
-          while (s < imgObj.data.length) {
-            rgba[d++] = imgObj.data[s++];
-            rgba[d++] = imgObj.data[s++];
-            rgba[d++] = imgObj.data[s++];
-            rgba[d++] = 255;
-          }
-          imgData = new ImageData(rgba, imgObj.width, imgObj.height);
-        } else {
-          const rgba = new Uint8ClampedArray(totalPixels * 4);
-          let s = 0, d = 0;
-          while (s < imgObj.data.length) {
-            const v = imgObj.data[s++];
-            rgba[d++] = v;
-            rgba[d++] = v;
-            rgba[d++] = v;
-            rgba[d++] = 255;
-          }
-          imgData = new ImageData(rgba, imgObj.width, imgObj.height);
-        }
-        ctx.putImageData(imgData, 0, 0);
         const dataUrl = canvas.toDataURL('image/png');
         const b64 = dataUrl.split(',')[1];
         const bin = atob(b64);
         const bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         return bytes;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function imgObjToPngBytes(imgObj) {
+      try {
+        const w = imgObj.width;
+        const h = imgObj.height;
+        if (!w || !h) return null;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+
+        // 1. ImageBitmap / Canvas / Image element
+        if (imgObj instanceof ImageBitmap || (typeof ImageBitmap !== 'undefined' && imgObj instanceof ImageBitmap)) {
+          ctx.drawImage(imgObj, 0, 0);
+          return canvasToPngBytes(canvas);
+        }
+        if (imgObj.bitmap) {
+          ctx.drawImage(imgObj.bitmap, 0, 0);
+          return canvasToPngBytes(canvas);
+        }
+        if (imgObj instanceof HTMLImageElement || imgObj instanceof HTMLCanvasElement) {
+          ctx.drawImage(imgObj, 0, 0);
+          return canvasToPngBytes(canvas);
+        }
+
+        // 2. Raw pixel array data
+        if (imgObj.data) {
+          const totalPixels = w * h;
+          let imgData;
+          if (imgObj.data.length === totalPixels * 4) {
+            imgData = new ImageData(new Uint8ClampedArray(imgObj.data), w, h);
+          } else if (imgObj.data.length === totalPixels * 3) {
+            const rgba = new Uint8ClampedArray(totalPixels * 4);
+            let s = 0, d = 0;
+            const src = imgObj.data;
+            while (s < src.length) {
+              rgba[d++] = src[s++];
+              rgba[d++] = src[s++];
+              rgba[d++] = src[s++];
+              rgba[d++] = 255;
+            }
+            imgData = new ImageData(rgba, w, h);
+          } else {
+            const rgba = new Uint8ClampedArray(totalPixels * 4);
+            let s = 0, d = 0;
+            const src = imgObj.data;
+            while (s < src.length) {
+              const v = src[s++];
+              rgba[d++] = v;
+              rgba[d++] = v;
+              rgba[d++] = v;
+              rgba[d++] = 255;
+            }
+            imgData = new ImageData(rgba, w, h);
+          }
+          ctx.putImageData(imgData, 0, 0);
+          return canvasToPngBytes(canvas);
+        }
+
+        return null;
       } catch (e) {
         console.warn('imgObjToPngBytes error:', e);
         return null;
@@ -1647,6 +1704,17 @@
     async function extractPageImages(page) {
       const images = [];
       try {
+        const viewport = page.getViewport({ scale: 1.5 });
+        const pw = viewport.width;
+        const ph = viewport.height;
+
+        // Render page first so PDF.js resolves image streams into page.objs
+        const canvas = document.createElement('canvas');
+        canvas.width = pw;
+        canvas.height = ph;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
         const ops = await page.getOperatorList();
         let currentMatrix = [1, 0, 0, 1, 0, 0];
         const matrixStack = [];
@@ -1670,39 +1738,68 @@
               a1 * e2 + c1 * f2 + e1,
               b1 * e2 + d1 * f2 + f1
             ];
-          } else if (fn === pdfjsLib.OPS.paintImageXObject) {
+          } else if (fn === pdfjsLib.OPS.paintImageXObject || fn === pdfjsLib.OPS.paintInlineImageXObject) {
             const imgId = args[0];
             const width = Math.abs(currentMatrix[0]);
             const height = Math.abs(currentMatrix[3]);
             const x = currentMatrix[4];
             const y = currentMatrix[5];
 
+            if (width < 14 || height < 14) continue;
+
+            let pngBytes = null;
+
+            // 1. Try internal PDF.js object lookup
             const imgObj = await new Promise(resolve => {
               let done = false;
               if (page.objs && typeof page.objs.get === 'function') {
                 page.objs.get(imgId, obj => {
                   if (!done) { done = true; resolve(obj); }
                 });
-              } else if (page.commonObjs && typeof page.commonObjs.get === 'function') {
+              }
+              if (!done && page.commonObjs && typeof page.commonObjs.get === 'function') {
                 page.commonObjs.get(imgId, obj => {
                   if (!done) { done = true; resolve(obj); }
                 });
               }
-              setTimeout(() => { if (!done) { done = true; resolve(null); } }, 1200);
+              setTimeout(() => { if (!done) { done = true; resolve(null); } }, 400);
             });
 
-            if (imgObj && imgObj.width && imgObj.height && imgObj.data) {
-              const pngBytes = imgObjToPngBytes(imgObj);
-              if (pngBytes) {
-                images.push({
-                  id: imgId,
-                  x,
-                  y,
-                  width: width || imgObj.width,
-                  height: height || imgObj.height,
-                  bytes: pngBytes
-                });
+            if (imgObj) {
+              pngBytes = imgObjToPngBytes(imgObj);
+            }
+
+            // 2. High-reliability fallback: crop directly from rendered page canvas
+            if (!pngBytes) {
+              try {
+                const scale = 1.5;
+                const cropX = Math.max(0, x * scale);
+                const cropY = Math.max(0, ph - ((y + height) * scale));
+                const cropW = Math.min(width * scale, pw - cropX);
+                const cropH = Math.min(height * scale, ph - cropY);
+
+                if (cropW > 15 && cropH > 15) {
+                  const cropCanvas = document.createElement('canvas');
+                  cropCanvas.width = Math.round(cropW);
+                  cropCanvas.height = Math.round(cropH);
+                  const cropCtx = cropCanvas.getContext('2d');
+                  cropCtx.drawImage(canvas, Math.round(cropX), Math.round(cropY), cropCanvas.width, cropCanvas.height, 0, 0, cropCanvas.width, cropCanvas.height);
+                  pngBytes = canvasToPngBytes(cropCanvas);
+                }
+              } catch (cropErr) {
+                console.warn('Image crop fallback error:', cropErr);
               }
+            }
+
+            if (pngBytes) {
+              images.push({
+                id: imgId || ('img_' + images.length),
+                x,
+                y,
+                width: width || 220,
+                height: height || 160,
+                bytes: pngBytes
+              });
             }
           }
         }
@@ -1710,6 +1807,71 @@
         console.warn('extractPageImages error:', err);
       }
       return images;
+    }
+
+    function isLineOfCode(lineText, isMonoFont) {
+      if (isMonoFont) return true;
+      const trimmed = lineText.trim();
+      if (!trimmed) return false;
+
+      // Common programming statement starters
+      if (/^(!|#!\/|import |from |def |class |public |private |protected |return |const |let |var |function |if\s*\(|for\s*\(|while\s*\(|try\s*\{|catch\s*\(|\/\*|\/\/|# |<!--|\$ |git |npm |pip |docker |SELECT |FROM |WHERE |curl )/i.test(trimmed)) {
+        return true;
+      }
+      // Notebook prompt or command execution
+      if (/^(In\s*\[\d*\]:|Out\s*\[\d*\]:|!nvidia-smi|print\(|console\.log\(|System\.out)/.test(trimmed)) {
+        return true;
+      }
+      // High density of programming symbols
+      if (/[{}();=><]{2,}/.test(trimmed) || /==|!=|=>|->|\+\+|--|===|!==/.test(trimmed)) {
+        return true;
+      }
+      return false;
+    }
+
+    function reconstructLine(lineItems, pageLeftMargin = 50) {
+      if (!lineItems || lineItems.length === 0) return { text: '', runs: [], minX: 0, isMono: false };
+
+      const firstIt = lineItems[0];
+      const minX = firstIt.transform[4];
+      const avgCharWidth = (firstIt.height || 11) * 0.55;
+
+      let reconstructedText = '';
+      let lastX = minX;
+      let lastW = 0;
+      const runs = [];
+      let isMono = false;
+
+      lineItems.forEach((it, idx) => {
+        const curX = it.transform[4];
+        const itW = it.width || 0;
+        const fontName = it.fontName || '';
+        const itemIsMono = /mono|consolas|courier|menlo|code|fira|jetbrains/i.test(fontName);
+        if (itemIsMono) isMono = true;
+
+        if (idx > 0) {
+          const gap = curX - (lastX + lastW);
+          if (gap > 2) {
+            const numSpaces = Math.max(1, Math.round(gap / (avgCharWidth || 6)));
+            reconstructedText += ' '.repeat(Math.min(numSpaces, 20));
+          }
+        }
+
+        reconstructedText += it.str;
+
+        runs.push({
+          text: it.str,
+          fontSize: it.height || 11,
+          isBold: /bold/i.test(fontName) || it.height >= 14,
+          isItalic: /italic|oblique/i.test(fontName),
+          isMono: itemIsMono
+        });
+
+        lastX = curX;
+        lastW = itW;
+      });
+
+      return { text: reconstructedText, runs, minX, isMono };
     }
 
     async function buildSmartDocx(pagesElements, allImages, pageWidth = 595.28, pageHeight = 841.89) {
@@ -1747,8 +1909,14 @@
 
       zip.file('word/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
         '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
-        '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="24"/></w:rPr></w:rPrDefault></w:docDefaults>' +
+        '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:color w:val="1F2937"/></w:rPr></w:rPrDefault></w:docDefaults>' +
         '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>' +
+        '<w:style w:type="paragraph" w:styleId="CodeBlock">' +
+        '<w:name w:val="Code Block"/>' +
+        '<w:basedOn w:val="Normal"/>' +
+        '<w:pPr><w:spacing w:before="20" w:after="20" w:line="240" w:lineRule="auto"/><w:pBdr><w:left w:val="single" w:sz="16" w:space="8" w:color="2563EB"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F8FAFC"/></w:pPr>' +
+        '<w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:cs="Consolas"/><w:sz w:val="19"/><w:color w:val="0F172A"/></w:rPr>' +
+        '</w:style>' +
         '</w:styles>');
 
       let bodyXml = '';
@@ -1773,9 +1941,22 @@
               '</a:graphicData>' +
               '</a:graphic>' +
               '</wp:inline></w:drawing></w:r></w:p>';
+          } else if (el.type === 'code_block') {
+            bodyXml += '<w:p>' +
+              '<w:pPr>' +
+              '<w:pStyle w:val="CodeBlock"/>' +
+              '<w:spacing w:before="20" w:after="20" w:line="240" w:lineRule="auto"/>' +
+              '<w:pBdr><w:left w:val="single" w:sz="16" w:space="8" w:color="2563EB"/></w:pBdr>' +
+              '<w:shd w:val="clear" w:color="auto" w:fill="F8FAFC"/>' +
+              '</w:pPr>' +
+              '<w:r>' +
+              '<w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:cs="Consolas"/><w:sz w:val="19"/><w:color w:val="0F172A"/></w:rPr>' +
+              '<w:t xml:space="preserve">' + sanitizeXmlAndDecodeLigatures(el.text) + '</w:t>' +
+              '</w:r>' +
+              '</w:p>';
           } else if (el.type === 'table') {
             const numCols = Math.max(...el.rows.map(r => r.length));
-            const totalW = 8200;
+            const totalW = 8600;
             const colW = Math.round(totalW / Math.max(numCols, 1));
 
             bodyXml += '<w:tbl>' +
@@ -1783,12 +1964,12 @@
               '<w:tblW w:w="' + totalW + '" w:type="dxa"/>' +
               '<w:jc w:val="center"/>' +
               '<w:tblBorders>' +
-              '<w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
-              '<w:left w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
-              '<w:bottom w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
-              '<w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
-              '<w:insideH w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
-              '<w:insideV w:val="single" w:sz="6" w:space="0" w:color="000000"/>' +
+              '<w:top w:val="single" w:sz="6" w:space="0" w:color="CBD5E1"/>' +
+              '<w:left w:val="single" w:sz="6" w:space="0" w:color="CBD5E1"/>' +
+              '<w:bottom w:val="single" w:sz="6" w:space="0" w:color="CBD5E1"/>' +
+              '<w:right w:val="single" w:sz="6" w:space="0" w:color="CBD5E1"/>' +
+              '<w:insideH w:val="single" w:sz="6" w:space="0" w:color="E2E8F0"/>' +
+              '<w:insideV w:val="single" w:sz="6" w:space="0" w:color="E2E8F0"/>' +
               '</w:tblBorders>' +
               '</w:tblPr>';
 
@@ -1799,8 +1980,8 @@
                 bodyXml += '  <w:tc>' +
                   '<w:tcPr><w:tcW w:w="' + colW + '" w:type="dxa"/><w:tcMar><w:top w:w="80" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tcMar></w:tcPr>' +
                   '<w:p><w:pPr><w:jc w:val="' + (isHeader ? 'center' : 'left') + '"/></w:pPr>' +
-                  '<w:r><w:rPr>' + (cell.isBold || isHeader ? '<w:b/>' : '') + '<w:sz w:val="22"/></w:rPr>' +
-                  '<w:t xml:space="preserve">' + escapeXml(cell.text) + '</w:t>' +
+                  '<w:r><w:rPr>' + (cell.isBold || isHeader ? '<w:b/>' : '') + '<w:sz w:val="21"/></w:rPr>' +
+                  '<w:t xml:space="preserve">' + sanitizeXmlAndDecodeLigatures(cell.text) + '</w:t>' +
                   '</w:r>' +
                   '</w:p>' +
                   '</w:tc>';
@@ -1812,16 +1993,17 @@
             const jc = el.isCentered ? '<w:jc w:val="center"/>' : '';
             const spacing = '<w:spacing w:after="80" w:line="260" w:lineRule="auto"/>';
             const pPr = '<w:pPr>' + jc + spacing + '</w:pPr>';
-            let runs = '';
+            let runsXml = '';
             el.runs.forEach(r => {
               let rPr = '<w:rPr>';
               if (r.isBold) rPr += '<w:b/>';
               if (r.isItalic) rPr += '<w:i/>';
+              if (r.isMono) rPr += '<w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:cs="Consolas"/>';
               if (r.fontSize) rPr += '<w:sz w:val="' + Math.round(r.fontSize * 2) + '"/>';
               rPr += '</w:rPr>';
-              runs += '<w:r>' + rPr + '<w:t xml:space="preserve">' + escapeXml(r.text) + '</w:t></w:r>';
+              runsXml += '<w:r>' + rPr + '<w:t xml:space="preserve">' + sanitizeXmlAndDecodeLigatures(r.text) + '</w:t></w:r>';
             });
-            bodyXml += '<w:p>' + pPr + runs + '</w:p>';
+            bodyXml += '<w:p>' + pPr + runsXml + '</w:p>';
           }
         }
         if (pIdx < pagesElements.length - 1) {
@@ -1932,7 +2114,7 @@
         const pagesImages = [];
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i);
-          const viewport = page.getViewport({ scale: 2 });
+          const viewport = page.getViewport({ scale: 2.2 });
           const canvas = document.createElement('canvas');
           canvas.width = viewport.width;
           canvas.height = viewport.height;
@@ -1958,7 +2140,7 @@
         return await buildVisualDocx(pagesImages);
       }
 
-      // SMART RECONSTRUCTION MODE
+      // SMART RECONSTRUCTION PRO MODE
       const allExtractedImages = [];
       const pagesElements = [];
       let globalPageW = 595.28;
@@ -1973,25 +2155,41 @@
 
         const pageImgs = await extractPageImages(page);
         const tc = await page.getTextContent();
-        const items = tc.items.filter(it => it.str && it.str.trim().length > 0);
+        const items = tc.items.filter(it => it.str && it.str.length > 0);
 
         const pageEls = [];
 
-        const lines = [];
+        // Group items into lines
+        const linesMap = [];
         for (let it of items) {
           const y = it.transform[5];
-          let line = lines.find(l => Math.abs(l.y - y) <= 4);
+          let line = linesMap.find(l => Math.abs(l.y - y) <= 3.5);
           if (!line) {
             line = { y, items: [] };
-            lines.push(line);
+            linesMap.push(line);
           }
           line.items.push(it);
         }
-        lines.sort((a, b) => b.y - a.y);
-        lines.forEach(l => l.items.sort((a, b) => a.transform[4] - b.transform[4]));
+        linesMap.sort((a, b) => b.y - a.y);
+        linesMap.forEach(l => l.items.sort((a, b) => a.transform[4] - b.transform[4]));
 
-        let currentTable = null;
-        for (let line of lines) {
+        // Process lines into paragraphs, code blocks, or tables
+        for (let line of linesMap) {
+          const recon = reconstructLine(line.items, 50);
+          const lineText = recon.text;
+
+          // Check if this line is code
+          if (isLineOfCode(lineText, recon.isMono)) {
+            pageEls.push({
+              type: 'code_block',
+              y: line.y,
+              text: lineText
+            });
+            continue;
+          }
+
+          // Check if this line is part of a real table
+          // A table row must have at least 2 distinct segments with wide separation (> 24px)
           const segments = [];
           let curSeg = { text: '', x: line.items[0].transform[4], items: [] };
 
@@ -2000,7 +2198,7 @@
             if (curSeg.items.length > 0) {
               const lastIt = curSeg.items[curSeg.items.length - 1];
               const gap = itX - (lastIt.transform[4] + lastIt.width);
-              if (gap > 12) {
+              if (gap > 24) {
                 segments.push(curSeg);
                 curSeg = { text: '', x: itX, items: [] };
               }
@@ -2010,48 +2208,49 @@
           }
           if (curSeg.text) segments.push(curSeg);
 
-          if (segments.length >= 2) {
-            if (!currentTable) {
-              currentTable = { type: 'table', y: line.y, rows: [] };
-              pageEls.push(currentTable);
+          // Table requires >= 2 columns and cannot look like code
+          if (segments.length >= 2 && !isLineOfCode(lineText, false)) {
+            const lastEl = pageEls[pageEls.length - 1];
+            if (lastEl && lastEl.type === 'table') {
+              lastEl.rows.push(segments.map(s => ({
+                text: s.text,
+                isBold: s.items.some(it => /bold/i.test(it.fontName || '') || it.height >= 13),
+                x: s.x
+              })));
+            } else {
+              pageEls.push({
+                type: 'table',
+                y: line.y,
+                rows: [segments.map(s => ({
+                  text: s.text,
+                  isBold: s.items.some(it => /bold/i.test(it.fontName || '') || it.height >= 13),
+                  x: s.x
+                }))]
+              });
             }
-            currentTable.rows.push(segments.map(s => {
-              const isBold = s.items.some(it => (it.fontName && /bold/i.test(it.fontName)) || it.height >= 13);
-              return { text: s.text, isBold, x: s.x };
-            }));
           } else {
-            currentTable = null;
+            // Standard paragraph
             const minX = line.items[0].transform[4];
             const lastIt = line.items[line.items.length - 1];
             const maxX = lastIt.transform[4] + lastIt.width;
             const centerX = (minX + maxX) / 2;
-            const isCentered = Math.abs(centerX - (pageWidth / 2)) < 38 && (maxX - minX < pageWidth * 0.75);
+            const isCentered = Math.abs(centerX - (pageWidth / 2)) < 35 && (maxX - minX < pageWidth * 0.7);
 
-            const runs = [];
-            for (let it of line.items) {
-              const isBold = (it.fontName && /bold/i.test(it.fontName)) || it.height >= 14;
-              const isItalic = Boolean(it.fontName && /italic|oblique/i.test(it.fontName));
-              runs.push({
-                text: it.str + ' ',
-                fontSize: it.height || 11,
-                isBold,
-                isItalic
-              });
-            }
             pageEls.push({
               type: 'paragraph',
               y: line.y,
               isCentered,
-              runs
+              runs: recon.runs
             });
           }
         }
 
+        // Add extracted images for this page
         for (let img of pageImgs) {
-          let dispW = Math.min(img.width, 420);
+          let dispW = Math.min(img.width, 440);
           let dispH = img.height * (dispW / (img.width || 1));
-          if (dispH > 380) {
-            dispH = 380;
+          if (dispH > 420) {
+            dispH = 420;
             dispW = img.width * (dispH / (img.height || 1));
           }
           const imgIndex = allExtractedImages.length + 1;
@@ -2068,6 +2267,7 @@
           });
         }
 
+        // Sort all page elements by Y descending (top of page first)
         pageEls.sort((a, b) => b.y - a.y);
         pagesElements.push(pageEls);
       }
