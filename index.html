@@ -392,47 +392,61 @@
       <!-- Interactive Toolbar with code SVG icons -->
       <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-2 text-xs">
         <div class="flex items-center gap-1.5 flex-wrap">
-          <button onclick="setEditTool('pen')" id="toolPen" class="px-3 py-1.5 rounded-xl font-semibold bg-[#2563eb] text-white flex items-center gap-1.5">
+          <button onclick="setEditTool('select')" id="toolSelect" class="px-3 py-1.5 rounded-xl font-semibold bg-[#2563eb] text-white flex items-center gap-1.5 transition-colors cursor-pointer" title="Pilih & Pindahkan Objek">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7 18 3-7 7-3L3 3z"/></svg>
+            <span>Pilih / Geser</span>
+          </button>
+          <button onclick="setEditTool('pen')" id="toolPen" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5 transition-colors cursor-pointer" title="Coretan Bebas Pensil">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             <span>Pensil</span>
           </button>
-          <button onclick="setEditTool('text')" id="toolText" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5">
+          <button onclick="setEditTool('text')" id="toolText" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5 transition-colors cursor-pointer" title="Tambah Teks (Bisa Digeser & Diedit)">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
             <span>Teks</span>
           </button>
-          <button onclick="setEditTool('rect')" id="toolRect" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5">
+          <button onclick="setEditTool('rect')" id="toolRect" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5 transition-colors cursor-pointer" title="Bentuk Kotak (Bisa Digeser & Diubah Ukuran)">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
             <span>Kotak</span>
           </button>
-          <button onclick="setEditTool('circle')" id="toolCircle" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5">
+          <button onclick="setEditTool('circle')" id="toolCircle" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5 transition-colors cursor-pointer" title="Bentuk Lingkaran (Bisa Digeser)">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
             <span>Lingkaran</span>
           </button>
-          <button onclick="setEditTool('note')" id="toolNote" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5">
+          <button onclick="setEditTool('note')" id="toolNote" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5 transition-colors cursor-pointer" title="Catatan Sticky Note">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <span>Catatan</span>
           </button>
-          <button onclick="triggerImageAnnotationUpload()" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5">
+          <button onclick="triggerImageAnnotationUpload()" class="px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5 transition-colors cursor-pointer" title="Sisipkan Gambar">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             <span>Sisip Gambar</span>
           </button>
+
+          <!-- Undo & Redo buttons -->
+          <div class="flex items-center gap-1 pl-1.5 border-l border-slate-200">
+            <button type="button" onclick="undoEditAction()" id="editUndoBtn" disabled class="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer" title="Batalkan (Undo / Ctrl+Z)">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            </button>
+            <button type="button" onclick="redoEditAction()" id="editRedoBtn" disabled class="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer" title="Ulangi (Redo / Ctrl+Y)">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+            </button>
+          </div>
         </div>
 
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-1">
-            <button onclick="setEditColor('#dc2626')" class="w-6 h-6 rounded-full bg-red-600 border border-white ring-1 ring-slate-300"></button>
-            <button onclick="setEditColor('#2563eb')" class="w-6 h-6 rounded-full bg-blue-600 border border-white ring-1 ring-slate-300"></button>
-            <button onclick="setEditColor('#16a34a')" class="w-6 h-6 rounded-full bg-emerald-600 border border-white ring-1 ring-slate-300"></button>
-            <button onclick="setEditColor('#000000')" class="w-6 h-6 rounded-full bg-black border border-white ring-1 ring-slate-300"></button>
-            <button onclick="setEditColor('#eab308')" class="w-6 h-6 rounded-full bg-yellow-400 border border-white ring-1 ring-slate-300"></button>
+            <button onclick="setEditColor('#dc2626')" class="w-6 h-6 rounded-full bg-red-600 border border-white ring-1 ring-slate-300 cursor-pointer"></button>
+            <button onclick="setEditColor('#2563eb')" class="w-6 h-6 rounded-full bg-blue-600 border border-white ring-1 ring-slate-300 cursor-pointer"></button>
+            <button onclick="setEditColor('#16a34a')" class="w-6 h-6 rounded-full bg-emerald-600 border border-white ring-1 ring-slate-300 cursor-pointer"></button>
+            <button onclick="setEditColor('#000000')" class="w-6 h-6 rounded-full bg-black border border-white ring-1 ring-slate-300 cursor-pointer"></button>
+            <button onclick="setEditColor('#eab308')" class="w-6 h-6 rounded-full bg-yellow-400 border border-white ring-1 ring-slate-300 cursor-pointer"></button>
           </div>
-          <select id="editStrokeWidth" onchange="setEditStrokeWidth(this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs">
+          <select id="editStrokeWidth" onchange="setEditStrokeWidth(this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs cursor-pointer">
             <option value="2">Halus (2px)</option>
             <option value="4" selected>Sedang (4px)</option>
             <option value="8">Tebal (8px)</option>
           </select>
-          <button onclick="clearEditCanvasCurrentPage()" class="text-xs text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg">
-            Hapus Coretan
+          <button onclick="clearEditCanvasCurrentPage()" class="text-xs text-red-600 hover:bg-red-50 font-semibold px-2 py-1 rounded-lg transition-colors cursor-pointer" title="Hapus semua elemen pada halaman ini">
+            Hapus Semua
           </button>
         </div>
       </div>
@@ -463,9 +477,10 @@
 
       <!-- Interactive Canvas Stage -->
       <div class="relative overflow-auto max-h-[600px] flex justify-center bg-slate-100/70 p-4 rounded-2xl border">
-        <div id="editCanvasWrapper" class="relative shadow-md bg-white">
+        <div id="editCanvasWrapper" class="relative shadow-md bg-white select-none">
           <canvas id="editPdfBgCanvas" class="block"></canvas>
-          <canvas id="editDrawCanvas" class="absolute inset-0 cursor-crosshair"></canvas>
+          <canvas id="editDrawCanvas" class="absolute inset-0"></canvas>
+          <div id="editObjectsLayer" class="absolute inset-0 overflow-visible pointer-events-auto"></div>
         </div>
       </div>
 
@@ -1118,10 +1133,25 @@
     // Edit Canvas State
     let currentEditPage = 1;
     let totalEditPages = 1;
-    let currentEditTool = 'pen';
+    let currentEditTool = 'select';
     let currentEditColor = '#dc2626';
     let currentEditStrokeWidth = 4;
     let pageCanvasLayers = {};
+    let pageAnnotations = {};
+    let pageFreehandStrokes = {};
+    let pageEditHistory = {};
+    let selectedAnnotationId = null;
+    let isDrawing = false;
+    let currentStroke = null;
+    let strokeStartSnapshot = null;
+    let isDraggingObject = false;
+    let isResizingObject = false;
+    let activeDragId = null;
+    let dragStartX = 0, dragStartY = 0;
+    let initialObjX = 0, initialObjY = 0;
+    let initialObjW = 0, initialObjH = 0;
+    let dragStartSnapshot = null;
+    let textEditingSnapshot = null;
 
     // Rotate State
     let currentRotateAngle = 90;
@@ -1293,6 +1323,10 @@
       organizePages = [];
       pageRotations = [];
       pageCanvasLayers = {};
+      pageAnnotations = {};
+      pageFreehandStrokes = {};
+      pageEditHistory = {};
+      selectedAnnotationId = null;
       showHeroStage();
     }
 
@@ -2207,10 +2241,82 @@
     };
 
     // ==========================================
-    // 7. EDIT CANVAS PDF
+    // 7. EDIT CANVAS PDF (INTERACTIVE OBJECTS & UNDO/REDO)
     // ==========================================
-    let isDrawing = false;
-    let lastX = 0, lastY = 0;
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function getPageSnapshot(pageNum) {
+      return {
+        annotations: JSON.parse(JSON.stringify(pageAnnotations[pageNum] || [])),
+        strokes: JSON.parse(JSON.stringify(pageFreehandStrokes[pageNum] || []))
+      };
+    }
+
+    function saveStateBeforeAction(pageNum) {
+      if (!pageEditHistory[pageNum]) {
+        pageEditHistory[pageNum] = { undo: [], redo: [] };
+      }
+      const snapshot = getPageSnapshot(pageNum);
+      pageEditHistory[pageNum].undo.push(snapshot);
+      if (pageEditHistory[pageNum].undo.length > 30) {
+        pageEditHistory[pageNum].undo.shift();
+      }
+      pageEditHistory[pageNum].redo = [];
+      updateUndoRedoButtonState();
+    }
+
+    function updateUndoRedoButtonState() {
+      const undoBtn = document.getElementById('editUndoBtn');
+      const redoBtn = document.getElementById('editRedoBtn');
+      const history = pageEditHistory[currentEditPage];
+      const canUndo = history && history.undo && history.undo.length > 0;
+      const canRedo = history && history.redo && history.redo.length > 0;
+
+      if (undoBtn) undoBtn.disabled = !canUndo;
+      if (redoBtn) redoBtn.disabled = !canRedo;
+    }
+
+    function undoEditAction() {
+      const p = currentEditPage;
+      const history = pageEditHistory[p];
+      if (!history || history.undo.length === 0) return;
+
+      const currentSnapshot = getPageSnapshot(p);
+      history.redo.push(currentSnapshot);
+
+      const previous = history.undo.pop();
+      pageAnnotations[p] = JSON.parse(JSON.stringify(previous.annotations || []));
+      pageFreehandStrokes[p] = JSON.parse(JSON.stringify(previous.strokes || []));
+      selectedAnnotationId = null;
+
+      renderFreehandCanvas(p);
+      renderObjectsLayer(p);
+      updateUndoRedoButtonState();
+      syncPageCanvasLayer(p);
+    }
+
+    function redoEditAction() {
+      const p = currentEditPage;
+      const history = pageEditHistory[p];
+      if (!history || history.redo.length === 0) return;
+
+      const currentSnapshot = getPageSnapshot(p);
+      history.undo.push(currentSnapshot);
+
+      const next = history.redo.pop();
+      pageAnnotations[p] = JSON.parse(JSON.stringify(next.annotations || []));
+      pageFreehandStrokes[p] = JSON.parse(JSON.stringify(next.strokes || []));
+      selectedAnnotationId = null;
+
+      renderFreehandCanvas(p);
+      renderObjectsLayer(p);
+      updateUndoRedoButtonState();
+      syncPageCanvasLayer(p);
+    }
 
     function initEditPdfCanvas() {
       document.getElementById('editOutputFileName').value = currentWorkingPdf.name.replace(/\.pdf$/i, '') + '_edited.pdf';
@@ -2226,16 +2332,26 @@
         }
       }
 
+      setEditTool('select');
       renderEditPage(currentEditPage);
     }
 
-    window.jumpToEditPage = (val) => {
+    function jumpToEditPage(val) {
       let pageNum = parseInt(val, 10);
       if (isNaN(pageNum)) pageNum = 1;
       pageNum = Math.max(1, Math.min(pageNum, totalEditPages));
+      syncPageCanvasLayer(currentEditPage);
       currentEditPage = pageNum;
       renderEditPage(currentEditPage);
-    };
+    }
+
+    function changeEditPage(dir) {
+      const tgt = currentEditPage + dir;
+      if (tgt < 1 || tgt > totalEditPages) return;
+      syncPageCanvasLayer(currentEditPage);
+      currentEditPage = tgt;
+      renderEditPage(currentEditPage);
+    }
 
     async function renderEditPage(pageNum) {
       if (!currentWorkingPdfDoc) return;
@@ -2260,6 +2376,7 @@
 
       const bgCanvas = document.getElementById('editPdfBgCanvas');
       const drawCanvas = document.getElementById('editDrawCanvas');
+      const objLayer = document.getElementById('editObjectsLayer');
       const wrapper = document.getElementById('editCanvasWrapper');
 
       bgCanvas.width = vp.width;
@@ -2268,139 +2385,639 @@
       drawCanvas.height = vp.height;
       wrapper.style.width = vp.width + 'px';
       wrapper.style.height = vp.height + 'px';
+      if (objLayer) {
+        objLayer.style.width = vp.width + 'px';
+        objLayer.style.height = vp.height + 'px';
+      }
 
       await page.render({ canvasContext: bgCanvas.getContext('2d'), viewport: vp }).promise;
 
-      const drawCtx = drawCanvas.getContext('2d');
-      drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-      if (pageCanvasLayers[pageNum]) {
-        const img = new Image();
-        img.onload = () => drawCtx.drawImage(img, 0, 0);
-        img.src = pageCanvasLayers[pageNum];
+      renderFreehandCanvas(pageNum);
+      renderObjectsLayer(pageNum);
+      updateUndoRedoButtonState();
+      setupEditEventHandlers();
+    }
+
+    function setEditTool(tool) {
+      currentEditTool = tool;
+      const toolIds = ['toolSelect', 'toolPen', 'toolText', 'toolRect', 'toolCircle', 'toolNote'];
+      toolIds.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.className = 'px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5 transition-colors cursor-pointer';
+        }
+      });
+
+      const activeId = tool === 'select' ? 'toolSelect' :
+                       (tool === 'pen' ? 'toolPen' :
+                       (tool === 'text' ? 'toolText' :
+                       (tool === 'rect' ? 'toolRect' :
+                       (tool === 'circle' ? 'toolCircle' : 'toolNote'))));
+      const activeBtn = document.getElementById(activeId);
+      if (activeBtn) {
+        activeBtn.className = 'px-3 py-1.5 rounded-xl font-semibold bg-[#2563eb] text-white flex items-center gap-1.5 transition-colors cursor-pointer';
       }
 
-      setupCanvasEvents(drawCanvas);
-    }
+      const objLayer = document.getElementById('editObjectsLayer');
+      const drawCanvas = document.getElementById('editDrawCanvas');
 
-    function setupCanvasEvents(canvas) {
-      canvas.onmousedown = (e) => startEditAction(e, canvas);
-      canvas.onmousemove = (e) => moveEditAction(e, canvas);
-      canvas.onmouseup = () => endEditAction(canvas);
-      canvas.onmouseleave = () => endEditAction(canvas);
-    }
-
-    function startEditAction(e, canvas) {
-      const ctx = canvas.getContext('2d');
-      lastX = e.offsetX;
-      lastY = e.offsetY;
-
-      if (currentEditTool === 'pen') {
-        isDrawing = true;
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-      } else if (currentEditTool === 'text') {
-        const text = prompt('Ketik teks yang ingin ditambahkan:');
-        if (text) {
-          ctx.font = 'bold 16px sans-serif';
-          ctx.fillStyle = currentEditColor;
-          ctx.fillText(text, lastX, lastY);
-          pageCanvasLayers[currentEditPage] = canvas.toDataURL('image/png');
+      if (tool === 'pen') {
+        if (objLayer) objLayer.style.pointerEvents = 'none';
+        if (drawCanvas) {
+          drawCanvas.style.pointerEvents = 'auto';
+          drawCanvas.style.cursor = 'crosshair';
         }
-      } else if (currentEditTool === 'rect') {
-        ctx.strokeStyle = currentEditColor;
-        ctx.lineWidth = currentEditStrokeWidth;
-        ctx.strokeRect(lastX, lastY, 120, 60);
-        pageCanvasLayers[currentEditPage] = canvas.toDataURL('image/png');
-      } else if (currentEditTool === 'circle') {
-        ctx.strokeStyle = currentEditColor;
-        ctx.lineWidth = currentEditStrokeWidth;
+        if (selectedAnnotationId !== null) {
+          selectedAnnotationId = null;
+          renderObjectsLayer(currentEditPage);
+        }
+      } else {
+        if (objLayer) {
+          objLayer.style.pointerEvents = 'auto';
+          objLayer.style.cursor = tool === 'select' ? 'default' : 'crosshair';
+        }
+        if (drawCanvas) {
+          drawCanvas.style.pointerEvents = 'none';
+          drawCanvas.style.cursor = 'default';
+        }
+      }
+    }
+
+    function setEditColor(c) {
+      currentEditColor = c;
+      if (selectedAnnotationId) {
+        const list = pageAnnotations[currentEditPage] || [];
+        const obj = list.find(o => o.id === selectedAnnotationId);
+        if (obj) {
+          saveStateBeforeAction(currentEditPage);
+          obj.color = c;
+          renderObjectsLayer(currentEditPage);
+          syncPageCanvasLayer(currentEditPage);
+        }
+      }
+    }
+
+    function setEditStrokeWidth(w) {
+      currentEditStrokeWidth = parseInt(w, 10) || 4;
+      if (selectedAnnotationId) {
+        const list = pageAnnotations[currentEditPage] || [];
+        const obj = list.find(o => o.id === selectedAnnotationId);
+        if (obj) {
+          saveStateBeforeAction(currentEditPage);
+          obj.strokeWidth = currentEditStrokeWidth;
+          renderObjectsLayer(currentEditPage);
+          syncPageCanvasLayer(currentEditPage);
+        }
+      }
+    }
+
+    function clearEditCanvasCurrentPage() {
+      const hasStrokes = pageFreehandStrokes[currentEditPage] && pageFreehandStrokes[currentEditPage].length > 0;
+      const hasAnns = pageAnnotations[currentEditPage] && pageAnnotations[currentEditPage].length > 0;
+      if (!hasStrokes && !hasAnns) return;
+
+      saveStateBeforeAction(currentEditPage);
+      pageFreehandStrokes[currentEditPage] = [];
+      pageAnnotations[currentEditPage] = [];
+      selectedAnnotationId = null;
+
+      renderFreehandCanvas(currentEditPage);
+      renderObjectsLayer(currentEditPage);
+      syncPageCanvasLayer(currentEditPage);
+    }
+
+    function deleteAnnotation(id) {
+      saveStateBeforeAction(currentEditPage);
+      pageAnnotations[currentEditPage] = (pageAnnotations[currentEditPage] || []).filter(o => o.id !== id);
+      if (selectedAnnotationId === id) selectedAnnotationId = null;
+      renderObjectsLayer(currentEditPage);
+      syncPageCanvasLayer(currentEditPage);
+    }
+
+    function renderFreehandCanvas(pageNum) {
+      const canvas = document.getElementById('editDrawCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const strokes = pageFreehandStrokes[pageNum] || [];
+      for (const s of strokes) {
+        if (!s.points || s.points.length < 2) continue;
+        ctx.strokeStyle = s.color || '#dc2626';
+        ctx.lineWidth = s.strokeWidth || 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.beginPath();
-        ctx.arc(lastX, lastY, 40, 0, 2 * Math.PI);
+        ctx.moveTo(s.points[0].x, s.points[0].y);
+        for (let i = 1; i < s.points.length; i++) {
+          ctx.lineTo(s.points[i].x, s.points[i].y);
+        }
         ctx.stroke();
-        pageCanvasLayers[currentEditPage] = canvas.toDataURL('image/png');
-      } else if (currentEditTool === 'note') {
-        const note = prompt('Ketik catatan sticky note:');
-        if (note) {
+      }
+    }
+
+    function renderObjectsLayer(pageNum) {
+      const layer = document.getElementById('editObjectsLayer');
+      if (!layer) return;
+      layer.innerHTML = '';
+
+      const annotations = pageAnnotations[pageNum] || [];
+
+      annotations.forEach(obj => {
+        const isSelected = (selectedAnnotationId === obj.id);
+        const item = document.createElement('div');
+        item.id = 'dom_obj_' + obj.id;
+        item.className = 'annotation-item absolute select-none ' + (isSelected ? 'ring-2 ring-blue-500 shadow-md' : 'hover:ring-1 hover:ring-blue-300');
+        item.style.left = obj.x + 'px';
+        item.style.top = obj.y + 'px';
+        item.style.width = obj.width + 'px';
+        item.style.height = obj.height + 'px';
+        item.style.cursor = 'move';
+        item.style.boxSizing = 'border-box';
+
+        let innerContent = '';
+        if (obj.type === 'rect') {
+          innerContent = `<div class="w-full h-full pointer-events-none" style="border: ${obj.strokeWidth}px solid ${obj.color}; border-radius: 4px; box-sizing: border-box;"></div>`;
+        } else if (obj.type === 'circle') {
+          innerContent = `<div class="w-full h-full pointer-events-none" style="border: ${obj.strokeWidth}px solid ${obj.color}; border-radius: 9999px; box-sizing: border-box;"></div>`;
+        } else if (obj.type === 'note') {
+          innerContent = `
+            <div class="w-full h-full bg-amber-100 border border-amber-300 rounded-lg p-2 shadow-sm flex flex-col pointer-events-none box-border overflow-hidden">
+              <div class="flex items-center gap-1 text-[9px] font-bold text-amber-800 uppercase tracking-wider mb-1 border-b border-amber-200/80 pb-0.5 pointer-events-none">
+                <svg class="w-3 h-3 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span>Catatan</span>
+              </div>
+              <div class="flex-1 w-full text-xs text-amber-950 font-medium focus:outline-none select-text whitespace-pre-wrap break-words pointer-events-auto overflow-y-auto"
+                   contenteditable="true"
+                   data-ann-id="${obj.id}">
+                ${escapeHtml(obj.text || 'Catatan baru...')}
+              </div>
+            </div>
+          `;
+        } else if (obj.type === 'text') {
+          innerContent = `
+            <div class="w-full h-full p-1 focus:outline-none cursor-text select-text whitespace-pre-wrap break-words box-border"
+                 contenteditable="true"
+                 style="color: ${obj.color}; font-size: ${obj.fontSize || 18}px; font-weight: bold; line-height: 1.25;"
+                 data-ann-id="${obj.id}">
+              ${escapeHtml(obj.text || 'Teks Baru')}
+            </div>
+          `;
+        } else if (obj.type === 'image') {
+          innerContent = `<img src="${obj.imageUrl}" class="w-full h-full object-contain pointer-events-none select-none rounded" draggable="false" />`;
+        }
+
+        let handlesHtml = '';
+        if (isSelected) {
+          handlesHtml += `
+            <button type="button" class="delete-obj-btn absolute -top-3 -right-3 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-md cursor-pointer z-20"
+                    title="Hapus elemen ini">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="resize-handle-btn absolute -bottom-2 -right-2 w-4 h-4 bg-[#2563eb] border-2 border-white rounded-full shadow cursor-se-resize z-20"
+                 title="Tarik untuk ubah ukuran"></div>
+          `;
+        }
+
+        item.innerHTML = innerContent + handlesHtml;
+
+        const delBtn = item.querySelector('.delete-obj-btn');
+        if (delBtn) {
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteAnnotation(obj.id);
+          });
+        }
+
+        item.addEventListener('mousedown', (e) => {
+          if (e.target.closest('.delete-obj-btn')) return;
+
+          if (e.target.closest('.resize-handle-btn')) {
+            isResizingObject = true;
+            activeDragId = obj.id;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            initialObjW = obj.width;
+            initialObjH = obj.height;
+            dragStartSnapshot = getPageSnapshot(currentEditPage);
+            e.stopPropagation();
+            e.preventDefault();
+            return;
+          }
+
+          const isEditable = e.target.isContentEditable || e.target.closest('[contenteditable="true"]');
+          if (isEditable) {
+            if (selectedAnnotationId !== obj.id) {
+              selectedAnnotationId = obj.id;
+              renderObjectsLayer(currentEditPage);
+            }
+            e.stopPropagation();
+            return;
+          }
+
+          selectedAnnotationId = obj.id;
+          isDraggingObject = true;
+          activeDragId = obj.id;
+          dragStartX = e.clientX;
+          dragStartY = e.clientY;
+          initialObjX = obj.x;
+          initialObjY = obj.y;
+          dragStartSnapshot = getPageSnapshot(currentEditPage);
+
+          renderObjectsLayer(currentEditPage);
+          e.stopPropagation();
+        });
+
+        const editableDiv = item.querySelector('[contenteditable="true"]');
+        if (editableDiv) {
+          editableDiv.addEventListener('focus', () => {
+            textEditingSnapshot = getPageSnapshot(currentEditPage);
+          });
+          editableDiv.addEventListener('blur', () => {
+            const newTxt = editableDiv.innerText.trim();
+            if (obj.text !== newTxt) {
+              if (textEditingSnapshot) {
+                if (!pageEditHistory[currentEditPage]) pageEditHistory[currentEditPage] = { undo: [], redo: [] };
+                pageEditHistory[currentEditPage].undo.push(textEditingSnapshot);
+                pageEditHistory[currentEditPage].redo = [];
+                updateUndoRedoButtonState();
+              }
+              obj.text = newTxt;
+              syncPageCanvasLayer(currentEditPage);
+            }
+            textEditingSnapshot = null;
+          });
+        }
+
+        layer.appendChild(item);
+      });
+    }
+
+    let editEventHandlersInitialized = false;
+    function setupEditEventHandlers() {
+      if (editEventHandlersInitialized) return;
+      editEventHandlersInitialized = true;
+
+      const objLayer = document.getElementById('editObjectsLayer');
+      const drawCanvas = document.getElementById('editDrawCanvas');
+      const wrapper = document.getElementById('editCanvasWrapper');
+
+      if (objLayer) {
+        objLayer.addEventListener('mousedown', (e) => {
+          if (e.target.closest('.annotation-item')) return;
+
+          if (currentEditTool === 'select') {
+            if (selectedAnnotationId !== null) {
+              selectedAnnotationId = null;
+              renderObjectsLayer(currentEditPage);
+            }
+          } else if (['text', 'rect', 'circle', 'note'].includes(currentEditTool)) {
+            const rect = wrapper.getBoundingClientRect();
+            const clickX = Math.round(e.clientX - rect.left);
+            const clickY = Math.round(e.clientY - rect.top);
+
+            let w = 150, h = 40;
+            if (currentEditTool === 'rect') { w = 140; h = 70; }
+            else if (currentEditTool === 'circle') { w = 90; h = 90; }
+            else if (currentEditTool === 'note') { w = 160; h = 100; }
+            else if (currentEditTool === 'text') { w = 180; h = 40; }
+
+            const newObj = {
+              id: 'ann_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+              type: currentEditTool,
+              x: Math.max(0, clickX),
+              y: Math.max(0, clickY),
+              width: w,
+              height: h,
+              color: currentEditColor,
+              strokeWidth: currentEditStrokeWidth,
+              fontSize: 18,
+              text: currentEditTool === 'text' ? 'Teks Baru' : (currentEditTool === 'note' ? 'Catatan Anda...' : '')
+            };
+
+            saveStateBeforeAction(currentEditPage);
+            if (!pageAnnotations[currentEditPage]) pageAnnotations[currentEditPage] = [];
+            pageAnnotations[currentEditPage].push(newObj);
+            selectedAnnotationId = newObj.id;
+            setEditTool('select');
+            renderObjectsLayer(currentEditPage);
+            syncPageCanvasLayer(currentEditPage);
+          }
+        });
+      }
+
+      if (drawCanvas) {
+        drawCanvas.onmousedown = (e) => {
+          if (currentEditTool !== 'pen') return;
+          strokeStartSnapshot = getPageSnapshot(currentEditPage);
+          isDrawing = true;
+          currentStroke = {
+            color: currentEditColor,
+            strokeWidth: currentEditStrokeWidth,
+            points: [{ x: e.offsetX, y: e.offsetY }]
+          };
+          const ctx = drawCanvas.getContext('2d');
+          ctx.strokeStyle = currentEditColor;
+          ctx.lineWidth = currentEditStrokeWidth;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          ctx.moveTo(e.offsetX, e.offsetY);
+        };
+
+        drawCanvas.onmousemove = (e) => {
+          if (!isDrawing || currentEditTool !== 'pen' || !currentStroke) return;
+          currentStroke.points.push({ x: e.offsetX, y: e.offsetY });
+          const ctx = drawCanvas.getContext('2d');
+          ctx.lineTo(e.offsetX, e.offsetY);
+          ctx.stroke();
+        };
+
+        const stopDrawing = () => {
+          if (isDrawing && currentEditTool === 'pen') {
+            isDrawing = false;
+            if (currentStroke && currentStroke.points.length > 1) {
+              if (!pageFreehandStrokes[currentEditPage]) pageFreehandStrokes[currentEditPage] = [];
+              pageFreehandStrokes[currentEditPage].push(currentStroke);
+              if (!pageEditHistory[currentEditPage]) pageEditHistory[currentEditPage] = { undo: [], redo: [] };
+              pageEditHistory[currentEditPage].undo.push(strokeStartSnapshot);
+              pageEditHistory[currentEditPage].redo = [];
+              updateUndoRedoButtonState();
+              syncPageCanvasLayer(currentEditPage);
+            }
+            currentStroke = null;
+          }
+        };
+
+        drawCanvas.onmouseup = stopDrawing;
+        drawCanvas.onmouseleave = stopDrawing;
+      }
+
+      window.addEventListener('mousemove', (e) => {
+        if (isDraggingObject && activeDragId) {
+          const dx = e.clientX - dragStartX;
+          const dy = e.clientY - dragStartY;
+          const list = pageAnnotations[currentEditPage] || [];
+          const obj = list.find(o => o.id === activeDragId);
+          if (obj) {
+            obj.x = initialObjX + dx;
+            obj.y = initialObjY + dy;
+            const el = document.getElementById('dom_obj_' + obj.id);
+            if (el) {
+              el.style.left = obj.x + 'px';
+              el.style.top = obj.y + 'px';
+            }
+          }
+        } else if (isResizingObject && activeDragId) {
+          const dx = e.clientX - dragStartX;
+          const dy = e.clientY - dragStartY;
+          const list = pageAnnotations[currentEditPage] || [];
+          const obj = list.find(o => o.id === activeDragId);
+          if (obj) {
+            obj.width = Math.max(30, initialObjW + dx);
+            obj.height = Math.max(20, initialObjH + dy);
+            const el = document.getElementById('dom_obj_' + obj.id);
+            if (el) {
+              el.style.width = obj.width + 'px';
+              el.style.height = obj.height + 'px';
+            }
+          }
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isDraggingObject) {
+          isDraggingObject = false;
+          const list = pageAnnotations[currentEditPage] || [];
+          const obj = list.find(o => o.id === activeDragId);
+          if (obj && dragStartSnapshot) {
+            if (obj.x !== initialObjX || obj.y !== initialObjY) {
+              if (!pageEditHistory[currentEditPage]) pageEditHistory[currentEditPage] = { undo: [], redo: [] };
+              pageEditHistory[currentEditPage].undo.push(dragStartSnapshot);
+              pageEditHistory[currentEditPage].redo = [];
+              updateUndoRedoButtonState();
+              syncPageCanvasLayer(currentEditPage);
+            }
+          }
+          activeDragId = null;
+          dragStartSnapshot = null;
+        }
+        if (isResizingObject) {
+          isResizingObject = false;
+          const list = pageAnnotations[currentEditPage] || [];
+          const obj = list.find(o => o.id === activeDragId);
+          if (obj && dragStartSnapshot) {
+            if (obj.width !== initialObjW || obj.height !== initialObjH) {
+              if (!pageEditHistory[currentEditPage]) pageEditHistory[currentEditPage] = { undo: [], redo: [] };
+              pageEditHistory[currentEditPage].undo.push(dragStartSnapshot);
+              pageEditHistory[currentEditPage].redo = [];
+              updateUndoRedoButtonState();
+              syncPageCanvasLayer(currentEditPage);
+            }
+          }
+          activeDragId = null;
+          dragStartSnapshot = null;
+        }
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (currentMode !== 'pdf_edit') return;
+
+        const isCtrl = e.ctrlKey || e.metaKey;
+        if (isCtrl && (e.key === 'z' || e.key === 'Z')) {
+          if (e.shiftKey) {
+            redoEditAction();
+          } else {
+            undoEditAction();
+          }
+          e.preventDefault();
+        } else if (isCtrl && (e.key === 'y' || e.key === 'Y')) {
+          redoEditAction();
+          e.preventDefault();
+        } else if (e.key === 'Delete' || e.key === 'Backspace') {
+          const activeEl = document.activeElement;
+          const isTyping = activeEl && (activeEl.isContentEditable || activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+          if (!isTyping && selectedAnnotationId) {
+            deleteAnnotation(selectedAnnotationId);
+            e.preventDefault();
+          }
+        }
+      });
+    }
+
+    function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+      if (!text) return;
+      const paragraphs = String(text).split('\n');
+      let currentY = y;
+      for (const para of paragraphs) {
+        const words = para.split(' ');
+        let line = '';
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + (line ? ' ' : '') + words[n];
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > maxWidth && n > 0) {
+            ctx.fillText(line, x, currentY);
+            line = words[n];
+            currentY += lineHeight;
+          } else {
+            line = testLine;
+          }
+        }
+        if (line) {
+          ctx.fillText(line, x, currentY);
+          currentY += lineHeight;
+        }
+      }
+    }
+
+    function syncPageCanvasLayer(pageNum) {
+      const drawCanvas = document.getElementById('editDrawCanvas');
+      if (!drawCanvas) return;
+
+      const w = drawCanvas.width;
+      const h = drawCanvas.height;
+      if (!w || !h) return;
+
+      const flatCanvas = document.createElement('canvas');
+      flatCanvas.width = w;
+      flatCanvas.height = h;
+      const ctx = flatCanvas.getContext('2d');
+
+      const strokes = pageFreehandStrokes[pageNum] || [];
+      for (const s of strokes) {
+        if (!s.points || s.points.length < 2) continue;
+        ctx.strokeStyle = s.color || '#dc2626';
+        ctx.lineWidth = s.strokeWidth || 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(s.points[0].x, s.points[0].y);
+        for (let i = 1; i < s.points.length; i++) {
+          ctx.lineTo(s.points[i].x, s.points[i].y);
+        }
+        ctx.stroke();
+      }
+
+      const annotations = pageAnnotations[pageNum] || [];
+      for (const obj of annotations) {
+        ctx.save();
+        if (obj.type === 'rect') {
+          ctx.strokeStyle = obj.color || '#dc2626';
+          ctx.lineWidth = obj.strokeWidth || 4;
+          ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+        } else if (obj.type === 'circle') {
+          ctx.strokeStyle = obj.color || '#dc2626';
+          ctx.lineWidth = obj.strokeWidth || 4;
+          ctx.beginPath();
+          const rx = Math.max(1, obj.width / 2);
+          const ry = Math.max(1, obj.height / 2);
+          ctx.ellipse(obj.x + rx, obj.y + ry, rx, ry, 0, 0, 2 * Math.PI);
+          ctx.stroke();
+        } else if (obj.type === 'note') {
           ctx.fillStyle = '#fef08a';
-          ctx.fillRect(lastX, lastY, 160, 80);
+          ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
           ctx.strokeStyle = '#eab308';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(lastX, lastY, 160, 80);
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+
+          ctx.fillStyle = '#fde047';
+          ctx.fillRect(obj.x, obj.y, obj.width, 18);
+          ctx.fillStyle = '#854d0e';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.fillText('CATATAN', obj.x + 6, obj.y + 12);
+
           ctx.fillStyle = '#713f12';
           ctx.font = '12px sans-serif';
-          ctx.fillText(note.substring(0, 40), lastX + 10, lastY + 30);
-          pageCanvasLayers[currentEditPage] = canvas.toDataURL('image/png');
+          drawWrappedText(ctx, obj.text || '', obj.x + 8, obj.y + 34, obj.width - 16, 16);
+        } else if (obj.type === 'text') {
+          ctx.fillStyle = obj.color || '#dc2626';
+          ctx.font = `bold ${obj.fontSize || 18}px sans-serif`;
+          ctx.textBaseline = 'top';
+          drawWrappedText(ctx, obj.text || '', obj.x, obj.y, Math.max(obj.width, 200), (obj.fontSize || 18) * 1.25);
+        } else if (obj.type === 'image' && obj.imageElement) {
+          ctx.drawImage(obj.imageElement, obj.x, obj.y, obj.width, obj.height);
+        }
+        ctx.restore();
+      }
+
+      const hasStrokes = strokes.length > 0;
+      const hasAnns = annotations.length > 0;
+      if (hasStrokes || hasAnns) {
+        pageCanvasLayers[pageNum] = flatCanvas.toDataURL('image/png');
+      } else {
+        delete pageCanvasLayers[pageNum];
+      }
+    }
+
+    async function ensureAllImagesLoaded() {
+      const promises = [];
+      for (const pNum in pageAnnotations) {
+        for (const ann of pageAnnotations[pNum]) {
+          if (ann.type === 'image' && (!ann.imageElement || !ann.imageElement.complete)) {
+            promises.push(new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => { ann.imageElement = img; resolve(); };
+              img.onerror = () => resolve();
+              img.src = ann.imageUrl;
+            }));
+          }
         }
       }
+      await Promise.all(promises);
     }
 
-    function moveEditAction(e, canvas) {
-      if (!isDrawing || currentEditTool !== 'pen') return;
-      const ctx = canvas.getContext('2d');
-      ctx.strokeStyle = currentEditColor;
-      ctx.lineWidth = currentEditStrokeWidth;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.lineTo(e.offsetX, e.offsetY);
-      ctx.stroke();
-      lastX = e.offsetX;
-      lastY = e.offsetY;
-    }
-
-    function endEditAction(canvas) {
-      if (isDrawing) {
-        isDrawing = false;
-        pageCanvasLayers[currentEditPage] = canvas.toDataURL('image/png');
+    function triggerImageAnnotationUpload() {
+      const input = document.getElementById('imageAnnotationInput');
+      if (input) {
+        input.value = '';
+        input.click();
       }
     }
 
-    window.changeEditPage = (dir) => {
-      const tgt = currentEditPage + dir;
-      if (tgt < 1 || tgt > totalEditPages) return;
-      currentEditPage = tgt;
-      renderEditPage(currentEditPage);
-    };
-
-    window.setEditTool = (tool) => {
-      currentEditTool = tool;
-      ['toolPen', 'toolText', 'toolRect', 'toolCircle', 'toolNote'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.className = 'px-3 py-1.5 rounded-xl font-medium bg-white text-slate-700 border flex items-center gap-1.5';
-      });
-      const activeBtn = document.getElementById(
-        tool === 'pen' ? 'toolPen' : (tool === 'text' ? 'toolText' : (tool === 'rect' ? 'toolRect' : (tool === 'circle' ? 'toolCircle' : 'toolNote')))
-      );
-      if (activeBtn) activeBtn.className = 'px-3 py-1.5 rounded-xl font-semibold bg-blue-600 text-white flex items-center gap-1.5';
-    };
-
-    window.setEditColor = (c) => currentEditColor = c;
-    window.setEditStrokeWidth = (w) => currentEditStrokeWidth = parseInt(w);
-    window.clearEditCanvasCurrentPage = () => {
-      const c = document.getElementById('editDrawCanvas');
-      c.getContext('2d').clearRect(0, 0, c.width, c.height);
-      delete pageCanvasLayers[currentEditPage];
-    };
-
-    window.triggerImageAnnotationUpload = () => document.getElementById('imageAnnotationInput').click();
-    document.getElementById('imageAnnotationInput').onchange = (e) => {
-      const f = e.target.files[0];
-      if (!f) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const img = new Image();
-        img.onload = () => {
-          const c = document.getElementById('editDrawCanvas');
-          c.getContext('2d').drawImage(img, 50, 50, 150, (150 * img.height) / img.width);
-          pageCanvasLayers[currentEditPage] = c.toDataURL('image/png');
+    const imgAnnInput = document.getElementById('imageAnnotationInput');
+    if (imgAnnInput) {
+      imgAnnInput.onchange = (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const dataUrl = ev.target.result;
+          const img = new Image();
+          img.onload = () => {
+            saveStateBeforeAction(currentEditPage);
+            const maxW = 200;
+            const w = Math.min(maxW, img.width || maxW);
+            const h = ((w * img.height) / img.width) || 120;
+            const newObj = {
+              id: 'ann_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+              type: 'image',
+              x: 60,
+              y: 60,
+              width: Math.round(w),
+              height: Math.round(h),
+              imageUrl: dataUrl,
+              imageElement: img
+            };
+            if (!pageAnnotations[currentEditPage]) pageAnnotations[currentEditPage] = [];
+            pageAnnotations[currentEditPage].push(newObj);
+            selectedAnnotationId = newObj.id;
+            setEditTool('select');
+            renderObjectsLayer(currentEditPage);
+            syncPageCanvasLayer(currentEditPage);
+          };
+          img.src = dataUrl;
         };
-        img.src = ev.target.result;
+        reader.readAsDataURL(f);
       };
-      reader.readAsDataURL(f);
-    };
+    }
 
     async function saveEditedPdf() {
       showStatus('Menerapkan coretan dan editan ke PDF...');
       try {
+        await ensureAllImagesLoaded();
+        for (let p = 1; p <= totalEditPages; p++) {
+          syncPageCanvasLayer(p);
+        }
+
         const doc = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
         for (let pNum in pageCanvasLayers) {
           const pageIndex = parseInt(pNum) - 1;
@@ -2422,6 +3039,19 @@
         showStatus('Gagal menyimpan: ' + e.message, 'error');
       }
     }
+
+    window.initEditPdfCanvas = initEditPdfCanvas;
+    window.jumpToEditPage = jumpToEditPage;
+    window.changeEditPage = changeEditPage;
+    window.undoEditAction = undoEditAction;
+    window.redoEditAction = redoEditAction;
+    window.setEditTool = setEditTool;
+    window.setEditColor = setEditColor;
+    window.setEditStrokeWidth = setEditStrokeWidth;
+    window.clearEditCanvasCurrentPage = clearEditCanvasCurrentPage;
+    window.deleteAnnotation = deleteAnnotation;
+    window.triggerImageAnnotationUpload = triggerImageAnnotationUpload;
+    window.saveEditedPdf = saveEditedPdf;
 
     // ==========================================
     // 8. SINGLE ACTION DISPATCHER
