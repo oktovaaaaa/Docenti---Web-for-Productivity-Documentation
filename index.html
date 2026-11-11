@@ -236,6 +236,27 @@
       </div>
     </div>
 
+    <!-- Modal Pop-up Konfirmasi Hapus PDF -->
+    <div id="deleteConfirmModal" class="fixed inset-0 z-[10000] hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs transition-opacity" onclick="if(event.target === this) closeDeleteConfirmModal()">
+      <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 transform scale-95 opacity-0 transition-all duration-200 text-center space-y-4">
+        <div class="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-900 text-base">Hapus Dokumen PDF?</h3>
+          <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">Dokumen akan ditutup dan seluruh data sesi penyimpanan browser (IndexedDB) akan dibersihkan.</p>
+        </div>
+        <div class="flex items-center gap-2 pt-2">
+          <button type="button" onclick="closeDeleteConfirmModal()" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer">
+            Batal
+          </button>
+          <button type="button" onclick="confirmDeleteWorkingPdf()" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm cursor-pointer">
+            Ya, Hapus PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Hidden Generic File Inputs -->
     <input type="file" id="genericFileInput" class="hidden">
     <input type="file" id="imageAnnotationInput" accept="image/png,image/jpeg" class="hidden">
@@ -282,11 +303,13 @@
           <span id="totalSizeBadge" class="text-xs text-slate-400">Total: 0 KB</span>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl transition-colors">
-            + Tambah Berkas
+          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="Tambah berkas lainnya">
+            <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            <span>+ Tambah Berkas</span>
           </button>
-          <button id="clearAllBtn" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition-colors">
-            Hapus Semua
+          <button onclick="openDeleteConfirmModal()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Hapus seluruh berkas dari daftar">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <span>Hapus Semua</span>
           </button>
         </div>
       </div>
@@ -353,8 +376,13 @@
           <button id="restoreAllPagesBtn" class="hidden text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl transition-colors">
             Pulihkan Semua Halaman
           </button>
-          <button onclick="resetCurrentWorkingPdf()" class="text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition-colors">
-            Pilih PDF Lain
+          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="Pilih berkas PDF lain untuk dikerjakan">
+            <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            <span>Pilih PDF Lain</span>
+          </button>
+          <button onclick="openDeleteConfirmModal()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <span>Hapus PDF</span>
           </button>
         </div>
       </div>
@@ -391,8 +419,13 @@
           <p class="text-xs text-slate-400">Tambahkan tulisan, bentuk kotak, catatan memo, atau gambar.</p>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="resetCurrentWorkingPdf()" class="text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors">
-            Pilih PDF Lain
+          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="Pilih berkas PDF lain untuk dikerjakan">
+            <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            <span>Pilih PDF Lain</span>
+          </button>
+          <button onclick="openDeleteConfirmModal()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <span>Hapus PDF</span>
           </button>
         </div>
       </div>
@@ -515,9 +548,16 @@
           <h2 id="singleActionTitle" class="font-bold text-slate-900 text-base sm:text-lg">Pengaturan Dokumen PDF</h2>
           <p id="singleActionFileName" class="text-xs text-slate-400 font-medium">nama_file.pdf</p>
         </div>
-        <button onclick="resetCurrentWorkingPdf()" class="text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors">
-          Pilih PDF Lain
-        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="Pilih berkas PDF lain untuk dikerjakan">
+            <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            <span>Pilih PDF Lain</span>
+          </button>
+          <button onclick="openDeleteConfirmModal()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <span>Hapus PDF</span>
+          </button>
+        </div>
       </div>
 
       <!-- 1. Form Split PDF -->
@@ -1000,9 +1040,16 @@
           <h2 class="font-bold text-slate-900 text-base sm:text-lg">Tanda Tangan Elektronik (e-Sign)</h2>
           <p class="text-xs text-slate-400">Buat tanda tangan dan atur posisinya secara presisi pada halaman PDF.</p>
         </div>
-        <button onclick="resetCurrentWorkingPdf()" class="text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors">
-          Pilih PDF Lain
-        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="Pilih berkas PDF lain untuk dikerjakan">
+            <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            <span>Pilih PDF Lain</span>
+          </button>
+          <button onclick="openDeleteConfirmModal()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <span>Hapus PDF</span>
+          </button>
+        </div>
       </div>
 
       <!-- Signature Creator Card -->
@@ -1516,6 +1563,55 @@
       showHeroStage();
     }
 
+    function openDeleteConfirmModal() {
+      const modal = document.getElementById('deleteConfirmModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        const dialog = modal.querySelector('div');
+        if (dialog) {
+          dialog.classList.remove('scale-95', 'opacity-0');
+          dialog.classList.add('scale-100', 'opacity-100');
+        }
+      });
+    }
+
+    function closeDeleteConfirmModal() {
+      const modal = document.getElementById('deleteConfirmModal');
+      if (!modal) return;
+      const dialog = modal.querySelector('div');
+      if (dialog) {
+        dialog.classList.remove('scale-100', 'opacity-100');
+        dialog.classList.add('scale-95', 'opacity-0');
+      }
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 150);
+    }
+
+    async function confirmDeleteWorkingPdf() {
+      closeDeleteConfirmModal();
+      if (typeof clearWorkingSession === 'function') {
+        await clearWorkingSession();
+      }
+      resetCurrentWorkingPdf();
+      pdfFiles = [];
+      wordFiles = [];
+      convertPdfFiles = [];
+      showHeroStage();
+      showStatus('Dokumen dan memori penyimpanan sesi berhasil dihapus!', 'success');
+    }
+
+    // Keyboard shortcut ESC to close delete confirmation modal
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('deleteConfirmModal');
+        if (modal && !modal.classList.contains('hidden')) {
+          closeDeleteConfirmModal();
+        }
+      }
+    });
+
     // ==========================================
     // 3. FILE INGESTION CONTROLLERS
     // ==========================================
@@ -1892,12 +1988,12 @@
       renderList();
     };
 
-    document.getElementById('clearAllBtn').onclick = () => {
-      if (currentMode === 'pdf_merge') pdfFiles = [];
-      else if (currentMode === 'word_merge') wordFiles = [];
-      else convertPdfFiles = [];
-      renderList();
-    };
+    const clearBtnEl = document.getElementById('clearAllBtn');
+    if (clearBtnEl) {
+      clearBtnEl.onclick = () => {
+        openDeleteConfirmModal();
+      };
+    }
 
     document.getElementById('mergeBtn').onclick = async () => {
       const files = currentMode === 'pdf_merge' ? pdfFiles : wordFiles;
@@ -2305,26 +2401,46 @@
             const totalW = 8600;
             const colW = Math.round(totalW / Math.max(numCols, 1));
 
+            const colWidths = [];
+            if (numCols === 2) {
+              const len0 = Math.max(...el.rows.map(r => (r[0] ? r[0].text.length : 0)));
+              const len1 = Math.max(...el.rows.map(r => (r[1] ? r[1].text.length : 0)));
+              if (len0 > len1 * 1.8) {
+                colWidths.push(Math.round(totalW * 0.65), Math.round(totalW * 0.35));
+              } else if (len1 > len0 * 1.8) {
+                colWidths.push(Math.round(totalW * 0.38), Math.round(totalW * 0.62));
+              } else {
+                colWidths.push(Math.round(totalW * 0.48), Math.round(totalW * 0.52));
+              }
+            } else {
+              for (let c = 0; c < numCols; c++) {
+                colWidths.push(colW);
+              }
+            }
+
             bodyXml += '<w:tbl>' +
               '<w:tblPr>' +
               '<w:tblW w:w="' + totalW + '" w:type="dxa"/>' +
               '<w:jc w:val="center"/>' +
               '<w:tblBorders>' +
-              '<w:top w:val="single" w:sz="6" w:space="0" w:color="CBD5E1"/>' +
-              '<w:left w:val="single" w:sz="6" w:space="0" w:color="CBD5E1"/>' +
-              '<w:bottom w:val="single" w:sz="6" w:space="0" w:color="CBD5E1"/>' +
-              '<w:right w:val="single" w:sz="6" w:space="0" w:color="CBD5E1"/>' +
-              '<w:insideH w:val="single" w:sz="6" w:space="0" w:color="E2E8F0"/>' +
-              '<w:insideV w:val="single" w:sz="6" w:space="0" w:color="E2E8F0"/>' +
+              '<w:top w:val="single" w:sz="6" w:space="0" w:color="94A3B8"/>' +
+              '<w:left w:val="single" w:sz="6" w:space="0" w:color="94A3B8"/>' +
+              '<w:bottom w:val="single" w:sz="6" w:space="0" w:color="94A3B8"/>' +
+              '<w:right w:val="single" w:sz="6" w:space="0" w:color="94A3B8"/>' +
+              '<w:insideH w:val="single" w:sz="6" w:space="0" w:color="CBD5E1"/>' +
+              '<w:insideV w:val="single" w:sz="6" w:space="0" w:color="CBD5E1"/>' +
               '</w:tblBorders>' +
               '</w:tblPr>';
 
             el.rows.forEach((row, rIdx) => {
-              bodyXml += '<w:tr>';
-              row.forEach(cell => {
-                const isHeader = (rIdx === 0);
+              const isHeader = (rIdx === 0);
+              const trPr = isHeader ? '<w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>' : '<w:trPr><w:cantSplit/></w:trPr>';
+              bodyXml += '<w:tr>' + trPr;
+              row.forEach((cell, cIdx) => {
+                const tcW = colWidths[cIdx] || colW;
+                const shdXml = isHeader ? '<w:shd w:val="clear" w:color="auto" w:fill="F1F5F9"/>' : '';
                 bodyXml += '  <w:tc>' +
-                  '<w:tcPr><w:tcW w:w="' + colW + '" w:type="dxa"/><w:tcMar><w:top w:w="80" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tcMar></w:tcPr>' +
+                  '<w:tcPr><w:tcW w:w="' + tcW + '" w:type="dxa"/>' + shdXml + '<w:tcMar><w:top w:w="100" w:type="dxa"/><w:bottom w:w="100" w:type="dxa"/><w:left w:w="140" w:type="dxa"/><w:right w:w="140" w:type="dxa"/></w:tcMar></w:tcPr>' +
                   '<w:p><w:pPr><w:jc w:val="' + (isHeader ? 'center' : 'left') + '"/></w:pPr>' +
                   '<w:r><w:rPr>' + (cell.isBold || isHeader ? '<w:b/>' : '') + '<w:sz w:val="21"/></w:rPr>' +
                   '<w:t xml:space="preserve">' + sanitizeXmlAndDecodeLigatures(cell.text) + '</w:t>' +
@@ -2534,51 +2650,118 @@
             continue;
           }
 
-          // Check if this line is part of a real table
-          // A table row must have at least 2 distinct segments with wide separation (> 24px)
-          const segments = [];
-          let curSeg = { text: '', x: line.items[0].transform[4], items: [] };
-
+          // Check if single text items contain internal wide gaps (3 or more spaces or tabs)
+          const refinedItems = [];
           for (let it of line.items) {
-            const itX = it.transform[4];
-            if (curSeg.items.length > 0) {
-              const lastIt = curSeg.items[curSeg.items.length - 1];
-              const gap = itX - (lastIt.transform[4] + lastIt.width);
-              if (gap > 24) {
-                segments.push(curSeg);
-                curSeg = { text: '', x: itX, items: [] };
+            if (/\s{3,}|\t/.test(it.str)) {
+              const parts = it.str.split(/\s{3,}|\t/).filter(p => p.trim().length > 0);
+              if (parts.length >= 2) {
+                const totalChars = Math.max(1, it.str.length);
+                const itW = it.width || (totalChars * (it.height || 11) * 0.55);
+                let charOffset = 0;
+                parts.forEach((part) => {
+                  const partIdx = it.str.indexOf(part, charOffset);
+                  const approxX = it.transform[4] + (partIdx / totalChars) * itW;
+                  refinedItems.push({
+                    str: part,
+                    transform: [it.transform[0], it.transform[1], it.transform[2], it.transform[3], approxX, it.transform[5]],
+                    width: (part.length / totalChars) * itW,
+                    height: it.height,
+                    fontName: it.fontName
+                  });
+                  charOffset = partIdx + part.length;
+                });
+                continue;
               }
             }
-            curSeg.text += (curSeg.text ? ' ' : '') + it.str.trim();
-            curSeg.items.push(it);
+            refinedItems.push(it);
           }
-          if (curSeg.text) segments.push(curSeg);
 
-          // Table requires >= 2 columns and cannot look like code
+          // Segments detection (column separation)
+          const segments = [];
+          if (refinedItems.length > 0) {
+            let curSeg = { text: '', x: refinedItems[0].transform[4], items: [] };
+            for (let it of refinedItems) {
+              const itX = it.transform[4];
+              if (curSeg.items.length > 0) {
+                const lastIt = curSeg.items[curSeg.items.length - 1];
+                const gap = itX - (lastIt.transform[4] + (lastIt.width || 0));
+                if (gap > 18) {
+                  segments.push(curSeg);
+                  curSeg = { text: '', x: itX, items: [] };
+                }
+              }
+              curSeg.text += (curSeg.text ? ' ' : '') + it.str.trim();
+              curSeg.items.push(it);
+            }
+            if (curSeg.text) segments.push(curSeg);
+          }
+
+          const lastEl = pageEls[pageEls.length - 1];
+          const isTableActive = lastEl && lastEl.type === 'table';
+
+          // Table continuation check: if a table is currently active and this line has only 1 segment
+          // that aligns with an existing column (e.g. wrapped multiline sentence in a cell)
+          if (isTableActive && segments.length === 1 && !isLineOfCode(lineText, false)) {
+            const seg = segments[0];
+            const deltaY = lastEl.lastY ? (lastEl.lastY - line.y) : (lastEl.y - line.y);
+            const lastRow = lastEl.rows[lastEl.rows.length - 1];
+
+            if (deltaY > 0 && deltaY < 24 && lastRow && lastRow.length >= 2) {
+              let matchedColIdx = -1;
+              let minDiff = 9999;
+              lastRow.forEach((c, cIdx) => {
+                const diff = Math.abs(seg.x - c.x);
+                if (diff < minDiff) {
+                  minDiff = diff;
+                  matchedColIdx = cIdx;
+                }
+              });
+
+              if (matchedColIdx >= 1 || minDiff < 45) {
+                if (matchedColIdx < 0) matchedColIdx = lastRow.length - 1;
+                lastRow[matchedColIdx].text += ' ' + seg.text;
+                lastEl.lastY = line.y;
+                continue;
+              }
+            }
+          }
+
+          // Table row creation or append
           if (segments.length >= 2 && !isLineOfCode(lineText, false)) {
-            const lastEl = pageEls[pageEls.length - 1];
-            if (lastEl && lastEl.type === 'table') {
-              lastEl.rows.push(segments.map(s => ({
-                text: s.text,
-                isBold: s.items.some(it => /bold/i.test(it.fontName || '') || it.height >= 13),
-                x: s.x
-              })));
+            const rowCells = segments.map(s => ({
+              text: s.text,
+              isBold: s.items.some(it => /bold/i.test(it.fontName || '') || it.height >= 13),
+              x: s.x
+            }));
+
+            if (isTableActive) {
+              const deltaY = lastEl.lastY ? (lastEl.lastY - line.y) : (lastEl.y - line.y);
+              const lastRow = lastEl.rows[lastEl.rows.length - 1];
+              const startsWithCapital = /^[A-Z0-9"\(\[\-]/.test(segments[0].text);
+
+              // If deltaY is very tight and first column looks like a wrapped continuation
+              if (deltaY > 0 && deltaY < 14 && lastRow && lastRow.length === rowCells.length && !startsWithCapital) {
+                rowCells.forEach((c, idx) => {
+                  lastRow[idx].text += ' ' + c.text;
+                });
+              } else {
+                lastEl.rows.push(rowCells);
+              }
+              lastEl.lastY = line.y;
             } else {
               pageEls.push({
                 type: 'table',
                 y: line.y,
-                rows: [segments.map(s => ({
-                  text: s.text,
-                  isBold: s.items.some(it => /bold/i.test(it.fontName || '') || it.height >= 13),
-                  x: s.x
-                }))]
+                lastY: line.y,
+                rows: [rowCells]
               });
             }
           } else {
             // Standard paragraph
-            const minX = line.items[0].transform[4];
-            const lastIt = line.items[line.items.length - 1];
-            const maxX = lastIt.transform[4] + lastIt.width;
+            const minX = refinedItems[0] ? refinedItems[0].transform[4] : 50;
+            const lastIt = refinedItems[refinedItems.length - 1] || { transform: [0,0,0,0,50,0], width: 0 };
+            const maxX = lastIt.transform[4] + (lastIt.width || 0);
             const centerX = (minX + maxX) / 2;
             const isCentered = Math.abs(centerX - (pageWidth / 2)) < 35 && (maxX - minX < pageWidth * 0.7);
 
