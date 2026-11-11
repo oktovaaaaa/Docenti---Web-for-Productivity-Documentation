@@ -1361,6 +1361,9 @@
       } else {
         renderActiveToolWorkspace();
       }
+      if (currentWorkingPdfBytes && typeof saveWorkingSession === 'function') {
+        saveWorkingSession();
+      }
     }
 
     function showHeroStage() {
@@ -1509,6 +1512,7 @@
       if (typeof pageThumbCache !== 'undefined') pageThumbCache.clear();
       const splitGrid = document.getElementById('splitPagesThumbnailGrid');
       if (splitGrid) splitGrid.innerHTML = '';
+      if (typeof clearWorkingSession === 'function') clearWorkingSession();
       showHeroStage();
     }
 
@@ -1603,6 +1607,116 @@
       return currentWorkingPdfBytes.slice(0);
     }
 
+    // ==========================================
+    // 2.5 CLIENT-SIDE SESSION PERSISTENCE (INDEXEDDB)
+    // ==========================================
+    const DOCENTI_DB_NAME = 'docenti_offline_db';
+    const DOCENTI_DB_VERSION = 1;
+    const DOCENTI_STORE_NAME = 'working_session';
+
+    function getSessionDB() {
+      return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+          return reject(new Error('IndexedDB tidak didukung pada browser ini'));
+        }
+        const req = indexedDB.open(DOCENTI_DB_NAME, DOCENTI_DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(DOCENTI_STORE_NAME)) {
+            db.createObjectStore(DOCENTI_STORE_NAME, { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = (e) => resolve(e.target.result);
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    let saveSessionDebounceTimer = null;
+    function debouncedSaveWorkingSession(delay = 400) {
+      if (saveSessionDebounceTimer) clearTimeout(saveSessionDebounceTimer);
+      saveSessionDebounceTimer = setTimeout(() => {
+        saveWorkingSession();
+      }, delay);
+    }
+
+    async function saveWorkingSession() {
+      try {
+        if (!currentWorkingPdfBytes || currentWorkingPdfBytes.length === 0) return;
+        const db = await getSessionDB();
+        const tx = db.transaction(DOCENTI_STORE_NAME, 'readwrite');
+        const store = tx.objectStore(DOCENTI_STORE_NAME);
+
+        let wmSettings = null;
+        if (currentMode === 'pdf_watermark') {
+          wmSettings = {
+            type: currentWatermarkType,
+            text: document.getElementById('watermarkText')?.value || 'CONFIDENTIAL',
+            size: document.getElementById('watermarkSize')?.value || '44',
+            color: document.getElementById('watermarkColor')?.value || 'gray',
+            angle: document.getElementById('watermarkAngle')?.value || '0',
+            opacity: document.getElementById('watermarkOpacity')?.value || '25',
+            margin: document.getElementById('watermarkMargin')?.value || '40',
+            imageScale: document.getElementById('watermarkImageScale')?.value || '40',
+            pos: currentWatermarkPosition || 'center',
+            posRatio: (typeof wmPosRatio !== 'undefined' && wmPosRatio) ? { x: wmPosRatio.x, y: wmPosRatio.y } : { x: 0.5, y: 0.5 },
+            imageBytes: uploadedWatermarkImageBytes || null,
+            imageDim: uploadedWatermarkImageDim || null
+          };
+        }
+
+        const sessionRecord = {
+          id: 'active_session',
+          name: currentWorkingPdf ? currentWorkingPdf.name : 'dokumen.pdf',
+          type: currentWorkingPdf ? currentWorkingPdf.type : 'application/pdf',
+          size: currentWorkingPdf ? currentWorkingPdf.size : currentWorkingPdfBytes.length,
+          lastModified: (currentWorkingPdf && currentWorkingPdf.lastModified) ? currentWorkingPdf.lastModified : Date.now(),
+          mode: currentMode,
+          bytes: currentWorkingPdfBytes,
+          wmSettings: wmSettings,
+          savedAt: Date.now()
+        };
+
+        await new Promise((resolve, reject) => {
+          const req = store.put(sessionRecord);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      } catch (err) {
+        console.warn('Gagal menyimpan sesi dokumen ke IndexedDB:', err);
+      }
+    }
+
+    async function clearWorkingSession() {
+      try {
+        const db = await getSessionDB();
+        const tx = db.transaction(DOCENTI_STORE_NAME, 'readwrite');
+        const store = tx.objectStore(DOCENTI_STORE_NAME);
+        await new Promise((resolve, reject) => {
+          const req = store.delete('active_session');
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      } catch (err) {
+        console.warn('Gagal menghapus sesi dokumen dari IndexedDB:', err);
+      }
+    }
+
+    async function restoreWorkingSession() {
+      try {
+        const db = await getSessionDB();
+        const tx = db.transaction(DOCENTI_STORE_NAME, 'readonly');
+        const store = tx.objectStore(DOCENTI_STORE_NAME);
+        return await new Promise((resolve, reject) => {
+          const req = store.get('active_session');
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => reject(req.error);
+        });
+      } catch (err) {
+        console.warn('Gagal memulihkan sesi dokumen dari IndexedDB:', err);
+        return null;
+      }
+    }
+
     async function loadSingleWorkingPdf(file) {
       currentWorkingPdf = file;
       showStatus('Memuat berkas "' + file.name + '"...');
@@ -1645,6 +1759,7 @@
 
         hideStatus();
         renderActiveToolWorkspace();
+        if (typeof saveWorkingSession === 'function') saveWorkingSession();
       } catch (err) {
         console.error(err);
         showStatus('Gagal membaca PDF: ' + (err.message || 'Periksa apakah berkas valid'), 'error');
@@ -4382,6 +4497,10 @@
           statusEl.textContent = 'Posisi: ' + (descEl ? descEl.textContent : 'Tengah Halaman') + ' (Aman dalam margin)';
         }
       }
+
+      if (typeof debouncedSaveWorkingSession === 'function') {
+        debouncedSaveWorkingSession();
+      }
     };
 
     function initWatermarkDraggableBox() {
@@ -4455,6 +4574,7 @@
         if (!wmIsDragging) return;
         wmIsDragging = false;
         box.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-500/20');
+        if (typeof saveWorkingSession === 'function') saveWorkingSession();
       }
 
       box.onmousedown = (e) => onStart(e.clientX, e.clientY, e);
@@ -5562,7 +5682,87 @@
       }, 300);
     }
 
-    function init() {
+    async function init() {
+      try {
+        const saved = await restoreWorkingSession();
+        if (saved && saved.bytes && saved.bytes.length > 0) {
+          const restoredFile = new File([saved.bytes], saved.name || 'dokumen.pdf', {
+            type: saved.type || 'application/pdf',
+            lastModified: saved.lastModified || Date.now()
+          });
+
+          const targetMode = saved.mode && TOOLS[saved.mode] ? saved.mode : 'pdf_watermark';
+          selectTool(targetMode);
+
+          if (saved.wmSettings && targetMode === 'pdf_watermark') {
+            const wm = saved.wmSettings;
+            if (wm.type && typeof setWatermarkType === 'function') {
+              setWatermarkType(wm.type);
+            }
+            if (wm.text && document.getElementById('watermarkText')) {
+              document.getElementById('watermarkText').value = wm.text;
+            }
+            if (wm.size && document.getElementById('watermarkSize')) {
+              document.getElementById('watermarkSize').value = wm.size;
+            }
+            if (wm.color && document.getElementById('watermarkColor')) {
+              document.getElementById('watermarkColor').value = wm.color;
+            }
+            if (wm.angle !== undefined && typeof setWatermarkAnglePreset === 'function') {
+              setWatermarkAnglePreset(parseInt(wm.angle) || 0);
+            }
+            if (wm.opacity && document.getElementById('watermarkOpacity')) {
+              document.getElementById('watermarkOpacity').value = wm.opacity;
+              const opEl = document.getElementById('wmOpacityVal');
+              if (opEl) opEl.textContent = wm.opacity + '%';
+            }
+            if (wm.margin && document.getElementById('watermarkMargin')) {
+              document.getElementById('watermarkMargin').value = wm.margin;
+              const mEl = document.getElementById('wmMarginDisplayVal');
+              if (mEl) mEl.textContent = wm.margin;
+            }
+            if (wm.imageScale && document.getElementById('watermarkImageScale')) {
+              document.getElementById('watermarkImageScale').value = wm.imageScale;
+              const sEl = document.getElementById('wmImageScaleVal');
+              if (sEl) sEl.textContent = wm.imageScale + '%';
+            }
+            if (wm.pos === 'custom') {
+              currentWatermarkPosition = 'custom';
+              if (wm.posRatio && typeof wmPosRatio !== 'undefined') {
+                wmPosRatio = { x: wm.posRatio.x, y: wm.posRatio.y };
+              }
+            } else if (wm.pos && typeof selectWatermarkPosition === 'function') {
+              selectWatermarkPosition(wm.pos);
+            }
+            if (wm.imageBytes) {
+              uploadedWatermarkImageBytes = wm.imageBytes;
+              uploadedWatermarkImageDim = wm.imageDim || null;
+              try {
+                const blob = new Blob([wm.imageBytes], { type: 'image/png' });
+                const imgUrl = URL.createObjectURL(blob);
+                const thumb = document.getElementById('wmImageThumbnail');
+                const icon = document.getElementById('wmImageIconPlaceholder');
+                if (thumb) {
+                  thumb.src = imgUrl;
+                  thumb.classList.remove('hidden');
+                }
+                if (icon) icon.classList.add('hidden');
+                const liveImg = document.getElementById('wmLiveImg');
+                if (liveImg) liveImg.src = imgUrl;
+              } catch (e) {
+                console.warn('Gagal memulihkan gambar tanda air:', e);
+              }
+            }
+          }
+
+          await loadSingleWorkingPdf(restoredFile);
+          showStatus('Sesi dokumen sebelumnya berhasil dipulihkan otomatis!', 'success');
+          return;
+        }
+      } catch (err) {
+        console.warn('Gagal memulihkan sesi kerja:', err);
+      }
+
       selectTool('pdf_merge');
     }
 
