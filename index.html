@@ -668,117 +668,193 @@
         </div>
       </div>
 
-      <!-- 5. Form Tanda Air (Watermark) -->
-      <div id="formWatermark" class="space-y-5 text-xs hidden">
-        <!-- Watermark Type Selector (Text vs Image) -->
-        <div class="flex items-center gap-2">
-          <span class="font-bold text-slate-700">Tipe Tanda Air:</span>
-          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
-            <button type="button" onclick="setWatermarkType('text')" id="wmTypeTextBtn" class="px-3.5 py-1.5 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-              <span>Teks</span>
-            </button>
-            <button type="button" onclick="setWatermarkType('image')" id="wmTypeImageBtn" class="px-3.5 py-1.5 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              <span>Gambar / Logo</span>
-            </button>
-          </div>
-        </div>
+      <!-- 5. Form Tanda Air (Watermark) dengan Pratinjau Interaktif Live & Drag Bebas Margin -->
+      <div id="formWatermark" class="text-xs hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          <!-- Kolom Kiri: Kontrol Pengaturan Minimalis (5 Kolom) -->
+          <div class="lg:col-span-5 space-y-4">
+            
+            <!-- Tab Switcher: Teks / Logo -->
+            <div class="p-1 bg-slate-100 rounded-xl border border-slate-200 flex items-center gap-1">
+              <button type="button" onclick="setWatermarkType('text')" id="wmTypeTextBtn" class="flex-1 py-2 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                <span>Teks</span>
+              </button>
+              <button type="button" onclick="setWatermarkType('image')" id="wmTypeImageBtn" class="flex-1 py-2 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Gambar / Logo</span>
+              </button>
+            </div>
 
-        <!-- Section A: Text Watermark Controls -->
-        <div id="wmTextControls" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="sm:col-span-2">
-            <label class="block font-bold text-slate-700 mb-1">Teks Tanda Air:</label>
-            <input type="text" id="watermarkText" value="CONFIDENTIAL" placeholder="Contoh: CONFIDENTIAL, DRAF, RAHASIA" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none">
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Ukuran Font:</label>
-            <input type="number" id="watermarkSize" value="48" min="12" max="140" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none">
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Warna Teks:</label>
-            <select id="watermarkColor" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none cursor-pointer">
-              <option value="gray">Abu-abu (Standar)</option>
-              <option value="red">Merah Peringatan</option>
-              <option value="blue">Biru Elegan</option>
-              <option value="black">Hitam</option>
-            </select>
-          </div>
-        </div>
+            <!-- Kontrol Khusus Teks -->
+            <div id="wmTextControls" class="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Teks Tanda Air:</label>
+                <input type="text" id="watermarkText" value="CONFIDENTIAL" oninput="updateWatermarkLivePreview()" placeholder="Contoh: CONFIDENTIAL, DRAF, RAHASIA" class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none transition-all">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Ukuran Font:</label>
+                  <input type="number" id="watermarkSize" value="44" min="12" max="140" oninput="updateWatermarkLivePreview()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Warna Teks:</label>
+                  <select id="watermarkColor" onchange="updateWatermarkLivePreview()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none cursor-pointer">
+                    <option value="gray">Abu-abu</option>
+                    <option value="red">Merah</option>
+                    <option value="blue">Biru</option>
+                    <option value="black">Hitam</option>
+                  </select>
+                </div>
+              </div>
+            </div>
 
-        <!-- Section B: Image Watermark Controls -->
-        <div id="wmImageControls" class="space-y-3 hidden">
-          <div class="p-4 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 overflow-hidden">
-                <img id="wmImageThumbnail" class="w-full h-full object-contain hidden" alt="Thumbnail" />
-                <svg id="wmImageIconPlaceholder" class="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <!-- Kontrol Khusus Gambar -->
+            <div id="wmImageControls" class="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl hidden">
+              <div class="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 overflow-hidden">
+                    <img id="wmImageThumbnail" class="w-full h-full object-contain hidden" alt="Thumbnail" />
+                    <svg id="wmImageIconPlaceholder" class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </div>
+                  <div class="truncate">
+                    <div class="font-bold text-slate-800 text-xs truncate" id="wmImageNameLabel">Belum ada logo</div>
+                    <div class="text-[10px] text-slate-400">PNG / JPG / WebP</div>
+                  </div>
+                </div>
+                <button type="button" onclick="document.getElementById('watermarkImageFileInput').click()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg font-bold text-slate-700 text-xs transition-colors shrink-0 cursor-pointer">
+                  Pilih Logo
+                </button>
+                <input type="file" id="watermarkImageFileInput" accept="image/png,image/jpeg,image/webp" class="hidden">
               </div>
               <div>
-                <div class="font-bold text-slate-800 text-xs" id="wmImageNameLabel">Belum ada gambar yang dipilih</div>
-                <div class="text-[11px] text-slate-400">Mendukung format PNG transparan, JPG, WebP</div>
+                <div class="flex justify-between items-center mb-1">
+                  <label class="font-bold text-slate-700">Skala Logo (%):</label>
+                  <span id="wmImageScaleVal" class="text-blue-600 font-bold">40%</span>
+                </div>
+                <input type="range" id="watermarkImageScale" value="40" min="10" max="100" oninput="document.getElementById('wmImageScaleVal').textContent = this.value + '%'; updateWatermarkLivePreview()" class="w-full accent-blue-600">
               </div>
             </div>
-            <button type="button" onclick="document.getElementById('watermarkImageFileInput').click()" class="px-4 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition-colors shadow-xs cursor-pointer">
-              Pilih Berkas Gambar
-            </button>
-            <input type="file" id="watermarkImageFileInput" accept="image/png,image/jpeg,image/webp" class="hidden">
-          </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Skala Ukuran Gambar (%): <span id="wmImageScaleVal" class="text-blue-600 font-bold">40%</span></label>
-              <input type="range" id="watermarkImageScale" value="40" min="10" max="100" oninput="document.getElementById('wmImageScaleVal').textContent = this.value + '%'" class="w-full accent-blue-600">
-            </div>
-          </div>
-        </div>
-
-        <!-- Section C: Placement / Position & Rotation (Shared) -->
-        <div class="pt-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <!-- 3x3 Position Grid Selector -->
-          <div>
-            <label class="block font-bold text-slate-700 mb-2">Posisi / Letak Tanda Air:</label>
-            <div class="inline-grid grid-cols-3 gap-1.5 p-2 bg-slate-100 border border-slate-200 rounded-2xl w-48 h-48">
-              <button type="button" onclick="selectWatermarkPosition('top-left')" data-wm-pos="top-left" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kiri Atas">KA</button>
-              <button type="button" onclick="selectWatermarkPosition('top-center')" data-wm-pos="top-center" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Tengah Atas">TA</button>
-              <button type="button" onclick="selectWatermarkPosition('top-right')" data-wm-pos="top-right" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kanan Atas">KnA</button>
-
-              <button type="button" onclick="selectWatermarkPosition('center-left')" data-wm-pos="center-left" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kiri Tengah">KT</button>
-              <button type="button" onclick="selectWatermarkPosition('center')" data-wm-pos="center" class="wm-pos-btn rounded-xl border-2 border-blue-600 bg-blue-600 text-white shadow-xs text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer" title="Tengah">Tengah</button>
-              <button type="button" onclick="selectWatermarkPosition('center-right')" data-wm-pos="center-right" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kanan Tengah">KnT</button>
-
-              <button type="button" onclick="selectWatermarkPosition('bottom-left')" data-wm-pos="bottom-left" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kiri Bawah">KB</button>
-              <button type="button" onclick="selectWatermarkPosition('bottom-center')" data-wm-pos="bottom-center" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Tengah Bawah">TB</button>
-              <button type="button" onclick="selectWatermarkPosition('bottom-right')" data-wm-pos="bottom-right" class="wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kanan Bawah">KnB</button>
-            </div>
-            <p class="text-[11px] text-slate-500 font-medium mt-1.5" id="wmPosDescription">Posisi aktif: Tengah Halaman</p>
-          </div>
-
-          <!-- Rotation, Opacity, and Margin -->
-          <div class="space-y-3.5">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Sudut Rotasi:</label>
-              <select id="watermarkAngle" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none cursor-pointer">
-                <option value="45">Diagonal Miring (45 Derajat)</option>
-                <option value="0">Horizontal Lurus (0 Derajat)</option>
-                <option value="-45">Diagonal Terbalik (-45 Derajat)</option>
-                <option value="90">Vertikal Tegak (90 Derajat)</option>
-              </select>
-            </div>
-
-            <div>
-              <div class="flex justify-between items-center mb-1">
-                <label class="font-bold text-slate-700">Transparansi / Opasitas:</label>
-                <span id="wmOpacityVal" class="text-blue-600 font-bold">25%</span>
+            <!-- Tampilan & Efek (Opasitas, Sudut Rotasi, Margin Batas Tepi) -->
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <label class="font-bold text-slate-700">Transparansi:</label>
+                    <span id="wmOpacityVal" class="text-blue-600 font-bold">25%</span>
+                  </div>
+                  <input type="range" id="watermarkOpacity" value="25" min="5" max="95" oninput="document.getElementById('wmOpacityVal').textContent = this.value + '%'; updateWatermarkLivePreview()" class="w-full accent-blue-600">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Sudut Rotasi:</label>
+                  <select id="watermarkAngle" onchange="updateWatermarkLivePreview()" class="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none cursor-pointer">
+                    <option value="45">Miring (45°)</option>
+                    <option value="0">Lurus (0°)</option>
+                    <option value="-45">Terbalik (-45°)</option>
+                    <option value="90">Tegak (90°)</option>
+                  </select>
+                </div>
               </div>
-              <input type="range" id="watermarkOpacity" value="25" min="5" max="95" oninput="document.getElementById('wmOpacityVal').textContent = this.value + '%'" class="w-full accent-blue-600">
+
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <label class="font-bold text-slate-700">Batas Jarak Tepi (Margin):</label>
+                  <span class="text-slate-500 font-medium text-[11px]"><strong id="wmMarginDisplayVal">40</strong> px</span>
+                </div>
+                <input type="number" id="watermarkMargin" value="40" min="5" max="150" oninput="document.getElementById('wmMarginDisplayVal').textContent = this.value; updateWatermarkLivePreview()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                <p class="text-[10px] text-slate-400 mt-1">Watermark dibatasi secara aman agar tidak keluar dari garis margin ini.</p>
+              </div>
             </div>
 
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Jarak Tepi (Margin px):</label>
-              <input type="number" id="watermarkMargin" value="40" min="10" max="150" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none">
+            <!-- Posisi Cepat (3x3 Preset Minimalis) -->
+            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-0.5">Preset Posisi Cepat:</label>
+                <div class="text-[11px] text-slate-500 font-medium" id="wmPosDescription">Tengah Halaman</div>
+                <div class="text-[10px] text-blue-600 font-bold mt-0.5">Bisa ditarik manual di layar kanan</div>
+              </div>
+              <div class="grid grid-cols-3 gap-1 p-1 bg-white border border-slate-200 rounded-xl w-32 h-32 shrink-0">
+                <button type="button" onclick="selectWatermarkPosition('top-left')" data-wm-pos="top-left" class="wm-pos-btn rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 text-[9px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kiri Atas">KA</button>
+                <button type="button" onclick="selectWatermarkPosition('top-center')" data-wm-pos="top-center" class="wm-pos-btn rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 text-[9px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Tengah Atas">TA</button>
+                <button type="button" onclick="selectWatermarkPosition('top-right')" data-wm-pos="top-right" class="wm-pos-btn rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 text-[9px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kanan Atas">KnA</button>
+
+                <button type="button" onclick="selectWatermarkPosition('center-left')" data-wm-pos="center-left" class="wm-pos-btn rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 text-[9px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kiri Tengah">KT</button>
+                <button type="button" onclick="selectWatermarkPosition('center')" data-wm-pos="center" class="wm-pos-btn rounded-lg border-2 border-blue-600 bg-blue-600 text-white shadow-2xs text-[9px] font-bold transition-all flex items-center justify-center cursor-pointer" title="Tengah">Tgh</button>
+                <button type="button" onclick="selectWatermarkPosition('center-right')" data-wm-pos="center-right" class="wm-pos-btn rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 text-[9px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kanan Tengah">KnT</button>
+
+                <button type="button" onclick="selectWatermarkPosition('bottom-left')" data-wm-pos="bottom-left" class="wm-pos-btn rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 text-[9px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kiri Bawah">KB</button>
+                <button type="button" onclick="selectWatermarkPosition('bottom-center')" data-wm-pos="bottom-center" class="wm-pos-btn rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 text-[9px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Tengah Bawah">TB</button>
+                <button type="button" onclick="selectWatermarkPosition('bottom-right')" data-wm-pos="bottom-right" class="wm-pos-btn rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 text-[9px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer" title="Kanan Bawah">KnB</button>
+              </div>
             </div>
+
           </div>
+
+          <!-- Kolom Kanan: Pratinjau Interaktif Live & Drag Bebas Margin (7 Kolom) -->
+          <div id="wmPreviewStage" class="lg:col-span-7 bg-slate-50 border border-slate-200 rounded-3xl p-4 flex flex-col items-center">
+            
+            <!-- Header Pratinjau & Navigasi Halaman -->
+            <div class="w-full flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200 text-xs">
+              <div class="flex items-center gap-1.5 font-bold text-slate-800">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
+                <span>Pratinjau Langsung (Live Preview)</span>
+              </div>
+              <div class="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-xl shadow-2xs">
+                <button type="button" onclick="changeWatermarkPreviewPage(-1)" id="wmPrevPageBtn" disabled class="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-30 text-slate-600 cursor-pointer" title="Halaman Sebelumnya">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span class="text-xs font-semibold text-slate-700 px-1">Hal. <strong id="wmCurrentPageNum" class="text-blue-600 font-bold">1</strong> / <span id="wmTotalPagesNum">1</span></span>
+                <button type="button" onclick="changeWatermarkPreviewPage(1)" id="wmNextPageBtn" class="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-30 text-slate-600 cursor-pointer" title="Halaman Berikutnya">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Petunjuk Visual Ringkas -->
+            <div class="w-full flex items-center justify-between text-[11px] text-slate-500 px-1 mb-2">
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                <span>Tarik watermark untuk ubah posisi</span>
+              </span>
+              <span class="text-blue-600 font-semibold flex items-center gap-1">
+                <span class="w-2 h-2 border border-dashed border-blue-500 inline-block"></span>
+                <span>Garis putus-putus = Batas margin aman</span>
+              </span>
+            </div>
+
+            <!-- Stage Canvas & Draggable Wrapper -->
+            <div class="w-full overflow-auto max-h-[580px] flex justify-center bg-slate-200/50 p-4 rounded-2xl border border-slate-200/80">
+              <div id="wmCanvasWrapper" class="relative shadow-lg bg-white select-none transition-all">
+                <canvas id="wmPageCanvas" class="block"></canvas>
+                
+                <!-- Margin Boundary Overlay (Visual Safe Margin) -->
+                <div id="wmMarginBoundary" class="absolute pointer-events-none border border-dashed border-blue-500/70 rounded transition-all" style="left: 20px; top: 20px; width: 100px; height: 100px;">
+                  <span class="absolute -top-4 left-1 text-[9px] font-bold text-blue-600 bg-white/90 px-1 rounded shadow-2xs">Batas Margin</span>
+                </div>
+
+                <!-- Draggable Watermark Box -->
+                <div id="wmDraggableBox" class="absolute cursor-move select-none flex items-center justify-center p-2 rounded-xl group touch-none border border-dashed border-transparent hover:border-blue-400 hover:bg-blue-500/10 active:border-blue-600 active:bg-blue-500/20 transition-colors" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+                  <div id="wmLiveText" class="font-extrabold whitespace-nowrap select-none pointer-events-none tracking-wider text-center" style="font-size: 32px; color: #64748b; opacity: 0.25;">CONFIDENTIAL</div>
+                  <img id="wmLiveImg" class="max-w-full max-h-full object-contain select-none pointer-events-none hidden" alt="Logo Watermark" />
+                  
+                  <!-- Floating tooltip / drag indicator -->
+                  <div class="absolute -top-5 left-1/2 -translate-x-1/2 bg-slate-900/85 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xs">
+                    Geser Watermark
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status Posisi Koordinat Live -->
+            <div class="w-full flex items-center justify-between text-[11px] text-slate-500 mt-2.5 px-1">
+              <span id="wmLiveCoordStatus">Posisi: Tengah Halaman (Terkunci dalam margin)</span>
+              <button type="button" onclick="selectWatermarkPosition('center')" class="text-blue-600 hover:underline font-semibold cursor-pointer">Reset ke Tengah</button>
+            </div>
+
+          </div>
+
         </div>
       </div>
 
@@ -1364,6 +1440,9 @@
         } else if (currentMode === 'pdf_watermark') {
           document.getElementById('formWatermark').classList.remove('hidden');
           document.getElementById('singleActionBtnText').textContent = 'Sisipkan Tanda Air & Unduh';
+          if (currentWorkingPdfDoc) {
+            initWatermarkWorkspace();
+          }
         } else if (currentMode === 'pdf_rotate') {
           document.getElementById('formRotate').classList.remove('hidden');
           document.getElementById('singleActionBtnText').textContent = 'Putar Halaman & Unduh';
@@ -4053,6 +4132,294 @@
     let uploadedWatermarkImageBytes = null;
     let uploadedWatermarkImageDim = null;
 
+    let currentWatermarkPage = 1;
+    let wmViewportScale = 1.0;
+    let wmPageWidth = 595;
+    let wmPageHeight = 842;
+    let wmCanvasWidth = 400;
+    let wmCanvasHeight = 560;
+    let wmPosRatio = { x: 0.5, y: 0.5 };
+    let wmIsDragging = false;
+    let wmDragStartX = 0, wmDragStartY = 0;
+    let wmInitialLeft = 0, wmInitialTop = 0;
+    let wmDraggableInitialized = false;
+
+    window.initWatermarkWorkspace = async function() {
+      if (!currentWorkingPdfDoc) return;
+      currentWatermarkPage = 1;
+      const total = currentWorkingPdfDoc.numPages;
+      const totalEl = document.getElementById('wmTotalPagesNum');
+      if (totalEl) totalEl.textContent = total;
+
+      await renderWatermarkPreviewPage(1);
+      if (!wmDraggableInitialized) {
+        initWatermarkDraggableBox();
+        wmDraggableInitialized = true;
+      }
+      updateWatermarkLivePreview();
+    };
+
+    window.changeWatermarkPreviewPage = async function(dir) {
+      if (!currentWorkingPdfDoc) return;
+      const total = currentWorkingPdfDoc.numPages;
+      const target = currentWatermarkPage + dir;
+      if (target < 1 || target > total) return;
+      await renderWatermarkPreviewPage(target);
+      updateWatermarkLivePreview();
+    };
+
+    async function renderWatermarkPreviewPage(pageNum) {
+      if (!currentWorkingPdfDoc) return;
+      currentWatermarkPage = pageNum;
+      const total = currentWorkingPdfDoc.numPages;
+
+      const curEl = document.getElementById('wmCurrentPageNum');
+      if (curEl) curEl.textContent = pageNum;
+      const prevBtn = document.getElementById('wmPrevPageBtn');
+      if (prevBtn) prevBtn.disabled = pageNum <= 1;
+      const nextBtn = document.getElementById('wmNextPageBtn');
+      if (nextBtn) nextBtn.disabled = pageNum >= total;
+
+      try {
+        const page = await currentWorkingPdfDoc.getPage(pageNum);
+        const unscaledVp = page.getViewport({ scale: 1.0 });
+        wmPageWidth = unscaledVp.width;
+        wmPageHeight = unscaledVp.height;
+
+        const stageEl = document.getElementById('wmPreviewStage');
+        const containerWidth = stageEl ? Math.min(480, Math.max(280, stageEl.clientWidth - 48)) : 420;
+        const scale = containerWidth / wmPageWidth;
+        wmViewportScale = scale;
+
+        const vp = page.getViewport({ scale });
+        wmCanvasWidth = vp.width;
+        wmCanvasHeight = vp.height;
+
+        const canvas = document.getElementById('wmPageCanvas');
+        const wrapper = document.getElementById('wmCanvasWrapper');
+        if (!canvas || !wrapper) return;
+
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        wrapper.style.width = vp.width + 'px';
+        wrapper.style.height = vp.height + 'px';
+
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      } catch (e) {
+        console.error('Error rendering watermark preview:', e);
+      }
+    }
+
+    window.updateWatermarkLivePreview = function() {
+      const isText = currentWatermarkType === 'text';
+      const liveText = document.getElementById('wmLiveText');
+      const liveImg = document.getElementById('wmLiveImg');
+      const box = document.getElementById('wmDraggableBox');
+      const marginBox = document.getElementById('wmMarginBoundary');
+      if (!box || !marginBox) return;
+
+      const marginPt = parseInt(document.getElementById('watermarkMargin')?.value) || 40;
+      const marginPx = marginPt * wmViewportScale;
+      const angle = parseInt(document.getElementById('watermarkAngle')?.value) || 0;
+      const opacity = (parseInt(document.getElementById('watermarkOpacity')?.value) || 25) / 100;
+
+      // Update margin guide box
+      const safeW = Math.max(0, wmCanvasWidth - 2 * marginPx);
+      const safeH = Math.max(0, wmCanvasHeight - 2 * marginPx);
+      marginBox.style.left = marginPx + 'px';
+      marginBox.style.top = marginPx + 'px';
+      marginBox.style.width = safeW + 'px';
+      marginBox.style.height = safeH + 'px';
+
+      // Update content & styling
+      if (isText) {
+        if (liveText) {
+          liveText.classList.remove('hidden');
+          const text = document.getElementById('watermarkText')?.value || 'CONFIDENTIAL';
+          liveText.textContent = text || 'WATERMARK';
+          const sizePt = parseInt(document.getElementById('watermarkSize')?.value) || 44;
+          liveText.style.fontSize = Math.max(10, Math.round(sizePt * wmViewportScale)) + 'px';
+
+          const colorChoice = document.getElementById('watermarkColor')?.value || 'gray';
+          let textColor = '#64748b';
+          if (colorChoice === 'red') textColor = '#ef4444';
+          else if (colorChoice === 'blue') textColor = '#2563eb';
+          else if (colorChoice === 'black') textColor = '#0f172a';
+          liveText.style.color = textColor;
+        }
+        if (liveImg) liveImg.classList.add('hidden');
+      } else {
+        if (liveText) liveText.classList.add('hidden');
+        if (liveImg) {
+          liveImg.classList.remove('hidden');
+          const scalePercent = (parseInt(document.getElementById('watermarkImageScale')?.value) || 40) / 100;
+          const imgBaseWidth = wmCanvasWidth * 0.45 * scalePercent;
+          liveImg.style.width = Math.round(imgBaseWidth) + 'px';
+          liveImg.style.height = 'auto';
+          const thumb = document.getElementById('wmImageThumbnail');
+          if (thumb && thumb.src && !thumb.classList.contains('hidden')) {
+            liveImg.src = thumb.src;
+          } else {
+            liveImg.src = 'Docenti.png';
+          }
+        }
+      }
+
+      // Opacity and rotation (CSS rotate(-angle) aligns with PDFLib counter-clockwise rotation)
+      box.style.opacity = opacity;
+      box.style.transform = 'translate(-50%, -50%) rotate(' + (-angle) + 'deg)';
+
+      // Measure unrotated box size
+      const boxW = box.offsetWidth || 120;
+      const boxH = box.offsetHeight || 40;
+
+      // Calculate rotated bounding box extent
+      const rad = Math.abs((angle * Math.PI) / 180);
+      const bbW = boxW * Math.cos(rad) + boxH * Math.sin(rad);
+      const bbH = boxW * Math.sin(rad) + boxH * Math.cos(rad);
+      const halfExtX = bbW / 2;
+      const halfExtY = bbH / 2;
+
+      // Margin limits for center coordinates (cx, cy)
+      const minCx = marginPx + halfExtX;
+      const maxCx = wmCanvasWidth - marginPx - halfExtX;
+      const minCy = marginPx + halfExtY;
+      const maxCy = wmCanvasHeight - marginPx - halfExtY;
+
+      let targetCx, targetCy;
+      if (currentWatermarkPosition === 'custom') {
+        targetCx = wmPosRatio.x * wmCanvasWidth;
+        targetCy = wmPosRatio.y * wmCanvasHeight;
+      } else {
+        const pos = currentWatermarkPosition || 'center';
+        if (pos.includes('left')) targetCx = minCx;
+        else if (pos.includes('right')) targetCx = maxCx;
+        else targetCx = wmCanvasWidth / 2;
+
+        if (pos.includes('top')) targetCy = minCy;
+        else if (pos.includes('bottom')) targetCy = maxCy;
+        else targetCy = wmCanvasHeight / 2;
+      }
+
+      // Strictly clamp within margin!
+      let clampedCx, clampedCy;
+      if (minCx >= maxCx) clampedCx = wmCanvasWidth / 2;
+      else clampedCx = Math.max(minCx, Math.min(maxCx, targetCx));
+
+      if (minCy >= maxCy) clampedCy = wmCanvasHeight / 2;
+      else clampedCy = Math.max(minCy, Math.min(maxCy, targetCy));
+
+      // Update box position in DOM
+      box.style.left = Math.round(clampedCx) + 'px';
+      box.style.top = Math.round(clampedCy) + 'px';
+
+      // Update normalized ratio
+      wmPosRatio.x = clampedCx / wmCanvasWidth;
+      wmPosRatio.y = clampedCy / wmCanvasHeight;
+
+      // Update position status description
+      const statusEl = document.getElementById('wmLiveCoordStatus');
+      if (statusEl) {
+        if (currentWatermarkPosition === 'custom') {
+          statusEl.textContent = 'Posisi: Kustom (X: ' + Math.round(wmPosRatio.x * 100) + '%, Y: ' + Math.round(wmPosRatio.y * 100) + '%) - Terkunci dalam margin';
+        } else {
+          const descEl = document.getElementById('wmPosDescription');
+          statusEl.textContent = 'Posisi: ' + (descEl ? descEl.textContent : 'Tengah Halaman') + ' (Aman dalam margin)';
+        }
+      }
+    };
+
+    function initWatermarkDraggableBox() {
+      const box = document.getElementById('wmDraggableBox');
+      const wrapper = document.getElementById('wmCanvasWrapper');
+      if (!box || !wrapper) return;
+
+      function onStart(clientX, clientY, e) {
+        wmIsDragging = true;
+        wmDragStartX = clientX;
+        wmDragStartY = clientY;
+        wmInitialLeft = box.offsetLeft;
+        wmInitialTop = box.offsetTop;
+        box.classList.add('ring-2', 'ring-blue-500', 'bg-blue-500/20');
+        if (e.preventDefault && e.cancelable) e.preventDefault();
+      }
+
+      function onMove(clientX, clientY, e) {
+        if (!wmIsDragging) return;
+        const dx = clientX - wmDragStartX;
+        const dy = clientY - wmDragStartY;
+        const rawCx = wmInitialLeft + dx;
+        const rawCy = wmInitialTop + dy;
+
+        const marginPt = parseInt(document.getElementById('watermarkMargin')?.value) || 40;
+        const marginPx = marginPt * wmViewportScale;
+        const angle = parseInt(document.getElementById('watermarkAngle')?.value) || 0;
+
+        const boxW = box.offsetWidth || 120;
+        const boxH = box.offsetHeight || 40;
+        const rad = Math.abs((angle * Math.PI) / 180);
+        const bbW = boxW * Math.cos(rad) + boxH * Math.sin(rad);
+        const bbH = boxW * Math.sin(rad) + boxH * Math.cos(rad);
+        const halfExtX = bbW / 2;
+        const halfExtY = bbH / 2;
+
+        const minCx = marginPx + halfExtX;
+        const maxCx = wmCanvasWidth - marginPx - halfExtX;
+        const minCy = marginPx + halfExtY;
+        const maxCy = wmCanvasHeight - marginPx - halfExtY;
+
+        let clampedCx, clampedCy;
+        if (minCx >= maxCx) clampedCx = wmCanvasWidth / 2;
+        else clampedCx = Math.max(minCx, Math.min(maxCx, rawCx));
+
+        if (minCy >= maxCy) clampedCy = wmCanvasHeight / 2;
+        else clampedCy = Math.max(minCy, Math.min(maxCy, rawCy));
+
+        box.style.left = Math.round(clampedCx) + 'px';
+        box.style.top = Math.round(clampedCy) + 'px';
+
+        wmPosRatio.x = clampedCx / wmCanvasWidth;
+        wmPosRatio.y = clampedCy / wmCanvasHeight;
+
+        currentWatermarkPosition = 'custom';
+        document.querySelectorAll('.wm-pos-btn').forEach(btn => {
+          btn.className = 'wm-pos-btn rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 text-[9px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer';
+        });
+        const descEl = document.getElementById('wmPosDescription');
+        if (descEl) descEl.textContent = 'Posisi: Kustom (Ditarik)';
+
+        const statusEl = document.getElementById('wmLiveCoordStatus');
+        if (statusEl) {
+          statusEl.textContent = 'Posisi: Kustom (X: ' + Math.round(wmPosRatio.x * 100) + '%, Y: ' + Math.round(wmPosRatio.y * 100) + '%) - Terkunci dalam margin';
+        }
+
+        if (e.preventDefault && e.cancelable) e.preventDefault();
+      }
+
+      function onEnd() {
+        if (!wmIsDragging) return;
+        wmIsDragging = false;
+        box.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-500/20');
+      }
+
+      box.onmousedown = (e) => onStart(e.clientX, e.clientY, e);
+      window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY, e));
+      window.addEventListener('mouseup', onEnd);
+
+      box.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        onStart(touch.clientX, touch.clientY, e);
+      }, { passive: false });
+
+      window.addEventListener('touchmove', (e) => {
+        if (!wmIsDragging) return;
+        const touch = e.touches[0];
+        onMove(touch.clientX, touch.clientY, e);
+      }, { passive: false });
+
+      window.addEventListener('touchend', onEnd);
+    }
+
     window.setWatermarkType = (type) => {
       currentWatermarkType = type;
       const isText = type === 'text';
@@ -4062,37 +4429,40 @@
       const textBtn = document.getElementById('wmTypeTextBtn');
       const imgBtn = document.getElementById('wmTypeImageBtn');
       if (isText) {
-        textBtn.className = 'px-3.5 py-1.5 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer';
-        imgBtn.className = 'px-3.5 py-1.5 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer';
+        textBtn.className = 'flex-1 py-2 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer';
+        imgBtn.className = 'flex-1 py-2 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center justify-center gap-1.5 cursor-pointer';
       } else {
-        imgBtn.className = 'px-3.5 py-1.5 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer';
-        textBtn.className = 'px-3.5 py-1.5 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer';
+        imgBtn.className = 'flex-1 py-2 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer';
+        textBtn.className = 'flex-1 py-2 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center justify-center gap-1.5 cursor-pointer';
       }
+      updateWatermarkLivePreview();
     };
 
     window.selectWatermarkPosition = (pos) => {
       currentWatermarkPosition = pos;
       document.querySelectorAll('.wm-pos-btn').forEach(btn => {
-        btn.className = 'wm-pos-btn rounded-xl border border-slate-200 bg-white hover:bg-blue-50 text-[10px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer';
+        btn.className = 'wm-pos-btn rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 text-[9px] font-bold text-slate-600 transition-all flex items-center justify-center cursor-pointer';
       });
       const active = document.querySelector('[data-wm-pos="' + pos + '"]');
       if (active) {
-        active.className = 'wm-pos-btn rounded-xl border-2 border-blue-600 bg-blue-600 text-white shadow-xs text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer';
+        active.className = 'wm-pos-btn rounded-lg border-2 border-blue-600 bg-blue-600 text-white shadow-2xs text-[9px] font-bold transition-all flex items-center justify-center cursor-pointer';
       }
 
       const descriptions = {
-        'top-left': 'Posisi aktif: Kiri Atas Halaman',
-        'top-center': 'Posisi aktif: Tengah Atas Halaman',
-        'top-right': 'Posisi aktif: Kanan Atas Halaman',
-        'center-left': 'Posisi aktif: Kiri Tengah Halaman',
-        'center': 'Posisi aktif: Tengah Halaman',
-        'center-right': 'Posisi aktif: Kanan Tengah Halaman',
-        'bottom-left': 'Posisi aktif: Kiri Bawah Halaman',
-        'bottom-center': 'Posisi aktif: Tengah Bawah Halaman',
-        'bottom-right': 'Posisi aktif: Kanan Bawah Halaman'
+        'top-left': 'Kiri Atas Halaman',
+        'top-center': 'Tengah Atas Halaman',
+        'top-right': 'Kanan Atas Halaman',
+        'center-left': 'Kiri Tengah Halaman',
+        'center': 'Tengah Halaman',
+        'center-right': 'Kanan Tengah Halaman',
+        'bottom-left': 'Kiri Bawah Halaman',
+        'bottom-center': 'Tengah Bawah Halaman',
+        'bottom-right': 'Kanan Bawah Halaman'
       };
       const descEl = document.getElementById('wmPosDescription');
       if (descEl) descEl.textContent = descriptions[pos] || pos;
+
+      updateWatermarkLivePreview();
     };
 
     const wmFileInput = document.getElementById('watermarkImageFileInput');
@@ -4112,6 +4482,9 @@
         }
         if (icon) icon.classList.add('hidden');
 
+        const liveImg = document.getElementById('wmLiveImg');
+        if (liveImg) liveImg.src = dataUrl;
+
         const img = new Image();
         img.onload = () => {
           const offCanvas = document.createElement('canvas');
@@ -4123,6 +4496,7 @@
           offCanvas.toBlob(async (blob) => {
             uploadedWatermarkImageBytes = await blob.arrayBuffer();
             uploadedWatermarkImageDim = { width: offCanvas.width, height: offCanvas.height };
+            updateWatermarkLivePreview();
           }, 'image/png');
         };
         img.src = dataUrl;
@@ -4137,11 +4511,13 @@
         const opacity = (parseInt(document.getElementById('watermarkOpacity').value) || 25) / 100;
         const angle = parseInt(document.getElementById('watermarkAngle').value) || 0;
         const margin = parseInt(document.getElementById('watermarkMargin').value) || 40;
-        const pos = currentWatermarkPosition || 'center';
+        const isCustom = currentWatermarkPosition === 'custom';
+        const rad = (angle * Math.PI) / 180;
+        const theta = Math.abs(rad);
 
         if (currentWatermarkType === 'text') {
           const text = document.getElementById('watermarkText').value.trim() || 'WATERMARK';
-          const size = parseInt(document.getElementById('watermarkSize').value) || 48;
+          const size = parseInt(document.getElementById('watermarkSize').value) || 44;
           const colorChoice = document.getElementById('watermarkColor').value || 'gray';
           const font = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
 
@@ -4153,21 +4529,38 @@
           const textWidth = font.widthOfTextAtSize(text, size);
           const textHeight = size * 0.75;
 
+          const bbW = textWidth * Math.cos(theta) + textHeight * Math.sin(theta);
+          const bbH = textWidth * Math.sin(theta) + textHeight * Math.cos(theta);
+          const halfExtX = bbW / 2;
+          const halfExtY = bbH / 2;
+
           for (let i = 0; i < doc.getPageCount(); i++) {
             const page = doc.getPage(i);
             const pw = page.getWidth();
             const ph = page.getHeight();
 
+            const minCx = margin + halfExtX;
+            const maxCx = pw - margin - halfExtX;
+            const minCy = margin + halfExtY;
+            const maxCy = ph - margin - halfExtY;
+
             let cx, cy;
-            if (pos.includes('left')) cx = margin + textWidth / 2;
-            else if (pos.includes('right')) cx = pw - margin - textWidth / 2;
-            else cx = pw / 2;
+            if (isCustom) {
+              const reqCx = wmPosRatio.x * pw;
+              const reqCy = (1 - wmPosRatio.y) * ph; // Invert Y for PDFLib
+              cx = minCx >= maxCx ? pw / 2 : Math.max(minCx, Math.min(maxCx, reqCx));
+              cy = minCy >= maxCy ? ph / 2 : Math.max(minCy, Math.min(maxCy, reqCy));
+            } else {
+              const pos = currentWatermarkPosition || 'center';
+              if (pos.includes('left')) cx = minCx;
+              else if (pos.includes('right')) cx = maxCx;
+              else cx = pw / 2;
 
-            if (pos.includes('top')) cy = ph - margin - textHeight / 2;
-            else if (pos.includes('bottom')) cy = margin + textHeight / 2;
-            else cy = ph / 2;
+              if (pos.includes('top')) cy = maxCy;
+              else if (pos.includes('bottom')) cy = minCy;
+              else cy = ph / 2;
+            }
 
-            const rad = (angle * Math.PI) / 180;
             const x = cx - (textWidth / 2) * Math.cos(rad) + (textHeight / 2) * Math.sin(rad);
             const y = cy - (textWidth / 2) * Math.sin(rad) - (textHeight / 2) * Math.cos(rad);
 
@@ -4197,23 +4590,40 @@
             const pw = page.getWidth();
             const ph = page.getHeight();
 
-            const baseWidth = pw * 0.5 * scalePercent;
+            const baseWidth = pw * 0.45 * scalePercent;
             const aspectRatio = (uploadedWatermarkImageDim && uploadedWatermarkImageDim.height > 0)
               ? (uploadedWatermarkImageDim.height / uploadedWatermarkImageDim.width)
               : 0.5;
             const imgW = baseWidth;
             const imgH = baseWidth * aspectRatio;
 
+            const bbW = imgW * Math.cos(theta) + imgH * Math.sin(theta);
+            const bbH = imgW * Math.sin(theta) + imgH * Math.cos(theta);
+            const halfExtX = bbW / 2;
+            const halfExtY = bbH / 2;
+
+            const minCx = margin + halfExtX;
+            const maxCx = pw - margin - halfExtX;
+            const minCy = margin + halfExtY;
+            const maxCy = ph - margin - halfExtY;
+
             let cx, cy;
-            if (pos.includes('left')) cx = margin + imgW / 2;
-            else if (pos.includes('right')) cx = pw - margin - imgW / 2;
-            else cx = pw / 2;
+            if (isCustom) {
+              const reqCx = wmPosRatio.x * pw;
+              const reqCy = (1 - wmPosRatio.y) * ph;
+              cx = minCx >= maxCx ? pw / 2 : Math.max(minCx, Math.min(maxCx, reqCx));
+              cy = minCy >= maxCy ? ph / 2 : Math.max(minCy, Math.min(maxCy, reqCy));
+            } else {
+              const pos = currentWatermarkPosition || 'center';
+              if (pos.includes('left')) cx = minCx;
+              else if (pos.includes('right')) cx = maxCx;
+              else cx = pw / 2;
 
-            if (pos.includes('top')) cy = ph - margin - imgH / 2;
-            else if (pos.includes('bottom')) cy = margin + imgH / 2;
-            else cy = ph / 2;
+              if (pos.includes('top')) cy = maxCy;
+              else if (pos.includes('bottom')) cy = minCy;
+              else cy = ph / 2;
+            }
 
-            const rad = (angle * Math.PI) / 180;
             const x = cx - (imgW / 2) * Math.cos(rad) + (imgH / 2) * Math.sin(rad);
             const y = cy - (imgW / 2) * Math.sin(rad) - (imgH / 2) * Math.cos(rad);
 
