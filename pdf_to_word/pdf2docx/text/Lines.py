@@ -215,7 +215,7 @@ class Lines(ElementCollection):
 
         # check by each physical row
         rows = self.group_by_physical_rows()
-        for lines in rows:
+        for i, lines in enumerate(rows):
             for line in lines: line.line_break = 0
 
             # check the end line depending on text alignment
@@ -228,10 +228,18 @@ class Lines(ElementCollection):
             
             if block.alignment == TextAlignment.CENTER: free_space *= 2 # two side space
             
+            # Check if next row starts a new bullet item
+            next_row_has_bullet = False
+            if i < len(rows) - 1:
+                next_row = rows[i+1]
+                if any(l.text.strip().startswith(('•', '-', '*', '–', '·')) for l in next_row):
+                    next_row_has_bullet = True
+
             # break line if 
             # - width ratio lower than the threshold; or 
-            # - free space exceeds the threshold
-            if line_break or free_space/block_width > line_break_free_space_ratio:
+            # - free space exceeds the threshold; or
+            # - next row starts a bullet list item
+            if line_break or free_space/block_width > line_break_free_space_ratio or next_row_has_bullet:
                 end_line.line_break = 1
         
         # no break for last row

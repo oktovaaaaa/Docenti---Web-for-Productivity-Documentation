@@ -200,6 +200,11 @@ class Collection(BaseCollection, IText):
         fun = lambda a,b: a.in_same_row(b)
         groups = self.group(fun)
 
+        # Ensure lines within each row are sorted in reading direction (left-to-right)
+        idx_h = 1 if text_direction and self.is_vertical_text else 0
+        for group in groups:
+            group._instances.sort(key=lambda line: line.bbox[idx_h])
+
         # increase in y-direction if sort
         if sorted: 
             idx = 0 if text_direction and self.is_vertical_text else 1

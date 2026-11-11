@@ -401,6 +401,10 @@ class TextSpan(Element):
 
         # font name
         font_name = self.font
+        # Fix: Word cannot display unicode bullet '\u2022' under 'Symbol' font,
+        # resulting in empty box '▯'. Use standard font (Calibri) instead.
+        if self.text and ('•' in self.text or '\u2022' in self.text) and font_name and 'symbol' in font_name.lower():
+            font_name = 'Calibri'
         docx_run.font.name = font_name
         docx_run._element.rPr.rFonts.set(qn('w:eastAsia'), font_name) # for CJK characters
         docx_run.font.color.rgb = RGBColor(*rgb_component(self.color))
