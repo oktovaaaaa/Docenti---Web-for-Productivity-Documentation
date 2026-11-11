@@ -225,8 +225,16 @@
   <!-- Main Container -->
   <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 sm:py-12 flex flex-col justify-center">
 
-    <!-- Status / Notification Alert Banner -->
-    <div id="statusBox" class="hidden mb-6 p-4 rounded-2xl text-sm font-medium shadow-xs transition-all"></div>
+    <!-- Floating Toast Pop-up Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-[9999] pointer-events-none flex flex-col gap-2 max-w-sm sm:max-w-md w-full px-4">
+      <div id="statusBox" class="hidden pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-2xl border transition-all duration-300 transform -translate-y-2 opacity-0 bg-white">
+        <div id="toastIcon" class="shrink-0 mt-0.5"></div>
+        <div class="flex-1 text-xs sm:text-sm font-medium leading-snug" id="toastMessage"></div>
+        <button type="button" onclick="hideStatus()" class="shrink-0 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100/60 transition-colors cursor-pointer" title="Tutup">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
 
     <!-- Hidden Generic File Inputs -->
     <input type="file" id="genericFileInput" class="hidden">
@@ -514,7 +522,13 @@
 
       <!-- 1. Form Split PDF -->
       <div id="formSplit" class="space-y-4 hidden">
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Pilih Metode Pemisahan:</label>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Pilih Metode Pemisahan:</label>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
+            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            Total Dokumen: <strong id="splitTotalPagesBadge" class="text-blue-900 font-extrabold">0</strong> Halaman
+          </span>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <label class="p-4 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
             <input type="radio" name="splitMode" value="range" checked onchange="toggleSplitInputs()" class="text-blue-600">
@@ -533,13 +547,62 @@
           </label>
         </div>
         <div id="splitRangeInputContainer" class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-          <label for="splitPageRanges" class="block text-xs font-bold text-slate-700">Masukkan Nomor Halaman / Rentang:</label>
-          <input type="text" id="splitPageRanges" value="1" placeholder="Contoh: 1-3, 5, 8-10" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#2563eb]">
-          <p class="text-[11px] text-slate-400">Total halaman tersedia: <span id="splitTotalPagesNotice" class="font-bold">0</span> halaman.</p>
+          <div class="flex items-center justify-between">
+            <label for="splitPageRanges" class="block text-xs font-bold text-slate-700">Masukkan Nomor Halaman / Rentang:</label>
+            <span class="text-[11px] text-slate-500 font-medium">Total tersedia: <strong id="splitTotalPagesNotice" class="text-slate-800 font-bold">0</strong> halaman</span>
+          </div>
+          <input type="text" id="splitPageRanges" value="1" oninput="onSplitRangeInputChanged()" placeholder="Contoh: 1-3, 5, 8-10" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#2563eb] transition-all">
+          <p class="text-[11px] text-slate-500">Ketik nomor halaman atau klik pratinjau halaman visual di bawah untuk memilih/mengecualikan secara interaktif.</p>
         </div>
         <div id="splitEveryNContainer" class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 hidden">
           <label for="splitEveryNVal" class="block text-xs font-bold text-slate-700">Pecah setiap berapa halaman?</label>
           <input type="number" id="splitEveryNVal" value="2" min="1" class="w-32 px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl">
+        </div>
+
+        <!-- Collapsible Visual Dropdown Accordion -->
+        <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+          <!-- Dropdown Toggle Button -->
+          <button type="button" onclick="toggleSplitPreviewDropdown()" id="splitPreviewDropdownBtn" class="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors cursor-pointer group">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                  <span>Pratinjau Visual Semua Halaman</span>
+                  <span id="splitDropdownCountBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">0 Halaman</span>
+                </div>
+                <p class="text-[11px] text-slate-500">Klik untuk menyembunyikan atau menampilkan pratinjau halaman</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-blue-600">
+              <span id="splitDropdownStateText">Sembunyikan</span>
+              <svg id="splitDropdownChevron" class="w-4 h-4 transition-transform duration-200 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </button>
+
+          <!-- Dropdown Body -->
+          <div id="splitPreviewDropdownContent" class="p-4 border-t border-slate-200 bg-slate-50/50 space-y-3">
+            <!-- Toolbar presets and stats -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-200 text-xs">
+              <div class="text-slate-600 font-medium text-[11px] flex items-center gap-1.5">
+                <span>Halaman terpilih:</span>
+                <span id="splitSelectedPagesCount" class="font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">1</span>
+                <span class="text-slate-400">dari <span id="splitTotalPagesCountText">0</span> halaman</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="selectSplitPagesPreset('all')" class="px-2.5 py-1 text-[11px] font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg transition-colors cursor-pointer shadow-2xs">Pilih Semua</button>
+                <button type="button" onclick="selectSplitPagesPreset('odd')" class="px-2.5 py-1 text-[11px] font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg transition-colors cursor-pointer shadow-2xs">Ganjil</button>
+                <button type="button" onclick="selectSplitPagesPreset('even')" class="px-2.5 py-1 text-[11px] font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg transition-colors cursor-pointer shadow-2xs">Genap</button>
+                <button type="button" onclick="selectSplitPagesPreset('clear')" class="px-2.5 py-1 text-[11px] font-semibold bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-lg transition-colors cursor-pointer shadow-2xs">Kosongkan</button>
+              </div>
+            </div>
+
+            <!-- Page thumbnails grid -->
+            <div id="splitPagesThumbnailGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 max-h-96 overflow-y-auto p-1">
+              <!-- Dynamically populated page cards -->
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1275,7 +1338,20 @@
         if (currentMode === 'pdf_split') {
           document.getElementById('formSplit').classList.remove('hidden');
           document.getElementById('singleActionBtnText').textContent = 'Pisahkan & Unduh PDF';
-          if (currentWorkingPdfDoc) document.getElementById('splitTotalPagesNotice').textContent = currentWorkingPdfDoc.numPages;
+          if (currentWorkingPdfDoc) {
+            const totPages = currentWorkingPdfDoc.numPages;
+            const badgeEl = document.getElementById('splitTotalPagesBadge');
+            if (badgeEl) badgeEl.textContent = totPages;
+            const notEl = document.getElementById('splitTotalPagesNotice');
+            if (notEl) notEl.textContent = totPages;
+            const countEl = document.getElementById('splitDropdownCountBadge');
+            if (countEl) countEl.textContent = totPages + ' Halaman';
+            const totTextEl = document.getElementById('splitTotalPagesCountText');
+            if (totTextEl) totTextEl.textContent = totPages;
+            if (splitPreviewDropdownOpen) {
+              initSplitPagePreview();
+            }
+          }
         } else if (currentMode === 'pdf_compress') {
           document.getElementById('formCompress').classList.remove('hidden');
           document.getElementById('singleActionBtnText').textContent = 'Kompres & Unduh PDF';
@@ -1327,6 +1403,9 @@
       pageFreehandStrokes = {};
       pageEditHistory = {};
       selectedAnnotationId = null;
+      splitPreviewLoadedDoc = null;
+      const splitGrid = document.getElementById('splitPagesThumbnailGrid');
+      if (splitGrid) splitGrid.innerHTML = '';
       showHeroStage();
     }
 
@@ -3325,11 +3404,211 @@
     }
 
     // Split PDF
+    let splitPreviewDropdownOpen = true;
+    let splitPreviewLoadedDoc = null;
+
     window.toggleSplitInputs = function() {
       const mode = document.querySelector('input[name="splitMode"]:checked').value;
       document.getElementById('splitRangeInputContainer').classList.toggle('hidden', mode !== 'range');
       document.getElementById('splitEveryNContainer').classList.toggle('hidden', mode !== 'every_n');
     };
+
+    window.toggleSplitPreviewDropdown = function() {
+      splitPreviewDropdownOpen = !splitPreviewDropdownOpen;
+      const content = document.getElementById('splitPreviewDropdownContent');
+      const chevron = document.getElementById('splitDropdownChevron');
+      const stateText = document.getElementById('splitDropdownStateText');
+
+      if (splitPreviewDropdownOpen) {
+        if (content) content.classList.remove('hidden');
+        if (chevron) chevron.classList.add('rotate-180');
+        if (stateText) stateText.textContent = 'Sembunyikan';
+        if (splitPreviewLoadedDoc !== currentWorkingPdfDoc) {
+          initSplitPagePreview();
+        }
+      } else {
+        if (content) content.classList.add('hidden');
+        if (chevron) chevron.classList.remove('rotate-180');
+        if (stateText) stateText.textContent = 'Tampilkan';
+      }
+    };
+
+    function formatPageRanges(pageNumbers) {
+      if (!pageNumbers || pageNumbers.length === 0) return '';
+      const sorted = Array.from(new Set(pageNumbers)).map(n => parseInt(n)).filter(n => !isNaN(n) && n > 0).sort((a, b) => a - b);
+      if (sorted.length === 0) return '';
+
+      const ranges = [];
+      let start = sorted[0];
+      let end = sorted[0];
+
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === end + 1) {
+          end = sorted[i];
+        } else {
+          ranges.push(start === end ? `${start}` : `${start}-${end}`);
+          start = sorted[i];
+          end = sorted[i];
+        }
+      }
+      ranges.push(start === end ? `${start}` : `${start}-${end}`);
+      return ranges.join(', ');
+    }
+
+    async function initSplitPagePreview() {
+      if (!currentWorkingPdfDoc) return;
+      const total = currentWorkingPdfDoc.numPages;
+      const grid = document.getElementById('splitPagesThumbnailGrid');
+      if (!grid) return;
+
+      const badgeEl = document.getElementById('splitTotalPagesBadge');
+      if (badgeEl) badgeEl.textContent = total;
+      const notEl = document.getElementById('splitTotalPagesNotice');
+      if (notEl) notEl.textContent = total;
+      const countEl = document.getElementById('splitDropdownCountBadge');
+      if (countEl) countEl.textContent = total + ' Halaman';
+      const totTextEl = document.getElementById('splitTotalPagesCountText');
+      if (totTextEl) totTextEl.textContent = total;
+
+      grid.innerHTML = '';
+      splitPreviewLoadedDoc = currentWorkingPdfDoc;
+
+      for (let i = 1; i <= total; i++) {
+        const pageNum = i;
+        const card = document.createElement('div');
+        card.id = 'splitCard_' + pageNum;
+        card.className = 'group relative bg-white border-2 border-slate-200 rounded-xl p-2 cursor-pointer transition-all flex flex-col items-center gap-1.5 hover:shadow-md select-none opacity-60 hover:opacity-100 hover:border-slate-300';
+        card.onclick = () => toggleSplitPageCard(pageNum);
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'w-full flex items-center justify-between text-[11px] font-bold';
+        header.innerHTML = `
+          <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">Hal. ${pageNum}</span>
+          <div id="splitCheck_${pageNum}" class="w-5 h-5 rounded-full flex items-center justify-center border border-slate-300 text-transparent transition-colors bg-white">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </div>
+        `;
+        card.appendChild(header);
+
+        // Canvas container
+        const thumbBox = document.createElement('div');
+        thumbBox.className = 'w-full aspect-[3/4] bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center relative border border-slate-100';
+        const canvas = document.createElement('canvas');
+        canvas.id = 'splitCanvas_' + pageNum;
+        canvas.className = 'max-w-full max-h-full object-contain';
+        thumbBox.appendChild(canvas);
+        card.appendChild(thumbBox);
+
+        // Footer status text
+        const status = document.createElement('div');
+        status.id = 'splitStatus_' + pageNum;
+        status.className = 'text-[10px] font-semibold text-slate-400';
+        status.textContent = 'Dilewati';
+        card.appendChild(status);
+
+        grid.appendChild(card);
+
+        // Render page thumbnail asynchronously
+        renderThumb(pageNum - 1, canvas);
+      }
+
+      updateSplitGridHighlights();
+    }
+
+    window.toggleSplitPageCard = function(pageNum) {
+      if (!currentWorkingPdfDoc) return;
+      const rangeRadio = document.querySelector('input[name="splitMode"][value="range"]');
+      if (rangeRadio && !rangeRadio.checked) {
+        rangeRadio.checked = true;
+        toggleSplitInputs();
+      }
+
+      const total = currentWorkingPdfDoc.numPages;
+      const input = document.getElementById('splitPageRanges');
+      const currentIndices = parsePageRanges(input ? input.value : '', total);
+      const pageIndex = pageNum - 1;
+
+      const idxSet = new Set(currentIndices);
+      if (idxSet.has(pageIndex)) {
+        idxSet.delete(pageIndex);
+      } else {
+        idxSet.add(pageIndex);
+      }
+
+      const newPages = Array.from(idxSet).map(idx => idx + 1);
+      if (input) input.value = formatPageRanges(newPages);
+      updateSplitGridHighlights();
+    };
+
+    window.onSplitRangeInputChanged = function() {
+      updateSplitGridHighlights();
+    };
+
+    window.selectSplitPagesPreset = function(type) {
+      if (!currentWorkingPdfDoc) return;
+      const rangeRadio = document.querySelector('input[name="splitMode"][value="range"]');
+      if (rangeRadio && !rangeRadio.checked) {
+        rangeRadio.checked = true;
+        toggleSplitInputs();
+      }
+
+      const total = currentWorkingPdfDoc.numPages;
+      const input = document.getElementById('splitPageRanges');
+      let pages = [];
+
+      if (type === 'all') {
+        for (let i = 1; i <= total; i++) pages.push(i);
+      } else if (type === 'odd') {
+        for (let i = 1; i <= total; i += 2) pages.push(i);
+      } else if (type === 'even') {
+        for (let i = 2; i <= total; i += 2) pages.push(i);
+      } else if (type === 'clear') {
+        pages = [];
+      }
+
+      if (input) input.value = formatPageRanges(pages);
+      updateSplitGridHighlights();
+    };
+
+    function updateSplitGridHighlights() {
+      if (!currentWorkingPdfDoc) return;
+      const total = currentWorkingPdfDoc.numPages;
+      const input = document.getElementById('splitPageRanges');
+      const indices = parsePageRanges(input ? input.value : '', total);
+      const selectedSet = new Set(indices);
+
+      const countEl = document.getElementById('splitSelectedPagesCount');
+      if (countEl) countEl.textContent = selectedSet.size;
+
+      for (let i = 1; i <= total; i++) {
+        const card = document.getElementById('splitCard_' + i);
+        const check = document.getElementById('splitCheck_' + i);
+        const status = document.getElementById('splitStatus_' + i);
+        if (!card) continue;
+
+        const isSelected = selectedSet.has(i - 1);
+        if (isSelected) {
+          card.className = 'group relative bg-blue-50/30 border-2 border-blue-600 ring-2 ring-blue-500/20 rounded-xl p-2 cursor-pointer transition-all flex flex-col items-center gap-1.5 shadow-sm select-none opacity-100';
+          if (check) {
+            check.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-blue-600 border-2 border-blue-600 text-white transition-colors shadow-2xs';
+          }
+          if (status) {
+            status.className = 'text-[10px] font-bold text-blue-600';
+            status.textContent = 'Dipilih';
+          }
+        } else {
+          card.className = 'group relative bg-white border-2 border-slate-200 rounded-xl p-2 cursor-pointer transition-all flex flex-col items-center gap-1.5 hover:shadow-md select-none opacity-60 hover:opacity-100 hover:border-slate-300';
+          if (check) {
+            check.className = 'w-5 h-5 rounded-full flex items-center justify-center border border-slate-300 text-transparent transition-colors bg-white';
+          }
+          if (status) {
+            status.className = 'text-[10px] font-semibold text-slate-400';
+            status.textContent = 'Dilewati';
+          }
+        }
+      }
+    }
 
     function parsePageRanges(rangeStr, totalPages) {
       const indices = new Set();
@@ -4618,18 +4897,57 @@
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
+    let toastTimeout = null;
+
     function showStatus(text, type = 'info') {
       const box = document.getElementById('statusBox');
-      box.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'bg-red-50', 'text-red-800', 'border-red-200', 'bg-blue-50', 'text-blue-800', 'border-blue-200');
-      if (type === 'success') box.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
-      else if (type === 'error') box.classList.add('bg-red-50', 'text-red-800', 'border', 'border-red-200');
-      else box.classList.add('bg-blue-50', 'text-blue-800', 'border', 'border-blue-200');
-      box.textContent = text;
-      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const icon = document.getElementById('toastIcon');
+      const msg = document.getElementById('toastMessage');
+      if (!box || !icon || !msg) return;
+
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+        toastTimeout = null;
+      }
+
+      box.className = 'pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-2xl border transition-all duration-300 transform translate-y-0 opacity-100 bg-white';
+
+      let iconSvg = '';
+      if (type === 'success') {
+        box.classList.add('border-emerald-200', 'text-emerald-950');
+        iconSvg = '<div class="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>';
+      } else if (type === 'error') {
+        box.classList.add('border-red-200', 'text-red-950');
+        iconSvg = '<div class="w-7 h-7 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>';
+      } else {
+        box.classList.add('border-blue-200', 'text-slate-900');
+        iconSvg = '<div class="w-7 h-7 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>';
+      }
+
+      icon.innerHTML = iconSvg;
+      msg.textContent = text;
+      box.classList.remove('hidden');
+
+      requestAnimationFrame(() => {
+        box.classList.remove('-translate-y-2', 'opacity-0');
+        box.classList.add('translate-y-0', 'opacity-100');
+      });
+
+      if (type === 'success' || type === 'error') {
+        toastTimeout = setTimeout(() => {
+          hideStatus();
+        }, 4500);
+      }
     }
 
     function hideStatus() {
-      document.getElementById('statusBox').classList.add('hidden');
+      const box = document.getElementById('statusBox');
+      if (!box) return;
+      box.classList.remove('translate-y-0', 'opacity-100');
+      box.classList.add('-translate-y-2', 'opacity-0');
+      setTimeout(() => {
+        box.classList.add('hidden');
+      }, 300);
     }
 
     function init() {
