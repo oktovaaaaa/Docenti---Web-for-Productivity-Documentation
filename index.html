@@ -1404,6 +1404,7 @@
       pageEditHistory = {};
       selectedAnnotationId = null;
       splitPreviewLoadedDoc = null;
+      if (typeof pageThumbCache !== 'undefined') pageThumbCache.clear();
       const splitGrid = document.getElementById('splitPagesThumbnailGrid');
       if (splitGrid) splitGrid.innerHTML = '';
       showHeroStage();
@@ -1582,9 +1583,53 @@
       totalSizeBadge.textContent = 'Total: ' + formatSize(totalBytes);
       fileList.innerHTML = '';
 
+      let draggedFileListIndex = null;
       files.forEach((file, index) => {
         const li = document.createElement('li');
-        li.className = 'py-3.5 flex items-center justify-between gap-3 text-sm hover:bg-slate-50/80 px-2 rounded-xl';
+        li.className = 'py-3.5 flex items-center justify-between gap-3 text-sm hover:bg-slate-50/80 px-2 rounded-xl transition-all ' + (currentMode !== 'pdf_to_word' ? 'cursor-grab active:cursor-grabbing' : '');
+
+        if (currentMode !== 'pdf_to_word') {
+          li.draggable = true;
+          li.ondragstart = (e) => {
+            draggedFileListIndex = index;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', index);
+            setTimeout(() => li.classList.add('opacity-40', 'bg-blue-50/50'), 0);
+          };
+          li.ondragover = (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+          };
+          li.ondragenter = (e) => {
+            e.preventDefault();
+            if (draggedFileListIndex !== null && draggedFileListIndex !== index) {
+              li.classList.add('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/30');
+            }
+          };
+          li.ondragleave = (e) => {
+            if (!li.contains(e.relatedTarget)) {
+              li.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/30');
+            }
+          };
+          li.ondrop = (e) => {
+            e.preventDefault();
+            li.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/30');
+            if (draggedFileListIndex !== null && draggedFileListIndex !== undefined && draggedFileListIndex !== index) {
+              let list = currentMode === 'pdf_merge' ? pdfFiles : wordFiles;
+              const moved = list.splice(draggedFileListIndex, 1)[0];
+              list.splice(index, 0, moved);
+              renderList();
+            }
+            draggedFileListIndex = null;
+          };
+          li.ondragend = () => {
+            li.classList.remove('opacity-40', 'bg-blue-50/50');
+            document.querySelectorAll('#fileList li').forEach(item => {
+              item.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/30', 'opacity-40', 'bg-blue-50/50');
+            });
+            draggedFileListIndex = null;
+          };
+        }
 
         let controls = '';
         if (currentMode === 'pdf_to_word') {
@@ -1596,7 +1641,12 @@
                      '<button onclick="removeListItem(' + index + ')" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
         }
 
-        li.innerHTML = '<div class="flex items-center gap-3 truncate">' +
+        const dragHandle = currentMode !== 'pdf_to_word'
+          ? '<span class="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 p-1" title="Tarik untuk memindahkan urutan berkas"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg></span>'
+          : '';
+
+        li.innerHTML = '<div class="flex items-center gap-2.5 truncate">' +
+                       dragHandle +
                        '<span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold shrink-0">' + (index + 1) + '</span>' +
                        '<div class="truncate">' +
                        '<p class="font-medium text-slate-800 truncate">' + file.name + '</p>' +
@@ -2407,6 +2457,34 @@
       }
     }
 
+    let draggedOrgIndex = null;
+    const pageThumbCache = new Map();
+
+    async function renderThumb(pageIndex, canvas) {
+      if (!currentWorkingPdfDoc) return;
+      try {
+        if (pageThumbCache.has(pageIndex)) {
+          const cached = pageThumbCache.get(pageIndex);
+          canvas.width = cached.width;
+          canvas.height = cached.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(cached.canvas, 0, 0);
+          return;
+        }
+        const page = await currentWorkingPdfDoc.getPage(pageIndex + 1);
+        const vp = page.getViewport({ scale: 0.35 });
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = vp.width;
+        offCanvas.height = vp.height;
+        offCanvas.getContext('2d').drawImage(canvas, 0, 0);
+        pageThumbCache.set(pageIndex, { width: vp.width, height: vp.height, canvas: offCanvas });
+      } catch (e) {}
+    }
+
     function renderOrganizeGrid() {
       const grid = document.getElementById('organizeGrid');
       grid.innerHTML = '';
@@ -2415,13 +2493,76 @@
       organizePages.forEach((p, idx) => {
         const card = document.createElement('div');
         const isDel = p.isDeleted;
-        card.className = 'page-card relative bg-slate-50 border-2 rounded-2xl p-3 flex flex-col justify-between ' + (isDel ? 'border-red-300 opacity-40 bg-red-50/40' : 'border-slate-200 bg-white');
+        card.className = 'page-card relative bg-slate-50 border-2 rounded-2xl p-3 flex flex-col justify-between cursor-grab active:cursor-grabbing hover:shadow-md transition-all select-none ' + (isDel ? 'border-red-300 opacity-40 bg-red-50/40' : 'border-slate-200 bg-white');
+        card.draggable = true;
+        card.dataset.index = idx;
 
+        // HTML5 Drag and Drop events
+        card.ondragstart = (e) => {
+          draggedOrgIndex = idx;
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', idx);
+          setTimeout(() => {
+            card.classList.add('opacity-40', 'scale-95', 'border-blue-500', 'border-dashed');
+          }, 0);
+        };
+
+        card.ondragover = (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        };
+
+        card.ondragenter = (e) => {
+          e.preventDefault();
+          if (draggedOrgIndex !== null && draggedOrgIndex !== idx) {
+            card.classList.add('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.02]');
+          }
+        };
+
+        card.ondragleave = (e) => {
+          if (!card.contains(e.relatedTarget)) {
+            card.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.02]');
+          }
+        };
+
+        card.ondrop = (e) => {
+          e.preventDefault();
+          card.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.02]');
+          const fromIdx = draggedOrgIndex;
+          const toIdx = idx;
+          if (fromIdx !== null && fromIdx !== undefined && fromIdx !== toIdx) {
+            const moved = organizePages.splice(fromIdx, 1)[0];
+            organizePages.splice(toIdx, 0, moved);
+            renderOrganizeGrid();
+            updateOrganizeBadges();
+            showStatus('Urutan halaman berhasil dipindahkan!', 'success');
+          }
+          draggedOrgIndex = null;
+        };
+
+        card.ondragend = () => {
+          card.classList.remove('opacity-40', 'scale-95', 'border-blue-500', 'border-dashed');
+          document.querySelectorAll('.page-card').forEach(c => {
+            c.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.02]', 'opacity-40', 'scale-95', 'border-dashed');
+          });
+          draggedOrgIndex = null;
+        };
+
+        // Header
         const top = document.createElement('div');
-        top.className = 'flex items-center justify-between text-xs mb-2';
-        top.innerHTML = '<span class="font-bold px-2 py-0.5 rounded ' + (isDel ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700') + '">' + (isDel ? '-' : seq++) + '</span><span class="text-slate-400">Hal. ' + (p.originalIndex + 1) + '</span>';
+        top.className = 'flex items-center justify-between text-xs mb-2 select-none';
+        top.innerHTML = `
+          <div class="flex items-center gap-1.5">
+            <span class="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 p-0.5 rounded hover:bg-slate-100" title="Tarik kartu untuk memindahkan urutan">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+            </span>
+            <button type="button" onclick="jumpOrgPage(${idx})" draggable="false" class="font-bold px-2 py-0.5 rounded cursor-pointer hover:ring-2 hover:ring-purple-300 transition-all ${isDel ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700'}" title="Klik untuk melompat langsung ke nomor urut tertentu">${isDel ? '-' : seq++}</button>
+          </div>
+          <span class="text-slate-400 font-medium">Hal. ${p.originalIndex + 1}</span>
+        `;
         card.appendChild(top);
 
+        // Thumbnail canvas
         const thumb = document.createElement('div');
         thumb.className = 'relative aspect-[3/4] bg-white rounded-xl border flex items-center justify-center overflow-hidden my-1';
         const canvas = document.createElement('canvas');
@@ -2439,18 +2580,20 @@
         renderThumb(p.originalIndex, canvas);
         card.appendChild(thumb);
 
+        // Action controls
         const act = document.createElement('div');
         act.className = 'flex items-center justify-between pt-2 border-t text-xs';
         if (isDel) {
-          act.innerHTML = '<button onclick="toggleDelPage(' + idx + ')" class="w-full py-1 text-emerald-700 bg-emerald-50 rounded font-semibold">Pulihkan</button>';
+          act.innerHTML = '<button onclick="toggleDelPage(' + idx + ')" draggable="false" class="w-full py-1 text-emerald-700 bg-emerald-50 rounded font-semibold cursor-pointer">Pulihkan</button>';
         } else {
           act.innerHTML = '<div class="flex items-center gap-1">' +
-            '<button onclick="moveOrgPage(' + idx + ', -1)" ' + (idx === 0 ? 'disabled' : '') + ' class="p-1 hover:bg-slate-100 rounded disabled:opacity-20 text-slate-600"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>' +
-            '<button onclick="moveOrgPage(' + idx + ', 1)" ' + (idx === organizePages.length - 1 ? 'disabled' : '') + ' class="p-1 hover:bg-slate-100 rounded disabled:opacity-20 text-slate-600"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>' +
+            '<button onclick="moveOrgPage(' + idx + ', -1)" ' + (idx === 0 ? 'disabled' : '') + ' draggable="false" class="p-1 hover:bg-slate-100 rounded disabled:opacity-20 text-slate-600 cursor-pointer" title="Geser 1 ke Kiri"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>' +
+            '<button onclick="moveOrgPage(' + idx + ', 1)" ' + (idx === organizePages.length - 1 ? 'disabled' : '') + ' draggable="false" class="p-1 hover:bg-slate-100 rounded disabled:opacity-20 text-slate-600 cursor-pointer" title="Geser 1 ke Kanan"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>' +
+            '<button onclick="jumpOrgPage(' + idx + ')" draggable="false" class="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-blue-600 cursor-pointer" title="Pindah ke Nomor Urut Tertentu (Lompat Cepat)"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 5H19V11"/><path d="M19 5L5 19"/></svg></button>' +
             '</div>' +
             '<div class="flex items-center gap-1">' +
-            '<button onclick="rotOrgPage(' + idx + ')" class="p-1 text-slate-500 hover:text-purple-600 rounded hover:bg-slate-100" title="Putar 90 Derajat"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg></button>' +
-            '<button onclick="toggleDelPage(' + idx + ')" class="p-1 text-slate-400 hover:text-red-600 rounded hover:bg-slate-100" title="Hapus Halaman"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+            '<button onclick="rotOrgPage(' + idx + ')" draggable="false" class="p-1 text-slate-500 hover:text-purple-600 rounded hover:bg-slate-100 cursor-pointer" title="Putar 90 Derajat"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg></button>' +
+            '<button onclick="toggleDelPage(' + idx + ')" draggable="false" class="p-1 text-slate-400 hover:text-red-600 rounded hover:bg-slate-100 cursor-pointer" title="Hapus Halaman"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
             '</div>';
         }
         card.appendChild(act);
@@ -2458,16 +2601,20 @@
       });
     }
 
-    async function renderThumb(pageIndex, canvas) {
-      if (!currentWorkingPdfDoc) return;
-      try {
-        const page = await currentWorkingPdfDoc.getPage(pageIndex + 1);
-        const vp = page.getViewport({ scale: 0.35 });
-        canvas.width = vp.width;
-        canvas.height = vp.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-      } catch (e) {}
-    }
+    window.jumpOrgPage = (idx) => {
+      const currentPos = idx + 1;
+      const maxPos = organizePages.length;
+      const val = prompt('Pindahkan halaman dari posisi ' + currentPos + ' ke posisi berapa? (1 - ' + maxPos + '):', currentPos);
+      if (!val) return;
+      const targetPos = parseInt(val.trim());
+      if (isNaN(targetPos) || targetPos < 1 || targetPos > maxPos || targetPos === currentPos) return;
+      const targetIdx = targetPos - 1;
+      const moved = organizePages.splice(idx, 1)[0];
+      organizePages.splice(targetIdx, 0, moved);
+      renderOrganizeGrid();
+      updateOrganizeBadges();
+      showStatus('Halaman berhasil dipindahkan dari urutan ' + currentPos + ' ke posisi ' + targetPos + '!', 'success');
+    };
 
     window.moveOrgPage = (idx, dir) => {
       const tgt = idx + dir;
