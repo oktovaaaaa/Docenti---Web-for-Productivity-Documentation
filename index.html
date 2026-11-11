@@ -333,25 +333,53 @@
 
       <!-- Action bar for convert -->
       <div id="convertActionContainer" class="pt-4 border-t border-slate-100 hidden flex flex-col gap-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-          <div class="space-y-1.5">
-            <span class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Mode Konversi Dokumen Word:</span>
-            <div class="flex flex-col sm:flex-row sm:items-center gap-3 text-xs sm:text-sm">
-              <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-800">
-                <input type="radio" name="pdfToWordMode" value="smart" checked class="text-blue-600 focus:ring-blue-500">
-                <span><strong>Rekonstruksi Cerdas Pro</strong> (Teks, Kodingan, Tabel & Gambar Dapat Diedit)</span>
-              </label>
-              <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-800">
-                <input type="radio" name="pdfToWordMode" value="visual" class="text-blue-600 focus:ring-blue-500">
-                <span><strong>Presisi Visual 100%</strong> (Identik Persis Asli Tanpa Pergeseran)</span>
-              </label>
+        <!-- Status Engine Python pdf_to_word -->
+        <div id="pdfEngineStatusCard" class="flex items-center justify-between flex-wrap gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl shadow-2xs">
+          <div class="flex items-center gap-3">
+            <span id="pdfEngineDot" class="w-3 h-3 rounded-full bg-slate-400 shrink-0"></span>
+            <div>
+              <span id="pdfEngineText" class="text-xs font-bold text-slate-800 block">Mengecek Engine pdf_to_word...</span>
+              <span id="pdfEngineSub" class="text-[11px] text-slate-500 block">Menghubungkan ke server lokal untuk konversi presisi tinggi (iLovePDF Style).</span>
             </div>
-            <p class="text-xs text-slate-500"><strong>Rekonstruksi Cerdas:</strong> Menjaga format kodingan (font Consolas & spasi indentasi), mengekstrak semua foto/gambar lengkap, dan teks bersih tanpa karakter aneh. <strong>Presisi Visual 100%:</strong> Tampilan dokumen Word 100% sama persis dengan PDF asli.</p>
           </div>
-          <button id="convertAllBtn" class="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            <span id="convertAllBtnText">Konversi Semua ke Word (.docx)</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="checkPythonEngineStatus(true)" class="text-xs text-blue-600 hover:text-blue-700 bg-white hover:bg-blue-50 font-semibold px-3 py-1.5 rounded-xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer shadow-2xs">
+              Segarkan Status
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <span class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Pilih Metode Konversi ke Word:</span>
+            <span class="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">Tips: Engine pdf2docx memberikan hasil terbaik tabel dan layout</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="p-3.5 border-2 rounded-2xl cursor-pointer hover:border-blue-400 transition-all block bg-white has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/20 shadow-2xs">
+              <div class="flex items-start gap-2.5">
+                <input type="radio" name="pdfToWordMode" value="smart" checked class="text-blue-600 mt-0.5">
+                <div>
+                  <span class="font-bold text-slate-800 text-xs sm:text-sm block">Engine Presisi Tinggi pdf2docx (iLovePDF Style)</span>
+                  <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">Tabel, baris data, kop surat, dan teks diekstrak secara utuh dan presisi sehingga dokumen Word rapi serta dapat diedit bebas.</p>
+                </div>
+              </div>
+            </label>
+            <label class="p-3.5 border-2 rounded-2xl cursor-pointer hover:border-blue-400 transition-all block bg-white has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/20 shadow-2xs">
+              <div class="flex items-start gap-2.5">
+                <input type="radio" name="pdfToWordMode" value="visual" class="text-blue-600 mt-0.5">
+                <div>
+                  <span class="font-bold text-slate-800 text-xs sm:text-sm block">Presisi Visual 100% (Identik Persis Asli)</span>
+                  <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">Tata letak, posisi logo, titik dua, dan border dijamin 100% sama persis dengan cetakan PDF asli tanpa pergeseran.</p>
+                </div>
+              </div>
+            </label>
+          </div>
+          <div class="pt-2 flex justify-end">
+            <button id="convertAllBtn" class="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span id="convertAllBtnText">Konversi Semua ke Word (.docx)</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1411,6 +1439,9 @@
       if (currentWorkingPdfBytes && typeof saveWorkingSession === 'function') {
         saveWorkingSession();
       }
+      if (toolId === 'pdf_to_word') {
+        checkPythonEngineStatus(false);
+      }
     }
 
     function showHeroStage() {
@@ -1436,6 +1467,9 @@
         document.getElementById('fileListCard').classList.remove('hidden');
         document.getElementById('mergeActionContainer').classList.toggle('hidden', currentMode === 'pdf_to_word');
         document.getElementById('convertActionContainer').classList.toggle('hidden', currentMode !== 'pdf_to_word');
+        if (currentMode === 'pdf_to_word') {
+          checkPythonEngineStatus(false);
+        }
 
         if (currentMode === 'word_merge') {
           document.getElementById('outputFileName').value = 'hasil_gabungan.docx';
@@ -2396,6 +2430,52 @@
               '<w:t xml:space="preserve">' + sanitizeXmlAndDecodeLigatures(el.text) + '</w:t>' +
               '</w:r>' +
               '</w:p>';
+          } else if (el.type === 'header_layout') {
+            const cx = Math.round(Math.min(el.image.width, 130) * 12700);
+            const cy = Math.round(Math.min(el.image.height, 130) * 12700);
+            const relId = 'rIdImg' + el.image.imgIndex;
+            bodyXml += '<w:tbl>' +
+              '<w:tblPr>' +
+              '<w:tblW w:w="8600" w:type="dxa"/>' +
+              '<w:jc w:val="center"/>' +
+              '<w:tblBorders>' +
+              '<w:top w:val="none"/><w:left w:val="none"/><w:bottom w:val="none"/><w:right w:val="none"/><w:insideH w:val="none"/><w:insideV w:val="none"/>' +
+              '</w:tblBorders>' +
+              '</w:tblPr>' +
+              '<w:tr>' +
+              '  <w:tc>' +
+              '    <w:tcPr><w:tcW w:w="2200" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr>' +
+              '    <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">' +
+              '      <wp:extent cx="' + cx + '" cy="' + cy + '"/>' +
+              '      <wp:docPr id="' + el.image.imgIndex + '" name="Picture ' + el.image.imgIndex + '"/>' +
+              '      <wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>' +
+              '      <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+              '        <pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+              '          <pic:nvPicPr><pic:cNvPr id="' + el.image.imgIndex + '" name="img_' + el.image.imgIndex + '.png"/><pic:cNvPicPr/></pic:nvPicPr>' +
+              '          <pic:blipFill><a:blip r:embed="' + relId + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
+              '          <pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
+              '        </pic:pic>' +
+              '      </a:graphicData></a:graphic>' +
+              '    </wp:inline></w:drawing></w:r></w:p>' +
+              '  </w:tc>' +
+              '  <w:tc>' +
+              '    <w:tcPr><w:tcW w:w="6400" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr>';
+            for (let p of el.paragraphs) {
+              const jc = '<w:jc w:val="center"/>';
+              const spacing = '<w:spacing w:after="40" w:line="240" w:lineRule="auto"/>';
+              let runsXml = '';
+              p.runs.forEach(r => {
+                let rPr = '<w:rPr>';
+                if (r.isBold) rPr += '<w:b/>';
+                if (r.fontSize) rPr += '<w:sz w:val="' + Math.round(r.fontSize * 2) + '"/>';
+                rPr += '</w:rPr>';
+                runsXml += '<w:r>' + rPr + '<w:t xml:space="preserve">' + sanitizeXmlAndDecodeLigatures(r.text) + '</w:t></w:r>';
+              });
+              bodyXml += '<w:p><w:pPr>' + jc + spacing + '</w:pPr>' + runsXml + '</w:p>';
+            }
+            bodyXml += '  </w:tc>' +
+              '</w:tr>' +
+              '</w:tbl>';
           } else if (el.type === 'table') {
             const numCols = Math.max(...el.rows.map(r => r.length));
             const totalW = 8600;
@@ -2568,11 +2648,66 @@
       return await zip.generateAsync({ type: 'blob' });
     }
 
-    async function convertPdfToDocxBlob(file, mode = 'smart') {
-      const buf = await file.arrayBuffer();
-      const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    let isPythonEngineAvailable = false;
+    let pythonEngineEndpoint = null;
 
+    async function checkPythonEngineStatus(showMessage = false) {
+      const dot = document.getElementById('pdfEngineDot');
+      const text = document.getElementById('pdfEngineText');
+      const sub = document.getElementById('pdfEngineSub');
+      const endpoints = [];
+      if (window.location.protocol.startsWith('http')) {
+        endpoints.push(window.location.origin + '/api/health');
+      }
+      endpoints.push('http://127.0.0.1:5000/api/health');
+      endpoints.push('http://localhost:5000/api/health');
+
+      for (const url of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 2000);
+          const res = await fetch(url, { method: 'GET', signal: controller.signal });
+          clearTimeout(timer);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && (data.engine === 'pdf_to_word' || data.engine === 'pdf2docx')) {
+              isPythonEngineAvailable = true;
+              pythonEngineEndpoint = url.replace('/api/health', '/api/convert');
+              if (dot) dot.className = 'w-3 h-3 rounded-full bg-emerald-500 animate-pulse shrink-0';
+              if (text) {
+                text.textContent = 'Engine Python (pdf2docx) Aktif & Siap';
+                text.className = 'text-xs font-bold text-emerald-700 block';
+              }
+              if (sub) {
+                sub.textContent = 'Konversi presisi tinggi (tabel utuh, format rapi seperti iLovePDF) aktif.';
+                sub.className = 'text-[11px] text-emerald-600 block';
+              }
+              if (showMessage) showStatus('Engine Python pdf_to_word aktif dan siap digunakan!', 'success');
+              return true;
+            }
+          }
+        } catch (e) {}
+      }
+
+      isPythonEngineAvailable = false;
+      pythonEngineEndpoint = null;
+      if (dot) dot.className = 'w-3 h-3 rounded-full bg-amber-500 shrink-0';
+      if (text) {
+        text.textContent = 'Engine Lokal Belum Berjalan';
+        text.className = 'text-xs font-bold text-amber-800 block';
+      }
+      if (sub) {
+        sub.textContent = 'Jalankan "jalankan_docenti.bat" untuk kualitas maksimal (iLovePDF Style). Mode browser aktif sebagai cadangan.';
+        sub.className = 'text-[11px] text-amber-700 block';
+      }
+      if (showMessage) showStatus('Engine lokal belum aktif. Jalankan "jalankan_docenti.bat" di komputer Anda.', 'info');
+      return false;
+    }
+
+    async function convertPdfToDocxBlob(file, mode = 'smart') {
       if (mode === 'visual') {
+        const buf = await file.arrayBuffer();
+        const doc = await pdfjsLib.getDocument({ data: buf }).promise;
         const pagesImages = [];
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i);
@@ -2602,6 +2737,63 @@
         return await buildVisualDocx(pagesImages);
       }
 
+      // Prioritas 1: Engine Presisi Tinggi Python (pdf2docx)
+      const endpoints = [];
+      if (pythonEngineEndpoint) endpoints.push(pythonEngineEndpoint);
+      if (window.location.protocol.startsWith('http')) {
+        endpoints.push(window.location.origin + '/api/convert');
+      }
+      endpoints.push('http://127.0.0.1:5000/api/convert');
+      endpoints.push('http://localhost:5000/api/convert');
+
+      const uniqueEndpoints = [...new Set(endpoints)];
+      for (const ep of uniqueEndpoints) {
+        try {
+          showStatus('Mengonversi "' + file.name + '" dengan Engine Presisi Tinggi (pdf2docx)...');
+          const formData = new FormData();
+          formData.append('file', file, file.name);
+
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 90000);
+
+          const res = await fetch(ep, {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+          });
+          clearTimeout(timer);
+
+          if (res.ok) {
+            const docxBlob = await res.blob();
+            if (docxBlob && docxBlob.size > 200) {
+              isPythonEngineAvailable = true;
+              pythonEngineEndpoint = ep;
+              return docxBlob;
+            }
+          }
+        } catch (e) {
+          // lanjut coba endpoint berikutnya
+        }
+      }
+
+      // Prioritas 2: Jika engine Python belum aktif, beri konfirmasi ke pengguna
+      const userChoice = confirm(
+        'Perhatian:\n' +
+        'Engine Presisi Tinggi Python (pdf2docx) belum aktif di komputer Anda.\n\n' +
+        'Untuk hasil konversi 100% presisi (tabel utuh, format rapi seperti iLovePDF):\n' +
+        '1. Buka folder proyek Docenti\n' +
+        '2. Klik dua kali file "jalankan_docenti.bat"\n\n' +
+        'Apakah Anda ingin tetap mengonversi dengan mode cadangan browser offline?'
+      );
+
+      if (!userChoice) {
+        throw new Error('Konversi dibatalkan. Silakan jalankan "jalankan_docenti.bat" lalu coba kembali.');
+      }
+
+      showStatus('Mengonversi dengan mode cadangan browser offline...', 'info');
+      const buf = await file.arrayBuffer();
+      const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+
       // SMART RECONSTRUCTION PRO MODE
       const allExtractedImages = [];
       const pagesElements = [];
@@ -2619,7 +2811,7 @@
         const tc = await page.getTextContent();
         const items = tc.items.filter(it => it.str && it.str.length > 0);
 
-        const pageEls = [];
+        let pageEls = [];
 
         // Group items into lines
         const linesMap = [];
@@ -2727,8 +2919,12 @@
             }
           }
 
-          // Table row creation or append
-          if (segments.length >= 2 && !isLineOfCode(lineText, false)) {
+          // Key-Value Metadata check (e.g. "Tanggal / Sesi :", "Batas Pengumpulan : Akhir Sesi", "Tujuan : ...")
+          const isKeyValueMetadata = (segments.length === 2 || segments.length === 3) &&
+            (segments.some(s => /^\s*:\s*/.test(s.text) || s.text.trim().endsWith(':')) || /:\s*[A-Za-z0-9]/.test(lineText));
+
+          // Table row creation or append (only for real data tables, NOT metadata key-values)
+          if (segments.length >= 2 && !isLineOfCode(lineText, false) && !isKeyValueMetadata) {
             const rowCells = segments.map(s => ({
               text: s.text,
               isBold: s.items.some(it => /bold/i.test(it.fontName || '') || it.height >= 13),
@@ -2774,8 +2970,57 @@
           }
         }
 
-        // Add extracted images for this page
-        for (let img of pageImgs) {
+        // Extract images and detect if there's a side-by-side Header (Logo on left + Institution Title on right)
+        const unassignedImgs = [...pageImgs];
+        const headerLayouts = [];
+
+        if (unassignedImgs.length > 0) {
+          // Look for top logo image (y in top 35% of page, x on left half)
+          const topLogoIdx = unassignedImgs.findIndex(img => (img.y + img.height > pageHeight * 0.65) && (img.x < pageWidth * 0.45) && (img.width < 220) && (img.height < 220));
+
+          if (topLogoIdx !== -1) {
+            const logoImg = unassignedImgs[topLogoIdx];
+            const logoBottom = logoImg.y;
+            const logoTop = logoImg.y + logoImg.height;
+
+            const overlappingParagraphs = [];
+            const remainingEls = [];
+
+            for (let el of pageEls) {
+              if (el.type === 'paragraph' && el.y >= (logoBottom - 30) && el.y <= (logoTop + 30)) {
+                overlappingParagraphs.push(el);
+              } else {
+                remainingEls.push(el);
+              }
+            }
+
+            if (overlappingParagraphs.length >= 1) {
+              const imgIndex = allExtractedImages.length + 1;
+              allExtractedImages.push({
+                imgIndex,
+                bytes: logoImg.bytes
+              });
+
+              headerLayouts.push({
+                type: 'header_layout',
+                y: logoTop,
+                image: {
+                  width: Math.min(logoImg.width, 130),
+                  height: Math.min(logoImg.height, 130),
+                  imgIndex
+                },
+                paragraphs: overlappingParagraphs
+              });
+
+              pageEls = remainingEls;
+              pageEls.push(...headerLayouts);
+              unassignedImgs.splice(topLogoIdx, 1);
+            }
+          }
+        }
+
+        // Add remaining extracted images
+        for (let img of unassignedImgs) {
           let dispW = Math.min(img.width, 440);
           let dispH = img.height * (dispW / (img.width || 1));
           if (dispH > 420) {

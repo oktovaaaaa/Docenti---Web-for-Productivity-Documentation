@@ -1,0 +1,9 @@
+# Abaikan backend Python agar Vercel tidak error akibat batasan ukuran 250MB
+api/
+requirements.txt
+pdf_to_word/
+server.py
+jalankan_docenti.bat
+__pycache__/
+*.pyc
+
