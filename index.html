@@ -89,12 +89,15 @@
       <!-- Left: Logo & Nav items -->
       <div class="flex items-center gap-8">
         <!-- Logo -->
-        <a href="javascript:void(0)" onclick="selectTool('pdf_merge')" class="flex items-center group cursor-pointer" title="Docenti">
+        <a href="javascript:void(0)" onclick="selectTool('pdf_to_word')" class="flex items-center group cursor-pointer" title="Docenti">
           <img src="Docenti.png" alt="Docenti" class="h-10 sm:h-11 w-auto object-contain transition-transform group-hover:scale-105">
         </a>
 
         <!-- Desktop Navigation Links -->
         <nav class="hidden lg:flex items-center gap-1 font-bold text-xs uppercase tracking-wider text-slate-700">
+          <button onclick="selectTool('pdf_to_word')" id="nav_pdf_to_word" class="nav-item px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
+            PDF ke Word
+          </button>
           <button onclick="selectTool('pdf_merge')" id="nav_pdf_merge" class="nav-item px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
             Gabungkan PDF
           </button>
@@ -332,22 +335,11 @@
       </div>
 
       <!-- Action bar for convert -->
-      <div id="convertActionContainer" class="pt-4 border-t border-slate-100 hidden flex flex-col sm:flex-row items-center justify-between gap-4">
-        <!-- Status Engine Python pdf_to_word -->
-        <div id="pdfEngineStatusCard" class="flex items-center gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl shadow-2xs w-full sm:w-auto">
-          <span id="pdfEngineDot" class="w-3 h-3 rounded-full bg-slate-400 shrink-0"></span>
-          <div>
-            <span id="pdfEngineText" class="text-xs font-bold text-slate-800 block">Mengecek Engine...</span>
-            <span id="pdfEngineSub" class="text-[11px] text-slate-500 block">Konversi presisi tinggi (iLovePDF Style).</span>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <button id="convertAllBtn" class="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            <span id="convertAllBtnText">Konversi Semua ke Word (.docx)</span>
-          </button>
-        </div>
+      <div id="convertActionContainer" class="pt-4 border-t border-slate-100 hidden flex items-center justify-end">
+        <button id="convertAllBtn" class="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span id="convertAllBtnText">Konversi Semua ke Word (.docx)</span>
+        </button>
       </div>
     </div>
 
@@ -1319,7 +1311,7 @@
       }
     };
 
-    let currentMode = 'pdf_merge';
+    let currentMode = 'pdf_to_word';
 
     // State Storage
     let pdfFiles = [];
@@ -1406,9 +1398,6 @@
       if (currentWorkingPdfBytes && typeof saveWorkingSession === 'function') {
         saveWorkingSession();
       }
-      if (toolId === 'pdf_to_word') {
-        checkPythonEngineStatus(false);
-      }
     }
 
     function showHeroStage() {
@@ -1434,9 +1423,6 @@
         document.getElementById('fileListCard').classList.remove('hidden');
         document.getElementById('mergeActionContainer').classList.toggle('hidden', currentMode === 'pdf_to_word');
         document.getElementById('convertActionContainer').classList.toggle('hidden', currentMode !== 'pdf_to_word');
-        if (currentMode === 'pdf_to_word') {
-          checkPythonEngineStatus(false);
-        }
 
         if (currentMode === 'word_merge') {
           document.getElementById('outputFileName').value = 'hasil_gabungan.docx';
@@ -2615,98 +2601,8 @@
       return await zip.generateAsync({ type: 'blob' });
     }
 
-    let isPythonEngineAvailable = false;
-    let pythonEngineEndpoint = null;
-
-    async function checkPythonEngineStatus(showMessage = false) {
-      const dot = document.getElementById('pdfEngineDot');
-      const text = document.getElementById('pdfEngineText');
-      const sub = document.getElementById('pdfEngineSub');
+    async function convertPdfToDocxBlob(file) {
       const endpoints = [];
-      if (window.location.protocol.startsWith('http')) {
-        endpoints.push(window.location.origin + '/api/health');
-      }
-      endpoints.push('http://127.0.0.1:5000/api/health');
-      endpoints.push('http://localhost:5000/api/health');
-
-      for (const url of endpoints) {
-        try {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 2000);
-          const res = await fetch(url, { method: 'GET', signal: controller.signal });
-          clearTimeout(timer);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && (data.engine === 'pdf_to_word' || data.engine === 'pdf2docx')) {
-              isPythonEngineAvailable = true;
-              pythonEngineEndpoint = url.replace('/api/health', '/api/convert');
-              if (dot) dot.className = 'w-3 h-3 rounded-full bg-emerald-500 animate-pulse shrink-0';
-              if (text) {
-                text.textContent = 'Engine Python (pdf2docx) Aktif & Siap';
-                text.className = 'text-xs font-bold text-emerald-700 block';
-              }
-              if (sub) {
-                sub.textContent = 'Konversi presisi tinggi (tabel utuh, format rapi seperti iLovePDF) aktif.';
-                sub.className = 'text-[11px] text-emerald-600 block';
-              }
-              if (showMessage) showStatus('Engine Python pdf_to_word aktif dan siap digunakan!', 'success');
-              return true;
-            }
-          }
-        } catch (e) {}
-      }
-
-      isPythonEngineAvailable = false;
-      pythonEngineEndpoint = null;
-      if (dot) dot.className = 'w-3 h-3 rounded-full bg-amber-500 shrink-0';
-      if (text) {
-        text.textContent = 'Engine Lokal Belum Berjalan';
-        text.className = 'text-xs font-bold text-amber-800 block';
-      }
-      if (sub) {
-        sub.textContent = 'Jalankan "jalankan_docenti.bat" untuk kualitas maksimal (iLovePDF Style). Mode browser aktif sebagai cadangan.';
-        sub.className = 'text-[11px] text-amber-700 block';
-      }
-      if (showMessage) showStatus('Engine lokal belum aktif. Jalankan "jalankan_docenti.bat" di komputer Anda.', 'info');
-      return false;
-    }
-
-    async function convertPdfToDocxBlob(file, mode = 'smart') {
-      if (mode === 'visual') {
-        const buf = await file.arrayBuffer();
-        const doc = await pdfjsLib.getDocument({ data: buf }).promise;
-        const pagesImages = [];
-        for (let i = 1; i <= doc.numPages; i++) {
-          const page = await doc.getPage(i);
-          const viewport = page.getViewport({ scale: 2.2 });
-          const canvas = document.createElement('canvas');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const ctx = canvas.getContext('2d');
-          await page.render({ canvasContext: ctx, viewport }).promise;
-          const dataUrl = canvas.toDataURL('image/png');
-          const b64 = dataUrl.split(',')[1];
-          const bin = atob(b64);
-          const bytes = new Uint8Array(bin.length);
-          for (let k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k);
-
-          const pw = page.view[2] - page.view[0] || 595.28;
-          const ph = page.view[3] - page.view[1] || 841.89;
-          const displayW = 490;
-          const displayH = Math.round(displayW * (ph / pw));
-
-          pagesImages.push({
-            bytes,
-            width: displayW,
-            height: displayH
-          });
-        }
-        return await buildVisualDocx(pagesImages);
-      }
-
-      // Prioritas 1: Engine Presisi Tinggi Python (pdf2docx)
-      const endpoints = [];
-      if (pythonEngineEndpoint) endpoints.push(pythonEngineEndpoint);
       if (window.location.protocol.startsWith('http')) {
         endpoints.push(window.location.origin + '/api/convert');
       }
@@ -2716,7 +2612,7 @@
       const uniqueEndpoints = [...new Set(endpoints)];
       for (const ep of uniqueEndpoints) {
         try {
-          showStatus('Mengonversi "' + file.name + '" dengan Engine Presisi Tinggi (pdf2docx)...');
+          showStatus('Mengonversi "' + file.name + '" ke Word... Mohon tunggu sebentar.');
           const formData = new FormData();
           formData.append('file', file, file.name);
 
@@ -2733,8 +2629,6 @@
           if (res.ok) {
             const docxBlob = await res.blob();
             if (docxBlob && docxBlob.size > 200) {
-              isPythonEngineAvailable = true;
-              pythonEngineEndpoint = ep;
               return docxBlob;
             }
           }
@@ -2743,21 +2637,8 @@
         }
       }
 
-      // Prioritas 2: Jika engine Python belum aktif, beri konfirmasi ke pengguna
-      const userChoice = confirm(
-        'Perhatian:\n' +
-        'Engine Presisi Tinggi Python (pdf2docx) belum aktif di komputer Anda.\n\n' +
-        'Untuk hasil konversi 100% presisi (tabel utuh, format rapi seperti iLovePDF):\n' +
-        '1. Buka folder proyek Docenti\n' +
-        '2. Klik dua kali file "jalankan_docenti.bat"\n\n' +
-        'Apakah Anda ingin tetap mengonversi dengan mode cadangan browser offline?'
-      );
-
-      if (!userChoice) {
-        throw new Error('Konversi dibatalkan. Silakan jalankan "jalankan_docenti.bat" lalu coba kembali.');
-      }
-
-      showStatus('Mengonversi dengan mode cadangan browser offline...', 'info');
+      // Mode cadangan otomatis tanpa dialog konfirmasi
+      showStatus('Memproses dokumen ke Word...', 'info');
       const buf = await file.arrayBuffer();
       const doc = await pdfjsLib.getDocument({ data: buf }).promise;
 
@@ -6156,7 +6037,7 @@
         console.warn('Gagal memulihkan sesi kerja:', err);
       }
 
-      selectTool('pdf_merge');
+      selectTool('pdf_to_word');
     }
 
     init();
