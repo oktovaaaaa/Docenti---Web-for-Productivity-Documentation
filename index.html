@@ -737,27 +737,50 @@
               </div>
             </div>
 
-            <!-- Tampilan & Efek (Opasitas, Sudut Rotasi, Margin Batas Tepi) -->
-            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <div class="flex justify-between items-center mb-1">
-                    <label class="font-bold text-slate-700">Transparansi:</label>
-                    <span id="wmOpacityVal" class="text-blue-600 font-bold">25%</span>
-                  </div>
-                  <input type="range" id="watermarkOpacity" value="25" min="5" max="95" oninput="document.getElementById('wmOpacityVal').textContent = this.value + '%'; updateWatermarkLivePreview()" class="w-full accent-blue-600">
+            <!-- Tampilan & Efek (Opasitas, Sudut Rotasi Bebas, Margin Batas Tepi) -->
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3.5">
+              
+              <!-- Pilihan Sudut Rotasi (Lurus 0° Default & Slider Bebas) -->
+              <div>
+                <div class="flex justify-between items-center mb-1.5">
+                  <label class="font-bold text-slate-700">Sudut Kemiringan / Rotasi:</label>
+                  <span id="wmAngleValBadge" class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">0° (Lurus)</span>
                 </div>
-                <div>
-                  <label class="block font-bold text-slate-700 mb-1">Sudut Rotasi:</label>
-                  <select id="watermarkAngle" onchange="updateWatermarkLivePreview()" class="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none cursor-pointer">
-                    <option value="45">Miring (45°)</option>
-                    <option value="0">Lurus (0°)</option>
-                    <option value="-45">Terbalik (-45°)</option>
-                    <option value="90">Tegak (90°)</option>
-                  </select>
+                
+                <!-- Preset Buttons -->
+                <div class="grid grid-cols-4 gap-1.5 mb-2">
+                  <button type="button" onclick="setWatermarkAnglePreset(0)" id="wmAngleBtn_0" class="wm-angle-btn py-1.5 px-1 rounded-lg text-[11px] font-bold border-2 border-blue-600 bg-blue-600 text-white shadow-2xs transition-all cursor-pointer text-center">
+                    0° Lurus
+                  </button>
+                  <button type="button" onclick="setWatermarkAnglePreset(45)" id="wmAngleBtn_45" class="wm-angle-btn py-1.5 px-1 rounded-lg text-[11px] font-medium border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition-all cursor-pointer text-center">
+                    45° Miring
+                  </button>
+                  <button type="button" onclick="setWatermarkAnglePreset(-45)" id="wmAngleBtn_m45" class="wm-angle-btn py-1.5 px-1 rounded-lg text-[11px] font-medium border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition-all cursor-pointer text-center">
+                    -45° Miring
+                  </button>
+                  <button type="button" onclick="setWatermarkAnglePreset(90)" id="wmAngleBtn_90" class="wm-angle-btn py-1.5 px-1 rounded-lg text-[11px] font-medium border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition-all cursor-pointer text-center">
+                    90° Tegak
+                  </button>
+                </div>
+
+                <!-- Slider untuk Pengaturan Derajat Halus -->
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] text-slate-400 font-medium">-180°</span>
+                  <input type="range" id="watermarkAngle" value="0" min="-180" max="180" step="1" oninput="onWatermarkAngleSliderChange(this.value)" class="w-full accent-blue-600 cursor-pointer">
+                  <span class="text-[10px] text-slate-400 font-medium">+180°</span>
                 </div>
               </div>
 
+              <!-- Transparansi / Opasitas -->
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <label class="font-bold text-slate-700">Transparansi / Opasitas:</label>
+                  <span id="wmOpacityVal" class="text-blue-600 font-bold">25%</span>
+                </div>
+                <input type="range" id="watermarkOpacity" value="25" min="5" max="95" oninput="document.getElementById('wmOpacityVal').textContent = this.value + '%'; updateWatermarkLivePreview()" class="w-full accent-blue-600">
+              </div>
+
+              <!-- Batas Jarak Tepi (Margin) -->
               <div>
                 <div class="flex justify-between items-center mb-1">
                   <label class="font-bold text-slate-700">Batas Jarak Tepi (Margin):</label>
@@ -4156,6 +4179,7 @@
         initWatermarkDraggableBox();
         wmDraggableInitialized = true;
       }
+      onWatermarkAngleSliderChange(document.getElementById('watermarkAngle')?.value || 0);
       updateWatermarkLivePreview();
     };
 
@@ -4209,6 +4233,37 @@
         console.error('Error rendering watermark preview:', e);
       }
     }
+
+    window.setWatermarkAnglePreset = function(deg) {
+      const slider = document.getElementById('watermarkAngle');
+      if (slider) slider.value = deg;
+      onWatermarkAngleSliderChange(deg);
+    };
+
+    window.onWatermarkAngleSliderChange = function(val) {
+      const deg = parseInt(val) || 0;
+      const badge = document.getElementById('wmAngleValBadge');
+      if (badge) {
+        if (deg === 0) badge.textContent = '0° (Lurus)';
+        else if (deg === 45) badge.textContent = '45° (Miring)';
+        else if (deg === -45) badge.textContent = '-45° (Miring)';
+        else if (deg === 90) badge.textContent = '90° (Tegak)';
+        else badge.textContent = deg + '°';
+      }
+
+      const presets = { '0': 'wmAngleBtn_0', '45': 'wmAngleBtn_45', '-45': 'wmAngleBtn_m45', '90': 'wmAngleBtn_90' };
+      Object.keys(presets).forEach(key => {
+        const btn = document.getElementById(presets[key]);
+        if (!btn) return;
+        if (parseInt(key) === deg) {
+          btn.className = 'wm-angle-btn py-1.5 px-1 rounded-lg text-[11px] font-bold border-2 border-blue-600 bg-blue-600 text-white shadow-2xs transition-all cursor-pointer text-center';
+        } else {
+          btn.className = 'wm-angle-btn py-1.5 px-1 rounded-lg text-[11px] font-medium border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition-all cursor-pointer text-center';
+        }
+      });
+
+      updateWatermarkLivePreview();
+    };
 
     window.updateWatermarkLivePreview = function() {
       const isText = currentWatermarkType === 'text';
