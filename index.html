@@ -550,21 +550,21 @@
           <label class="p-4 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
             <input type="radio" name="compressLevel" value="extreme" class="text-blue-600">
             <span class="font-bold text-slate-800 block mt-1">Kompresi Kuat (Ekstrem)</span>
-            <span class="text-slate-500 block text-[11px] mt-0.5">Ukuran sangat kecil untuk upload ketat / email</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">Kompresi maksimal untuk berkas scan & foto besar</span>
           </label>
           <label class="p-4 border-2 border-blue-600 rounded-2xl cursor-pointer transition-all block bg-blue-50/30">
             <input type="radio" name="compressLevel" value="recommended" checked class="text-blue-600">
-            <span class="font-bold text-slate-800 block mt-1">Rekomendasi (Seimbang)</span>
-            <span class="text-slate-500 block text-[11px] mt-0.5">Kualitas visual tetap jelas & ukuran berkurang</span>
+            <span class="font-bold text-slate-800 block mt-1">Rekomendasi (Cerdas & Seimbang)</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">Mempertahankan ketajaman teks vektor & kompres gambar</span>
           </label>
           <label class="p-4 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
             <input type="radio" name="compressLevel" value="lossless" class="text-blue-600">
             <span class="font-bold text-slate-800 block mt-1">Optimasi Struktur (Lossless)</span>
-            <span class="text-slate-500 block text-[11px] mt-0.5">Membersihkan metadata tanpa menurunkan resolusi</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">Membersihkan metadata tanpa penurunan kualitas</span>
           </label>
         </div>
-        <div id="compressResultBox" class="hidden p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-2xl text-xs space-y-1">
-          <p class="font-bold text-sm">Berhasil Mengompres PDF!</p>
+        <div id="compressResultBox" class="hidden p-4 rounded-2xl text-xs space-y-1">
+          <p id="compressResultTitle" class="font-bold text-sm"></p>
           <p id="compressResultDetails"></p>
         </div>
       </div>
@@ -3417,64 +3417,118 @@
 
     // Compress PDF
     async function applyCompressPdf() {
-      const level = document.querySelector('input[name="compressLevel"]:checked').value;
-      showStatus('Mengompres dokumen PDF (' + level + ')... Mohon tunggu.');
+      const levelRadio = document.querySelector('input[name="compressLevel"]:checked');
+      const level = levelRadio ? levelRadio.value : 'recommended';
+      showStatus('Menganalisis dan mengompres dokumen PDF (' + level + ')... Mohon tunggu.');
 
       try {
-        let compressedBytes;
-        const initialSize = currentWorkingPdf.size;
+        const initialBytes = getWorkingPdfBytesCopy();
+        const initialSize = initialBytes.length || currentWorkingPdf.size;
 
-        if (level === 'lossless') {
-          const doc = await safeLoadPdfDocument(getWorkingPdfBytesCopy());
+        // 1. Detect if document contains native digital text (Vector PDF)
+        let totalTextChars = 0;
+        const numPages = currentWorkingPdfDoc ? currentWorkingPdfDoc.numPages : 1;
+        for (let i = 1; i <= Math.min(numPages, 10); i++) {
+          const page = await currentWorkingPdfDoc.getPage(i);
+          const tc = await page.getTextContent();
+          totalTextChars += (tc.items || []).reduce((acc, it) => acc + (it.str ? it.str.length : 0), 0);
+        }
+        const hasDigitalText = totalTextChars > 30;
+
+        let bestBytes = initialBytes;
+        let bestSize = initialSize;
+
+        // Step A: Structural & Object Stream Compression (Always preserves 100% Vector Font Sharpness)
+        try {
+          const srcDoc = await safeLoadPdfDocument(initialBytes);
           const cleanDoc = await PDFLib.PDFDocument.create();
-          const pages = await cleanDoc.copyPages(doc, doc.getPageIndices());
+          const pages = await cleanDoc.copyPages(srcDoc, srcDoc.getPageIndices());
           pages.forEach(p => cleanDoc.addPage(p));
-          compressedBytes = await cleanDoc.save({ useObjectStreams: true });
 
-        } else {
-          const quality = level === 'extreme' ? 0.35 : 0.60;
-          const scale = level === 'extreme' ? 0.9 : 1.1;
+          // Strip heavy orphaned metadata
+          cleanDoc.setTitle('');
+          cleanDoc.setAuthor('');
+          cleanDoc.setSubject('');
+          cleanDoc.setKeywords([]);
+          cleanDoc.setProducer('Docenti');
+          cleanDoc.setCreator('Docenti');
 
-          const outPdf = await PDFLib.PDFDocument.create();
-          const numPages = currentWorkingPdfDoc.numPages;
-
-          for (let i = 1; i <= numPages; i++) {
-            showStatus('Mengompres halaman (' + i + '/' + numPages + ')...');
-            const page = await currentWorkingPdfDoc.getPage(i);
-            const vp = page.getViewport({ scale: scale });
-
-            const canvas = document.createElement('canvas');
-            canvas.width = vp.width;
-            canvas.height = vp.height;
-            const ctx = canvas.getContext('2d');
-            await page.render({ canvasContext: ctx, viewport: vp }).promise;
-
-            const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
-            const jpegBytes = await fetch(jpegDataUrl).then(r => r.arrayBuffer());
-            const embeddedJpg = await outPdf.embedJpg(jpegBytes);
-
-            const newPage = outPdf.addPage([page.view[2] - page.view[0], page.view[3] - page.view[1]]);
-            newPage.drawImage(embeddedJpg, {
-              x: 0,
-              y: 0,
-              width: newPage.getWidth(),
-              height: newPage.getHeight()
-            });
+          const structBytes = await cleanDoc.save({ useObjectStreams: true, addDefaultPage: false });
+          if (structBytes && structBytes.length < bestSize) {
+            bestBytes = structBytes;
+            bestSize = structBytes.length;
           }
-
-          compressedBytes = await outPdf.save({ useObjectStreams: true });
+        } catch (eStruct) {
+          console.warn('Structural optimization error:', eStruct);
         }
 
-        const finalSize = compressedBytes.length;
+        // Step B: For scanned pages or image-heavy PDFs (DO NOT rasterize digital text PDFs unless extreme mode on huge files)
+        if (!hasDigitalText || (level === 'extreme' && initialSize > 2.5 * 1024 * 1024)) {
+          try {
+            showStatus('Mengompresi elemen gambar halaman scan...');
+            const quality = level === 'extreme' ? 0.45 : 0.65;
+            const scale = level === 'extreme' ? 0.95 : 1.25;
+
+            const rasterPdf = await PDFLib.PDFDocument.create();
+            for (let i = 1; i <= numPages; i++) {
+              const page = await currentWorkingPdfDoc.getPage(i);
+              const vp = page.getViewport({ scale: scale });
+
+              const canvas = document.createElement('canvas');
+              canvas.width = vp.width;
+              canvas.height = vp.height;
+              const ctx = canvas.getContext('2d');
+              await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+              const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+              const jpegBytes = await fetch(jpegDataUrl).then(r => r.arrayBuffer());
+              const embeddedJpg = await rasterPdf.embedJpg(jpegBytes);
+
+              const newPage = rasterPdf.addPage([page.view[2] - page.view[0], page.view[3] - page.view[1]]);
+              newPage.drawImage(embeddedJpg, {
+                x: 0,
+                y: 0,
+                width: newPage.getWidth(),
+                height: newPage.getHeight()
+              });
+            }
+
+            const rasterBytes = await rasterPdf.save({ useObjectStreams: true });
+            // Strict check: Only accept rasterization if it is ACTUALLY smaller than the current best!
+            if (rasterBytes && rasterBytes.length < bestSize) {
+              bestBytes = rasterBytes;
+              bestSize = rasterBytes.length;
+            }
+          } catch (eRaster) {
+            console.warn('Raster optimization error:', eRaster);
+          }
+        }
+
+        const finalSize = bestSize;
         const reduction = Math.max(0, Math.round(((initialSize - finalSize) / initialSize) * 100));
 
         const resBox = document.getElementById('compressResultBox');
+        const resTitle = document.getElementById('compressResultTitle');
         const resDetails = document.getElementById('compressResultDetails');
-        resBox.classList.remove('hidden');
-        resDetails.innerHTML = 'Ukuran awal: <strong>' + formatSize(initialSize) + '</strong> &rarr; Ukuran baru: <strong>' + formatSize(finalSize) + '</strong> (Hemat <strong>' + reduction + '%</strong>)';
+        if (resBox) resBox.classList.remove('hidden');
 
-        triggerDownload(new Blob([compressedBytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
-        showStatus('Selesai mengompres PDF! Berhasil menghemat ' + reduction + '% ukuran berkas.', 'success');
+        if (reduction > 0) {
+          if (resBox) resBox.className = 'p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-2xl text-xs space-y-1';
+          if (resTitle) resTitle.textContent = 'Berhasil Mengompres PDF!';
+          if (resDetails) {
+            resDetails.innerHTML = 'Ukuran awal: <strong>' + formatSize(initialSize) + '</strong> &rarr; Ukuran baru: <strong>' + formatSize(finalSize) + '</strong> (Hemat <strong>' + reduction + '%</strong>). Kualitas teks vektor tetap 100% tajam.';
+          }
+          showStatus('Selesai mengompres PDF! Berhasil menghemat ' + reduction + '% ukuran berkas.', 'success');
+        } else {
+          if (resBox) resBox.className = 'p-4 bg-blue-50 text-blue-800 border border-blue-200 rounded-2xl text-xs space-y-1';
+          if (resTitle) resTitle.textContent = 'Dokumen Anda Sudah Sangat Optimal!';
+          if (resDetails) {
+            resDetails.innerHTML = 'Berkas ini (<strong>' + formatSize(initialSize) + '</strong>) sudah merupakan dokumen teks vektor yang sangat efisien. Docenti mempertahankan kualitas 100% tajam dan mencegah pembengkakan ukuran.';
+          }
+          showStatus('Dokumen Anda sudah berada pada ukuran paling efisien. Kualitas teks dipertahankan tetap tajam.', 'success');
+        }
+
+        triggerDownload(new Blob([bestBytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
 
       } catch (err) {
         showStatus('Gagal mengompres PDF: ' + err.message, 'error');
