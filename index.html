@@ -14,7 +14,7 @@
   <!-- Google Fonts for e-Sign Cursive Styles -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@600&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 
   <!-- PDF-Lib: Modern build with Encryption/Password support -->
   <script src="pdf-lib.min.js"></script>
@@ -55,180 +55,217 @@
   </script>
 
   <style>
-    .dragover {
-      border-color: #2563eb !important;
-      background-color: #eff6ff !important;
+    :root {
+      --brand: #2563eb;
+      --brand-d: #1d4ed8;
+      --brand-50: #eff6ff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
     }
-    .page-card {
-      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: #f8fafc;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
     }
-    .page-card:hover {
-      transform: translateY(-2px);
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(60% 45% at 50% -8%, rgba(37,99,235,.13) 0%, transparent 70%),
+        radial-gradient(35% 30% at 90% 10%, rgba(124,58,237,.06) 0%, transparent 70%);
     }
-    .page-card.dragging {
-      opacity: 0.4;
-      border: 2px dashed #4f46e5 !important;
+    :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 8px; }
+
+    /* ---------- Surfaces & buttons ---------- */
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 12px 32px -16px rgba(15,23,42,.12);
     }
-    .page-card.drag-target {
-      border: 2px solid #2563eb !important;
-      box-shadow: 0 0 0 3px rgba(229, 50, 45, 0.25);
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+      background: var(--brand); color: #fff; font-weight: 600; font-size: .95rem;
+      padding: .8rem 1.6rem; border-radius: 12px; cursor: pointer; border: 0;
+      box-shadow: 0 1px 2px rgba(37,99,235,.35), 0 8px 18px -8px rgba(37,99,235,.55);
+      transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
     }
-    .sig-font-1 {
-      font-family: 'Dancing Script', cursive, 'Brush Script MT';
+    .btn-primary:hover { background: var(--brand-d); transform: translateY(-1px); }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-soft, .btn-danger-soft {
+      display: inline-flex; align-items: center; gap: .4rem; cursor: pointer;
+      font-size: .8rem; font-weight: 600; padding: .5rem .85rem; border-radius: 10px;
+      transition: background .15s ease, color .15s ease, border-color .15s ease;
     }
-    .sig-font-2 {
-      font-family: 'Caveat', cursive, 'Segoe Script';
+    .btn-soft { background: #fff; color: #334155; border: 1px solid var(--line); }
+    .btn-soft:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .btn-danger-soft { background: #fff; color: #dc2626; border: 1px solid #fecaca; }
+    .btn-danger-soft:hover { background: #fef2f2; }
+    input[type="text"], input[type="number"], input[type="password"], select, textarea { transition: box-shadow .15s ease, border-color .15s ease; }
+
+    /* ---------- Header nav ---------- */
+    .nav-item {
+      padding: .5rem .9rem; border-radius: 999px; font-size: .82rem; font-weight: 600;
+      color: #475569; cursor: pointer; transition: background .15s ease, color .15s ease; white-space: nowrap;
     }
+    .nav-item:hover { background: #f1f5f9; color: var(--ink); }
+    .nav-item.is-active { background: var(--brand-50); color: var(--brand); }
+    .panel-anim:not(.hidden) { animation: panelIn .22s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes panelIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+    /* ---------- Tool cards ---------- */
+    .tool-card {
+      display: flex; align-items: center; gap: .85rem; text-align: left; width: 100%;
+      padding: .8rem .9rem; border-radius: 14px; border: 1px solid transparent; background: transparent;
+      cursor: pointer; transition: background .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    }
+    .tool-card:hover { background: #f8fafc; border-color: var(--line); }
+    .tool-card.is-current { background: var(--brand-50); border-color: #bfdbfe; }
+    .tool-grid .tool-card { background: #fff; border-color: var(--line); padding: 1rem; }
+    .tool-grid .tool-card:hover { transform: translateY(-2px); border-color: #93c5fd; box-shadow: 0 10px 24px -14px rgba(37,99,235,.45); }
+    .tool-tile { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+    .tool-tile svg { width: 20px; height: 20px; }
+    .tool-name { font-size: .875rem; font-weight: 600; color: var(--ink); line-height: 1.2; }
+    .tool-desc { font-size: .75rem; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+
+    /* ---------- Dropzone ---------- */
+    .dropzone {
+      border: 2px dashed #cbd5e1; border-radius: 28px; background: rgba(255,255,255,.85);
+      padding: 3.25rem 1.5rem; text-align: center; cursor: pointer;
+      transition: border-color .2s ease, background .2s ease, transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;
+    }
+    .dropzone:hover { border-color: var(--brand); background: #fff; }
+    .dz-icon {
+      width: 72px; height: 72px; margin: 0 auto 1.25rem; border-radius: 22px; display: grid; place-items: center;
+      background: var(--brand-50); color: var(--brand); animation: floaty 3.2s ease-in-out infinite;
+    }
+    @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    #heroDropArea.dragover .dropzone {
+      border-color: var(--brand); background: var(--brand-50); transform: scale(1.015);
+      box-shadow: 0 0 0 6px rgba(37,99,235,.12);
+    }
+    #heroDropArea.dragover .dz-icon { animation: bounceIn .5s ease infinite alternate; background: var(--brand); color: #fff; }
+    @keyframes bounceIn { from { transform: translateY(0) scale(1); } to { transform: translateY(-8px) scale(1.08); } }
+
+    #dropOverlay {
+      position: fixed; inset: 0; z-index: 9990; pointer-events: none; opacity: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(239,246,255,.82); backdrop-filter: blur(4px); transition: opacity .18s ease;
+    }
+    #dropOverlay.show { opacity: 1; }
+    #dropOverlay .frame {
+      border: 3px dashed var(--brand); border-radius: 32px; padding: 3rem 4rem; text-align: center; color: var(--brand-d);
+      background: rgba(255,255,255,.9); transform: scale(.94); transition: transform .25s cubic-bezier(.2,.8,.2,1);
+    }
+    #dropOverlay.show .frame { transform: scale(1); }
+
+    /* ---------- Stepper ---------- */
+    .stepper { display: flex; align-items: center; justify-content: center; gap: .6rem; }
+    .step { display: flex; align-items: center; gap: .5rem; white-space: nowrap; color: #94a3b8; font-size: .8rem; font-weight: 600; transition: color .2s ease; }
+    .step-dot {
+      width: 24px; height: 24px; border-radius: 999px; display: grid; place-items: center;
+      font-size: .72rem; border: 1.5px solid #cbd5e1; background: #fff; transition: all .25s ease;
+    }
+    .step.is-active { color: var(--ink); }
+    .step.is-active .step-dot { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,.15); }
+    .step.is-done { color: #059669; }
+    .step.is-done .step-dot { background: #059669; border-color: #059669; color: #fff; }
+    .step-line { width: 28px; height: 2px; background: #e2e8f0; border-radius: 2px; }
+    @media (max-width: 520px) { .step-line { width: 14px; } .step:not(.is-active) span:last-child { display: none; } }
+
+    /* ---------- Views & animations ---------- */
+    .view-anim:not(.hidden) { animation: fadeUp .35s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .anim-in { animation: itemIn .3s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes itemIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+    .anim-out { animation: itemOut .18s ease forwards; }
+    @keyframes itemOut { to { opacity: 0; transform: translateX(24px) scale(.96); } }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+
+    /* ---------- Sortable (drag & drop reorder) ---------- */
+    .sortable-item { transition: box-shadow .2s ease, background .2s ease, border-color .2s ease; }
+    .sortable-item.is-dragging {
+      opacity: .55; background: #eff6ff !important; border-color: #3b82f6 !important;
+      outline: 2px dashed #60a5fa; outline-offset: -2px;
+    }
+    body.is-sorting .sortable-item:not(.is-dragging) { cursor: grabbing; }
+    .drag-handle {
+      display: grid; place-items: center; width: 28px; height: 32px; border-radius: 8px; color: #94a3b8; cursor: grab; flex-shrink: 0;
+      transition: background .15s ease, color .15s ease;
+    }
+    .drag-handle:hover { background: #f1f5f9; color: #475569; }
+    .drag-handle:active { cursor: grabbing; }
+    .file-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem .75rem; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .file-row:hover { border-color: #cbd5e1; box-shadow: 0 6px 18px -12px rgba(15,23,42,.25); }
+    .file-badge { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: .65rem; font-weight: 800; letter-spacing: .04em; flex-shrink: 0; }
+    .file-badge.pdf { background: #fef2f2; color: #dc2626; }
+    .file-badge.doc { background: #eff6ff; color: #2563eb; }
+    .order-chip { min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: .72rem; font-weight: 700; display: grid; place-items: center; flex-shrink: 0; }
+    .icon-btn { padding: .4rem; border-radius: 8px; color: #64748b; cursor: pointer; transition: background .15s ease, color .15s ease; }
+    .icon-btn:hover { background: #f1f5f9; color: var(--ink); }
+    .icon-btn:disabled { opacity: .25; cursor: default; }
+    .icon-btn.danger:hover { background: #fef2f2; color: #dc2626; }
+
+    .page-card { transition: transform .15s ease, box-shadow .15s ease, opacity .2s ease, border-color .2s ease; }
+    .page-card:hover { transform: translateY(-2px); }
+
+    .sig-font-1 { font-family: 'Dancing Script', cursive, 'Brush Script MT'; }
+    .sig-font-2 { font-family: 'Caveat', cursive, 'Segoe Script'; }
   </style>
 </head>
-<body class="bg-[#f7f7f9] text-slate-800 min-h-screen flex flex-col font-sans">
+<body class="min-h-screen flex flex-col">
 
-  <!-- Top Navigation Bar (iLovePDF Style) -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-      <!-- Left: Logo -->
-      <div class="flex items-center shrink-0 lg:w-36">
-        <a href="javascript:void(0)" onclick="selectTool('pdf_to_word')" class="flex items-center group cursor-pointer" title="Docenti">
-          <img src="Docenti.png" alt="Docenti" class="h-10 sm:h-11 w-auto object-contain transition-transform group-hover:scale-105">
-        </a>
-      </div>
+  <!-- Global drop overlay (muncul saat file diseret ke jendela) -->
+  <div id="dropOverlay" aria-hidden="true">
+    <div class="frame">
+      <svg class="w-12 h-12 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <p class="text-xl font-bold">Lepaskan file untuk mengunggah</p>
+      <p class="text-sm text-slate-500 mt-1" id="dropOverlayHint">File akan langsung ditambahkan</p>
+    </div>
+  </div>
 
-      <!-- Center: Desktop Navigation Links -->
-      <nav class="hidden lg:flex items-center justify-center gap-1 font-bold text-xs uppercase tracking-wider text-slate-700 flex-1 mx-2">
-        <button onclick="selectTool('pdf_to_word')" id="nav_pdf_to_word" class="nav-item px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
-          PDF ke Word
-        </button>
-        <button onclick="selectTool('pdf_merge')" id="nav_pdf_merge" class="nav-item px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
-          Gabungkan PDF
-        </button>
-        <button onclick="selectTool('pdf_split')" id="nav_pdf_split" class="nav-item px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
-          Pisahkan PDF
-        </button>
-        <button onclick="selectTool('pdf_compress')" id="nav_pdf_compress" class="nav-item px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
-          Kompres PDF
-        </button>
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/80">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <a href="javascript:void(0)" onclick="goHome()" class="flex items-center shrink-0" title="Docenti">
+        <img src="Docenti.png" alt="Docenti" class="h-9 sm:h-10 w-auto object-contain">
+      </a>
 
-        <!-- Dropdown: Konversi PDF -->
-        <div class="relative group">
-          <button class="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
-            <span>Konversi PDF</span>
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="absolute left-1/2 -translate-x-1/2 top-full pt-1.5 hidden group-hover:block z-50 min-w-[240px]">
-            <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-2 space-y-1">
-              <button onclick="selectTool('pdf_to_word')" class="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-slate-50 flex items-center gap-3 transition-colors">
-                <div class="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                </div>
-                <div>
-                  <div class="font-bold text-xs text-slate-800">PDF ke Word</div>
-                  <div class="text-[11px] text-slate-400 normal-case font-normal">Konversi PDF ke dokumen .docx</div>
-                </div>
-              </button>
-              <button onclick="selectTool('word_merge')" class="w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-slate-50 flex items-center gap-3 transition-colors">
-                <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg shrink-0">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6a2 2 0 0 0-2 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                </div>
-                <div>
-                  <div class="font-bold text-xs text-slate-800">Gabungkan Word</div>
-                  <div class="text-[11px] text-slate-400 normal-case font-normal">Satukan beberapa berkas .docx</div>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Dropdown: Semua Fitur PDF (Mega dropdown) -->
-        <div class="relative group">
-          <button class="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:text-[#2563eb] transition-colors">
-            <span>Semua Fitur PDF</span>
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="absolute right-0 top-full pt-1.5 hidden group-hover:block z-50 w-[580px]">
-            <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 grid grid-cols-2 gap-3 text-slate-700">
-              <!-- Group 1: Organisasi & Perbaikan -->
-              <div class="space-y-1">
-                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 py-1">Organisasi Halaman</div>
-                <button onclick="selectTool('pdf_organize')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
-                  <svg class="w-4 h-4 text-purple-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                  <span>Hapus & Atur Halaman</span>
-                </button>
-                <button onclick="selectTool('pdf_rotate')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
-                  <svg class="w-4 h-4 text-purple-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                  <span>Putar PDF</span>
-                </button>
-                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 pt-2 pb-1">Optimasi & Perbaikan</div>
-                <button onclick="selectTool('pdf_repair')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
-                  <svg class="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                  <span>Perbaiki PDF (Repair)</span>
-                </button>
-              </div>
-              <!-- Group 2: Edit & Keamanan -->
-              <div class="space-y-1">
-                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 py-1">Edit & Format</div>
-                <button onclick="selectTool('pdf_edit')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
-                  <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  <span>Edit & Coret PDF</span>
-                </button>
-                <button onclick="selectTool('pdf_page_number')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
-                  <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
-                  <span>Nomor Halaman</span>
-                </button>
-                <button onclick="selectTool('pdf_watermark')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
-                  <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-                  <span>Tanda Air (Watermark)</span>
-                </button>
-                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 pt-2 pb-1">Keamanan & e-Sign</div>
-                <button onclick="selectTool('pdf_protect')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
-                  <svg class="w-4 h-4 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  <span>Proteksi Sandi</span>
-                </button>
-                <button onclick="selectTool('pdf_unlock')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
-                  <svg class="w-4 h-4 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                  <span>Buka PDF Terkunci</span>
-                </button>
-                <button onclick="selectTool('pdf_esign')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2.5 text-xs font-semibold text-slate-800">
-                  <svg class="w-4 h-4 text-indigo-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/></svg>
-                  <span>Tanda Tangan (e-Sign)</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <nav class="hidden lg:flex items-center gap-1" aria-label="Alat utama">
+        <button onclick="selectTool('pdf_to_word')" id="nav_pdf_to_word" class="nav-item">PDF ke Word</button>
+        <button onclick="selectTool('pdf_merge')" id="nav_pdf_merge" class="nav-item">Gabungkan PDF</button>
+        <button onclick="selectTool('pdf_split')" id="nav_pdf_split" class="nav-item">Pisahkan PDF</button>
+        <button onclick="selectTool('pdf_compress')" id="nav_pdf_compress" class="nav-item">Kompres PDF</button>
       </nav>
 
-      <!-- Right: Mobile Menu Button & Desktop Balancer -->
-      <div class="flex items-center justify-end shrink-0 lg:w-36">
-        <button onclick="toggleMobileMenu()" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-700">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
+      <button id="toolsPanelBtn" onclick="toggleToolsPanel()" aria-expanded="false" aria-controls="toolsPanel" class="btn-soft shrink-0" style="padding:.55rem .95rem">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>Semua alat</span>
+      </button>
+    </div>
+
+    <!-- Panel semua alat -->
+    <div id="toolsPanel" class="hidden panel-anim absolute inset-x-0 top-full z-50">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-2">
+        <div class="card p-4 sm:p-5 max-h-[calc(100vh-6rem)] overflow-y-auto">
+          <div id="toolsPanelGrid" class="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+        </div>
       </div>
     </div>
-
-    <!-- Mobile Navigation Drawer -->
-    <div id="mobileMenu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1 text-xs font-bold uppercase tracking-wider text-slate-700">
-      <button onclick="selectTool('pdf_merge'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Gabungkan PDF</button>
-      <button onclick="selectTool('pdf_split'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Pisahkan PDF</button>
-      <button onclick="selectTool('pdf_compress'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Kompres PDF</button>
-      <button onclick="selectTool('pdf_to_word'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-blue-600">PDF ke Word</button>
-      <button onclick="selectTool('word_merge'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-indigo-600">Gabungkan Word</button>
-      <button onclick="selectTool('pdf_organize'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Hapus & Atur Halaman</button>
-      <button onclick="selectTool('pdf_edit'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Edit & Coret PDF</button>
-      <button onclick="selectTool('pdf_page_number'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Nomor Halaman</button>
-      <button onclick="selectTool('pdf_watermark'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Tanda Air (Watermark)</button>
-      <button onclick="selectTool('pdf_rotate'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Putar PDF</button>
-      <button onclick="selectTool('pdf_protect'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Proteksi Sandi</button>
-      <button onclick="selectTool('pdf_unlock'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Buka PDF Terkunci</button>
-      <button onclick="selectTool('pdf_esign'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Tanda Tangan (e-Sign)</button>
-      <button onclick="selectTool('pdf_repair'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50">Perbaiki PDF</button>
-    </div>
   </header>
+  <div id="toolsBackdrop" onclick="toggleToolsPanel(false)" class="hidden fixed inset-0 z-30 bg-slate-900/20 backdrop-blur-[2px]"></div>
 
   <!-- Main Container -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 sm:py-12 flex flex-col justify-center">
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 sm:py-12 space-y-6">
 
-    <!-- Floating Toast Pop-up Notification Container -->
-    <div id="toastContainer" class="fixed top-5 right-5 z-[9999] pointer-events-none flex flex-col gap-2 max-w-sm sm:max-w-md w-full px-4">
+    <!-- Toast -->
+    <div id="toastContainer" class="fixed top-20 right-4 z-[9999] pointer-events-none flex flex-col gap-2 max-w-sm sm:max-w-md w-full">
       <div id="statusBox" class="hidden pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-2xl border transition-all duration-300 transform -translate-y-2 opacity-0 bg-white">
         <div id="toastIcon" class="shrink-0 mt-0.5"></div>
         <div class="flex-1 text-xs sm:text-sm font-medium leading-snug" id="toastMessage"></div>
@@ -238,23 +275,19 @@
       </div>
     </div>
 
-    <!-- Modal Pop-up Konfirmasi Hapus PDF -->
+    <!-- Modal Konfirmasi Hapus -->
     <div id="deleteConfirmModal" class="fixed inset-0 z-[10000] hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs transition-opacity" onclick="if(event.target === this) closeDeleteConfirmModal()">
       <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 transform scale-95 opacity-0 transition-all duration-200 text-center space-y-4">
         <div class="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
         </div>
         <div>
-          <h3 class="font-bold text-slate-900 text-base">Hapus Dokumen PDF?</h3>
-          <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">Dokumen akan ditutup dan seluruh data sesi penyimpanan browser (IndexedDB) akan dibersihkan.</p>
+          <h3 class="font-bold text-slate-900 text-base">Hapus semua berkas?</h3>
+          <p class="text-sm text-slate-500 mt-1.5 leading-relaxed">Berkas akan dibuang dari daftar dan data sesi di browser ini dibersihkan. Berkas asli di perangkat Anda tidak terpengaruh.</p>
         </div>
         <div class="flex items-center gap-2 pt-2">
-          <button type="button" onclick="closeDeleteConfirmModal()" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer">
-            Batal
-          </button>
-          <button type="button" onclick="confirmDeleteWorkingPdf()" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm cursor-pointer">
-            Ya, Hapus PDF
-          </button>
+          <button type="button" onclick="closeDeleteConfirmModal()" class="btn-soft flex-1 justify-center" style="padding:.7rem">Batal</button>
+          <button type="button" onclick="confirmDeleteWorkingPdf()" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm cursor-pointer">Ya, hapus</button>
         </div>
       </div>
     </div>
@@ -265,68 +298,92 @@
     <input type="file" id="signatureImageInput" accept="image/png,image/jpeg" class="hidden">
 
     <!-- ========================================== -->
-    <!-- HERO CLEAN STAGE (POLOS SEPERTI iLovePDF)  -->
+    <!-- HERO: DROPZONE + PEMILIH ALAT               -->
     <!-- ========================================== -->
-    <div id="heroDropArea" class="py-12 sm:py-20 text-center space-y-7 rounded-3xl border-2 border-transparent transition-all duration-200">
-      <div class="space-y-3">
-        <h1 id="heroTitle" class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
-          Gabungkan PDF
-        </h1>
-        <p id="heroSubtitle" class="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed px-4">
-          Gabungkan dan satukan beberapa file PDF dalam urutan yang Anda inginkan secara cepat dan mudah.
-        </p>
+    <section id="heroDropArea" class="space-y-10 view-anim">
+      <div class="text-center space-y-4 pt-2 sm:pt-6">
+        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-full px-3 py-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span id="heroPrivacy">Gratis &middot; Tanpa daftar</span>
+        </span>
+        <h1 id="heroTitle" class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Gabungkan PDF</h1>
+        <p id="heroSubtitle" class="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed"></p>
       </div>
 
-      <!-- Prominent Central Red CTA Button -->
-      <div class="pt-2">
-        <button id="heroSelectBtn" onclick="triggerHeroFileInput()" class="bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-[0.98] text-white font-bold text-xl sm:text-2xl px-12 py-5 sm:py-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-150 inline-flex items-center gap-3.5 cursor-pointer">
-          <svg class="w-7 h-7 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
+      <div id="dropZone" class="dropzone max-w-3xl mx-auto" role="button" tabindex="0" onclick="triggerHeroFileInput()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();triggerHeroFileInput();}" aria-label="Pilih atau seret file">
+        <div class="dz-icon">
+          <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <button id="heroSelectBtn" type="button" class="btn-primary" style="font-size:1.05rem;padding:.95rem 2.25rem;border-radius:14px">
           <span id="heroBtnText">Pilih file PDF</span>
         </button>
+        <p class="mt-4 text-sm text-slate-500">atau <strong class="text-slate-700">seret &amp; lepas</strong> file ke sini</p>
+        <p id="heroFormatHint" class="mt-1 text-xs text-slate-400">Format: PDF</p>
       </div>
 
-      <p class="text-sm text-slate-400 font-medium">
-        atau letakkan berkas di sini
-      </p>
+      <div data-stepper="1"></div>
+
+      <div class="pt-4">
+        <div class="flex items-end justify-between mb-4">
+          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Pilih alat lain</h2>
+          <span class="text-xs text-slate-400 hidden sm:inline">Klik untuk berpindah alat</span>
+        </div>
+        <div id="toolGrid" class="tool-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- BAR ALAT AKTIF (muncul saat ruang kerja)    -->
+    <!-- ========================================== -->
+    <div id="workspaceBar" class="hidden view-anim flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div id="wsIcon" class="tool-tile"></div>
+        <div class="min-w-0">
+          <h1 id="wsTitle" class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight truncate"></h1>
+          <p id="wsSubtitle" class="text-xs sm:text-sm text-slate-500 truncate"></p>
+        </div>
+      </div>
+      <div data-stepper="2" class="shrink-0"></div>
     </div>
 
     <!-- ========================================== -->
     <!-- SECTION A: FILE LIST (FOR MERGE & CONVERT) -->
     <!-- ========================================== -->
-    <div id="fileListCard" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-4 hidden">
+    <div id="fileListCard" class="card view-anim p-5 sm:p-7 space-y-4 hidden">
       <div class="flex items-center justify-between border-b border-slate-100 pb-4">
         <div class="flex items-center gap-3">
           <h2 id="fileListTitle" class="font-bold text-slate-900 text-base sm:text-lg">Berkas Terpilih</h2>
-          <span id="fileCountBadge" class="bg-slate-100 text-slate-700 text-xs px-2.5 py-0.5 rounded-full font-semibold">0 berkas</span>
-          <span id="totalSizeBadge" class="text-xs text-slate-400">Total: 0 KB</span>
+          <span id="fileCountBadge" class="bg-blue-50 text-blue-700 text-xs px-2.5 py-0.5 rounded-full font-semibold">0 berkas</span>
+          <span id="totalSizeBadge" class="text-xs text-slate-400 hidden sm:inline">Total: 0 KB</span>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="Tambah berkas lainnya">
+          <button onclick="triggerHeroFileInput()" class="btn-soft" title="Tambah berkas lainnya">
             <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-            <span>+ Tambah Berkas</span>
+            <span>Tambah berkas</span>
           </button>
-          <button onclick="openDeleteConfirmModal()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Hapus seluruh berkas dari daftar">
+          <button onclick="openDeleteConfirmModal()" class="btn-danger-soft" title="Hapus seluruh berkas dari daftar">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-            <span>Hapus Semua</span>
+            <span>Hapus semua</span>
           </button>
         </div>
       </div>
 
+      <p id="fileListHint" class="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-2">
+        <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span id="fileListHintText">Seret ikon titik-titik untuk mengubah urutan.</span>
+      </p>
+
       <!-- File Items Container -->
-      <ul id="fileList" class="divide-y divide-slate-100 max-h-[380px] overflow-y-auto pr-1"></ul>
+      <ul id="fileList" class="space-y-2 max-h-[420px] overflow-y-auto p-1 -m-1"></ul>
 
       <!-- Action bar for merge -->
       <div id="mergeActionContainer" class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div class="flex-1 max-w-sm w-full">
-          <label for="outputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama File Hasil Unduhan:</label>
+          <label for="outputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama file hasil</label>
           <input type="text" id="outputFileName" value="hasil_gabungan.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800" placeholder="Nama file keluaran">
         </div>
         <div class="sm:self-end w-full sm:w-auto">
-          <button id="mergeBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50">
+          <button id="mergeBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 btn-primary disabled:opacity-50">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
             <span id="mergeBtnText">Gabungkan & Unduh Dokumen</span>
           </button>
@@ -335,7 +392,7 @@
 
       <!-- Action bar for convert -->
       <div id="convertActionContainer" class="pt-4 border-t border-slate-100 hidden flex items-center justify-end">
-        <button id="convertAllBtn" class="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer">
+        <button id="convertAllBtn" class="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 btn-primary disabled:opacity-50 cursor-pointer">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           <span id="convertAllBtnText">Konversi Semua ke Word (.docx)</span>
         </button>
@@ -345,7 +402,7 @@
     <!-- ========================================== -->
     <!-- SECTION B: ATUR & HAPUS HALAMAN PDF       -->
     <!-- ========================================== -->
-    <div id="organizeSection" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-6 hidden">
+    <div id="organizeSection" class="card view-anim p-5 sm:p-7 space-y-6 hidden">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <div class="flex items-center gap-2 flex-wrap">
@@ -362,11 +419,11 @@
           <button id="restoreAllPagesBtn" class="hidden text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl transition-colors">
             Pulihkan Semua Halaman
           </button>
-          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="Pilih berkas PDF lain untuk dikerjakan">
+          <button onclick="triggerHeroFileInput()" class="btn-soft" title="Pilih berkas PDF lain untuk dikerjakan">
             <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
             <span>Pilih PDF Lain</span>
           </button>
-          <button onclick="openDeleteConfirmModal()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
+          <button onclick="openDeleteConfirmModal()" class="btn-danger-soft" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             <span>Hapus PDF</span>
           </button>
@@ -388,7 +445,7 @@
           <label for="organizeOutputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama File Hasil Unduhan:</label>
           <input type="text" id="organizeOutputFileName" value="hasil_diedit.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
         </div>
-        <button id="saveOrganizedPdfBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50">
+        <button id="saveOrganizedPdfBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 btn-primary disabled:opacity-50">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
           <span id="saveOrganizedPdfBtnText">Simpan & Unduh PDF Baru</span>
         </button>
@@ -398,18 +455,18 @@
     <!-- ========================================== -->
     <!-- SECTION C: EDIT PDF CANVAS INTERACTION     -->
     <!-- ========================================== -->
-    <div id="editPdfSection" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-5 hidden">
+    <div id="editPdfSection" class="card view-anim p-5 sm:p-7 space-y-5 hidden">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
           <h2 class="font-bold text-slate-900 text-base sm:text-lg">Edit & Anotasi Halaman PDF</h2>
           <p class="text-xs text-slate-400">Tambahkan tulisan, bentuk kotak, catatan memo, atau gambar.</p>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="Pilih berkas PDF lain untuk dikerjakan">
+          <button onclick="triggerHeroFileInput()" class="btn-soft" title="Pilih berkas PDF lain untuk dikerjakan">
             <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
             <span>Pilih PDF Lain</span>
           </button>
-          <button onclick="openDeleteConfirmModal()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
+          <button onclick="openDeleteConfirmModal()" class="btn-danger-soft" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             <span>Hapus PDF</span>
           </button>
@@ -467,11 +524,27 @@
             <button onclick="setEditColor('#000000')" class="w-6 h-6 rounded-full bg-black border border-white ring-1 ring-slate-300 cursor-pointer"></button>
             <button onclick="setEditColor('#eab308')" class="w-6 h-6 rounded-full bg-yellow-400 border border-white ring-1 ring-slate-300 cursor-pointer"></button>
           </div>
-          <select id="editStrokeWidth" onchange="setEditStrokeWidth(this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs cursor-pointer">
+          <select id="editStrokeWidth" onchange="setEditStrokeWidth(this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs cursor-pointer" title="Ketebalan Garis">
             <option value="2">Halus (2px)</option>
             <option value="4" selected>Sedang (4px)</option>
             <option value="8">Tebal (8px)</option>
           </select>
+          <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs" title="Ukuran Font Teks & Catatan">
+            <span class="text-slate-500 font-medium">Font:</span>
+            <select id="editFontSize" onchange="setEditFontSize(this.value)" class="bg-transparent font-semibold text-slate-700 outline-none cursor-pointer">
+              <option value="10">10px</option>
+              <option value="12">12px</option>
+              <option value="14">14px</option>
+              <option value="16">16px</option>
+              <option value="18" selected>18px</option>
+              <option value="20">20px</option>
+              <option value="24">24px</option>
+              <option value="28">28px</option>
+              <option value="32">32px</option>
+              <option value="40">40px</option>
+              <option value="48">48px</option>
+            </select>
+          </div>
           <button onclick="clearEditCanvasCurrentPage()" class="text-xs text-red-600 hover:bg-red-50 font-semibold px-2 py-1 rounded-lg transition-colors cursor-pointer" title="Hapus semua elemen pada halaman ini">
             Hapus Semua
           </button>
@@ -517,7 +590,7 @@
           <label for="editOutputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama File Hasil Unduhan:</label>
           <input type="text" id="editOutputFileName" value="hasil_diedit.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
         </div>
-        <button onclick="saveEditedPdf()" id="saveEditedPdfBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all">
+        <button onclick="saveEditedPdf()" id="saveEditedPdfBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 btn-primary">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
           <span>Simpan & Unduh PDF Hasil Edit</span>
         </button>
@@ -528,18 +601,18 @@
     <!-- SECTION D: SINGLE ACTION SECTION           -->
     <!-- (Split, Compress, Repair, Page Number, etc)-->
     <!-- ========================================== -->
-    <div id="singlePdfActionSection" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-6 hidden">
+    <div id="singlePdfActionSection" class="card view-anim p-5 sm:p-7 space-y-6 hidden">
       <div class="flex items-center justify-between border-b border-slate-100 pb-4">
         <div>
           <h2 id="singleActionTitle" class="font-bold text-slate-900 text-base sm:text-lg">Pengaturan Dokumen PDF</h2>
           <p id="singleActionFileName" class="text-xs text-slate-400 font-medium">nama_file.pdf</p>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="Pilih berkas PDF lain untuk dikerjakan">
+          <button onclick="triggerHeroFileInput()" class="btn-soft" title="Pilih berkas PDF lain untuk dikerjakan">
             <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
             <span>Pilih PDF Lain</span>
           </button>
-          <button onclick="openDeleteConfirmModal()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
+          <button onclick="openDeleteConfirmModal()" class="btn-danger-soft" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             <span>Hapus PDF</span>
           </button>
@@ -902,9 +975,9 @@
                 </div>
 
                 <!-- Draggable Watermark Box -->
-                <div id="wmDraggableBox" class="absolute cursor-move select-none flex items-center justify-center p-2 rounded-xl group touch-none border border-dashed border-transparent hover:border-blue-400 hover:bg-blue-500/10 active:border-blue-600 active:bg-blue-500/20 transition-colors" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+                <div id="wmDraggableBox" class="absolute cursor-move select-none flex items-center justify-center p-2 rounded-xl group touch-none border border-dashed border-transparent hover:border-blue-400 hover:bg-blue-500/10 active:border-blue-600 active:bg-blue-500/20 transition-colors w-max h-max max-w-none max-h-none whitespace-nowrap" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
                   <div id="wmLiveText" class="font-extrabold whitespace-nowrap select-none pointer-events-none tracking-wider text-center" style="font-size: 32px; color: #64748b; opacity: 0.25;">CONFIDENTIAL</div>
-                  <img id="wmLiveImg" class="max-w-full max-h-full object-contain select-none pointer-events-none hidden" alt="Logo Watermark" />
+                  <img id="wmLiveImg" class="max-w-none max-h-none object-contain select-none pointer-events-none hidden" alt="Logo Watermark" />
                   
                   <!-- Floating tooltip / drag indicator -->
                   <div class="absolute -top-5 left-1/2 -translate-x-1/2 bg-slate-900/85 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xs">
@@ -1028,7 +1101,7 @@
           <label for="singleOutputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama File Hasil Unduhan:</label>
           <input type="text" id="singleOutputFileName" value="hasil_proses.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
         </div>
-        <button id="singleActionExecuteBtn" onclick="executeSingleAction()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all disabled:opacity-50">
+        <button id="singleActionExecuteBtn" onclick="executeSingleAction()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 btn-primary disabled:opacity-50">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
           <span id="singleActionBtnText">Proses & Unduh Dokumen</span>
         </button>
@@ -1038,18 +1111,18 @@
     <!-- ========================================== -->
     <!-- SECTION E: e-SIGN STAGE                    -->
     <!-- ========================================== -->
-    <div id="esignSection" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-6 hidden">
+    <div id="esignSection" class="card view-anim p-5 sm:p-7 space-y-6 hidden">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
           <h2 class="font-bold text-slate-900 text-base sm:text-lg">Tanda Tangan Elektronik (e-Sign)</h2>
           <p class="text-xs text-slate-400">Buat tanda tangan dan atur posisinya secara presisi pada halaman PDF.</p>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="triggerHeroFileInput()" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="Pilih berkas PDF lain untuk dikerjakan">
+          <button onclick="triggerHeroFileInput()" class="btn-soft" title="Pilih berkas PDF lain untuk dikerjakan">
             <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
             <span>Pilih PDF Lain</span>
           </button>
-          <button onclick="openDeleteConfirmModal()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
+          <button onclick="openDeleteConfirmModal()" class="btn-danger-soft" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             <span>Hapus PDF</span>
           </button>
@@ -1178,7 +1251,7 @@
           <label for="esignOutputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama File Hasil Unduhan:</label>
           <input type="text" id="esignOutputFileName" value="hasil_tertandatangani.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
         </div>
-        <button onclick="applySignatureAndDownload()" id="saveEsignPdfBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-7 py-3 rounded-xl shadow-sm hover:shadow transition-all">
+        <button onclick="applySignatureAndDownload()" id="saveEsignPdfBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 btn-primary">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
           <span>Bubuhkan Tanda Tangan & Unduh</span>
         </button>
@@ -1328,6 +1401,190 @@
       }
     };
 
+
+    // ==========================================
+    // 1b. UI LAYER: TOOL META, PANEL, STEPPER, SORTABLE
+    // ==========================================
+    const ICONS = {
+      doc: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+      docPlus: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/>',
+      merge: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M11 7h3a2 2 0 0 1 2 2v4"/>',
+      split: '<path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.17-2.87L3 3"/><path d="m15 9 6-6"/>',
+      compress: '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>',
+      grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>',
+      rotate: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+      edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+      hash: '<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>',
+      drop: '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>',
+      sign: '<path d="M2 18c3-6 4-10 6-10s1 6 3 6 3-4 5-4 2 3 4 3"/><line x1="2" y1="21" x2="22" y2="21"/>',
+      lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+      unlock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
+      wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+      check: '<polyline points="20 6 9 17 4 12"/>'
+    };
+    const svgIcon = (name, cls = '', sw = 2) => '<svg class="' + cls + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round">' + ICONS[name] + '</svg>';
+
+    const TOOL_GROUPS = [
+      { id: 'convert', label: 'Konversi', bg: '#eff6ff', fg: '#2563eb', tools: ['pdf_to_word', 'word_merge'] },
+      { id: 'pages', label: 'Atur halaman', bg: '#f5f3ff', fg: '#7c3aed', tools: ['pdf_merge', 'pdf_split', 'pdf_organize', 'pdf_rotate'] },
+      { id: 'edit', label: 'Edit & tandai', bg: '#ecfeff', fg: '#0891b2', tools: ['pdf_edit', 'pdf_page_number', 'pdf_watermark', 'pdf_esign'] },
+      { id: 'secure', label: 'Keamanan', bg: '#fffbeb', fg: '#d97706', tools: ['pdf_protect', 'pdf_unlock'] },
+      { id: 'optimize', label: 'Optimasi', bg: '#ecfdf5', fg: '#059669', tools: ['pdf_compress', 'pdf_repair'] }
+    ];
+    const TOOL_META = {
+      pdf_to_word:     { name: 'PDF ke Word', desc: 'Ubah PDF jadi dokumen .docx yang bisa diedit', icon: 'doc' },
+      word_merge:      { name: 'Gabungkan Word', desc: 'Satukan beberapa file .docx jadi satu', icon: 'docPlus' },
+      pdf_merge:       { name: 'Gabungkan PDF', desc: 'Satukan banyak PDF, atur urutan dengan seret', icon: 'merge' },
+      pdf_split:       { name: 'Pisahkan PDF', desc: 'Ambil halaman tertentu atau pecah per N halaman', icon: 'split' },
+      pdf_organize:    { name: 'Hapus & Atur Halaman', desc: 'Susun ulang, putar, atau buang halaman', icon: 'grid' },
+      pdf_rotate:      { name: 'Putar PDF', desc: 'Putar halaman 90, 180, atau 270 derajat', icon: 'rotate' },
+      pdf_edit:        { name: 'Edit & Coret PDF', desc: 'Tambah teks, kotak, coretan, atau gambar', icon: 'edit' },
+      pdf_page_number: { name: 'Nomor Halaman', desc: 'Beri nomor otomatis di setiap halaman', icon: 'hash' },
+      pdf_watermark:   { name: 'Tanda Air', desc: 'Sisipkan teks atau gambar watermark', icon: 'drop' },
+      pdf_esign:       { name: 'Tanda Tangan', desc: 'Bubuhkan tanda tangan digital di PDF', icon: 'sign' },
+      pdf_protect:     { name: 'Proteksi Sandi', desc: 'Kunci PDF dengan kata sandi', icon: 'lock' },
+      pdf_unlock:      { name: 'Buka PDF Terkunci', desc: 'Hapus sandi dari PDF', icon: 'unlock' },
+      pdf_compress:    { name: 'Kompres PDF', desc: 'Perkecil ukuran file agar mudah dikirim', icon: 'compress' },
+      pdf_repair:      { name: 'Perbaiki PDF', desc: 'Pulihkan PDF yang rusak atau tak bisa dibuka', icon: 'wrench' }
+    };
+    function groupOfTool(id) { return TOOL_GROUPS.find(g => g.tools.includes(id)); }
+    function toolTileHtml(id) {
+      const g = groupOfTool(id), m = TOOL_META[id];
+      return '<span class="tool-tile" style="background:' + g.bg + ';color:' + g.fg + '">' + svgIcon(m.icon) + '</span>';
+    }
+    function toolCardHtml(id) {
+      const m = TOOL_META[id];
+      return '<button type="button" class="tool-card" data-tool="' + id + '" onclick="selectTool(\'' + id + '\')">' +
+        toolTileHtml(id) +
+        '<span class="min-w-0"><span class="tool-name block">' + m.name + '</span><span class="tool-desc block">' + m.desc + '</span></span></button>';
+    }
+    function buildToolUI() {
+      document.getElementById('toolsPanelGrid').innerHTML = TOOL_GROUPS.map(g =>
+        '<div><div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 pb-1.5">' + g.label + '</div>' +
+        '<div class="space-y-0.5">' + g.tools.map(toolCardHtml).join('') + '</div></div>').join('');
+      document.getElementById('toolGrid').innerHTML = TOOL_GROUPS.flatMap(g => g.tools).map(toolCardHtml).join('');
+    }
+
+    function toggleToolsPanel(force) {
+      const panel = document.getElementById('toolsPanel');
+      const backdrop = document.getElementById('toolsBackdrop');
+      const open = typeof force === 'boolean' ? force : panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !open);
+      backdrop.classList.toggle('hidden', !open);
+      document.getElementById('toolsPanelBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function goHome() { selectTool('pdf_to_word'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+    // Stepper: 1 Unggah -> 2 Atur -> 3 Unduh
+    const STEP_LABELS = ['Unggah file', 'Atur & proses', 'Unduh hasil'];
+    let currentStep = 2, stepResetTimer = null;
+    function stepperHtml(active) {
+      return '<div class="stepper">' + STEP_LABELS.map((label, i) => {
+        const n = i + 1;
+        const cls = n < active ? 'is-done' : (n === active ? 'is-active' : '');
+        const dot = n < active ? svgIcon('check', 'w-3 h-3', 3.5) : n;
+        return (i ? '<span class="step-line"></span>' : '') + '<div class="step ' + cls + '"><span class="step-dot">' + dot + '</span><span>' + label + '</span></div>';
+      }).join('') + '</div>';
+    }
+    function renderSteppers() {
+      document.querySelectorAll('[data-stepper]').forEach(el => {
+        el.innerHTML = stepperHtml(el.getAttribute('data-stepper') === '1' ? 1 : currentStep);
+      });
+    }
+    function setStep(n) {
+      currentStep = n;
+      renderSteppers();
+      clearTimeout(stepResetTimer);
+      if (n === 3) stepResetTimer = setTimeout(() => setStep(2), 6000);
+    }
+
+    // Sinkronkan UI (nav aktif, bar alat, kartu alat) dengan alat yang dipilih
+    function syncToolChrome(inWorkspace) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('is-active', el.id === 'nav_' + currentMode));
+      document.querySelectorAll('.tool-card').forEach(el => el.classList.toggle('is-current', el.dataset.tool === currentMode));
+      const bar = document.getElementById('workspaceBar');
+      bar.classList.toggle('hidden', !inWorkspace);
+      if (inWorkspace) {
+        const m = TOOL_META[currentMode], g = groupOfTool(currentMode);
+        const icon = document.getElementById('wsIcon');
+        icon.style.background = g.bg;
+        icon.style.color = g.fg;
+        icon.innerHTML = svgIcon(m.icon);
+        document.getElementById('wsTitle').textContent = TOOLS[currentMode].title;
+        document.getElementById('wsSubtitle').textContent = TOOLS[currentMode].subtitle;
+        setStep(2);
+      }
+    }
+
+    // Sortable generik dengan animasi FLIP (drag & drop urutan) untuk daftar & grid
+    function enableSortable(container, opts) {
+      if (container._sortable) { container._sortable.opts = opts; return; }
+      const st = { opts, el: null };
+      container._sortable = st;
+
+      container.addEventListener('dragstart', (e) => {
+        const item = e.target && e.target.closest ? e.target.closest(st.opts.item) : null;
+        if (!item || item.parentElement !== container) return;
+        st.el = item;
+        st.dropped = false;
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', 'docenti-sort'); } catch (_) {}
+        requestAnimationFrame(() => item.classList.add('is-dragging'));
+        document.body.classList.add('is-sorting');
+      });
+
+      container.addEventListener('dragleave', (e) => {
+        if (st.el && !container.contains(e.relatedTarget)) st.inside = false;
+      });
+
+      container.addEventListener('dragover', (e) => {
+        if (!st.el) return;
+        st.inside = true;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const hit = document.elementFromPoint(e.clientX, e.clientY);
+        const target = hit && hit.closest ? hit.closest(st.opts.item) : null;
+        if (!target || target === st.el || target.parentElement !== container) return;
+
+        const kids = Array.from(container.children);
+        const di = kids.indexOf(st.el), ti = kids.indexOf(target);
+        const r = target.getBoundingClientRect(), d = st.el.getBoundingClientRect();
+        const sameRow = Math.abs(d.top - r.top) < r.height / 2;
+        const progress = sameRow ? (e.clientX - r.left) / r.width : (e.clientY - r.top) / r.height;
+        if ((di < ti && progress < 0.3) || (di > ti && progress > 0.7)) return;
+
+        const before = new Map(kids.map(k => [k, k.getBoundingClientRect()]));
+        container.insertBefore(st.el, di < ti ? target.nextSibling : target);
+        kids.forEach(k => {
+          const a = before.get(k), b = k.getBoundingClientRect();
+          const dx = a.left - b.left, dy = a.top - b.top;
+          if (!dx && !dy) return;
+          k.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' });
+        });
+      });
+
+      container.addEventListener('drop', (e) => { if (st.el) { e.preventDefault(); st.dropped = true; } });
+
+      container.addEventListener('dragend', (e) => {
+        if (!st.el) return;
+        const el = st.el;
+        st.el = null;
+        el.classList.remove('is-dragging');
+        document.body.classList.remove('is-sorting');
+        const keep = st.dropped || st.inside;
+        st.dropped = false;
+        st.inside = false;
+        if (!keep) { st.opts.onCancel && st.opts.onCancel(); return; }
+        const order = Array.from(container.children).map(k => Number(k.dataset.sortIndex));
+        if (order.some((v, i) => v !== i)) st.opts.onReorder(order);
+      });
+    }
+
+    function applyOrder(arr, order) {
+      const copy = order.map(i => arr[i]);
+      arr.splice(0, arr.length, ...copy);
+    }
+
     let currentMode = 'pdf_to_word';
 
     // State Storage
@@ -1349,6 +1606,7 @@
     let currentEditTool = 'select';
     let currentEditColor = '#dc2626';
     let currentEditStrokeWidth = 4;
+    let currentEditFontSize = 18;
     let pageCanvasLayers = {};
     let pageAnnotations = {};
     let pageFreehandStrokes = {};
@@ -1393,13 +1651,15 @@
       document.getElementById('heroSubtitle').textContent = tool.subtitle;
       document.getElementById('heroBtnText').textContent = tool.btnLabel;
       document.title = 'Docenti';
+      toggleToolsPanel(false);
+      const fl = document.getElementById('fileList');
+      if (fl) fl._prevCount = 0;
 
-      // Update active navigation state
-      document.querySelectorAll('.nav-item').forEach(el => {
-        el.classList.remove('text-[#2563eb]');
-      });
-      const activeNav = document.getElementById('nav_' + toolId);
-      if (activeNav) activeNav.classList.add('text-[#2563eb]');
+      const isHttpProcessed = toolId === 'pdf_to_word';
+      document.getElementById('heroPrivacy').textContent = isHttpProcessed ? 'Gratis \u00b7 Tanpa daftar' : 'Gratis \u00b7 Diproses di perangkat Anda';
+      const fmt = tool.type === 'multi_word' ? 'Format: Word (.docx)' : 'Format: PDF';
+      document.getElementById('heroFormatHint').textContent = fmt + (tool.multiple ? ' \u00b7 bisa pilih lebih dari satu file' : '');
+      document.getElementById('dropOverlayHint').textContent = tool.multiple ? 'File akan langsung ditambahkan ke daftar' : 'File akan langsung dibuka';
 
       // Check whether files are already loaded for this tool
       const hasFiles = (tool.type === 'multi_pdf' && currentMode === 'pdf_merge' && pdfFiles.length > 0) ||
@@ -1424,6 +1684,8 @@
       document.getElementById('editPdfSection').classList.add('hidden');
       document.getElementById('singlePdfActionSection').classList.add('hidden');
       document.getElementById('esignSection').classList.add('hidden');
+      syncToolChrome(false);
+      renderSteppers();
     }
 
     function renderActiveToolWorkspace() {
@@ -1435,6 +1697,7 @@
       document.getElementById('esignSection').classList.add('hidden');
 
       const tool = TOOLS[currentMode];
+      syncToolChrome(true);
 
       if (tool.type === 'multi_pdf' || tool.type === 'multi_word') {
         document.getElementById('fileListCard').classList.remove('hidden');
@@ -1544,9 +1807,7 @@
       }
     }
 
-    function toggleMobileMenu() {
-      document.getElementById('mobileMenu').classList.toggle('hidden');
-    }
+    function toggleMobileMenu() { toggleToolsPanel(); }
 
     function resetCurrentWorkingPdf() {
       currentWorkingPdf = null;
@@ -1606,9 +1867,10 @@
       showStatus('Dokumen dan memori penyimpanan sesi berhasil dihapus!', 'success');
     }
 
-    // Keyboard shortcut ESC to close delete confirmation modal
+    // Keyboard shortcut ESC to close delete confirmation modal & tools panel
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        toggleToolsPanel(false);
         const modal = document.getElementById('deleteConfirmModal');
         if (modal && !modal.classList.contains('hidden')) {
           closeDeleteConfirmModal();
@@ -1635,28 +1897,37 @@
       genericFileInput.value = '';
     });
 
-    // Drag and drop event listeners on Hero area & Window
-    ['dragenter', 'dragover'].forEach(evt => {
-      window.addEventListener(evt, (e) => {
-        e.preventDefault();
-        heroDropArea.classList.add('dragover');
-      });
-    });
-
-    ['dragleave', 'drop'].forEach(evt => {
-      window.addEventListener(evt, (e) => {
-        e.preventDefault();
-        heroDropArea.classList.remove('dragover');
-      });
-    });
-
-    window.addEventListener('drop', (e) => {
+    // Drag & drop file dari luar: hanya aktif untuk file (bukan saat menyusun ulang item)
+    const dropOverlay = document.getElementById('dropOverlay');
+    let dragDepth = 0;
+    const hasFiles = (e) => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+    function setDropActive(on) {
+      heroDropArea.classList.toggle('dragover', on);
+      dropOverlay.classList.toggle('show', on);
+    }
+    window.addEventListener('dragenter', (e) => {
+      if (!hasFiles(e)) return;
       e.preventDefault();
-      heroDropArea.classList.remove('dragover');
+      dragDepth++;
+      setDropActive(true);
+    });
+    window.addEventListener('dragover', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+    window.addEventListener('dragleave', (e) => {
+      if (!hasFiles(e)) return;
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) setDropActive(false);
+    });
+    window.addEventListener('drop', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      dragDepth = 0;
+      setDropActive(false);
       const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0) {
-        handleIncomingFiles(files);
-      }
+      if (files.length > 0) handleIncomingFiles(files);
     });
 
     async function handleIncomingFiles(files) {
@@ -1878,16 +2149,19 @@
     // ==========================================
     // 4. MULTI-FILE LIST (MERGE & PDF TO WORD)
     // ==========================================
+    function currentFileArray() {
+      if (currentMode === 'pdf_merge') return pdfFiles;
+      if (currentMode === 'word_merge') return wordFiles;
+      return convertPdfFiles;
+    }
+
     function renderList() {
       const fileListCard = document.getElementById('fileListCard');
       const fileList = document.getElementById('fileList');
       const fileCountBadge = document.getElementById('fileCountBadge');
       const totalSizeBadge = document.getElementById('totalSizeBadge');
 
-      let files = [];
-      if (currentMode === 'pdf_merge') files = pdfFiles;
-      else if (currentMode === 'word_merge') files = wordFiles;
-      else if (currentMode === 'pdf_to_word') files = convertPdfFiles;
+      const files = currentFileArray();
 
       if (files.length === 0) {
         showHeroStage();
@@ -1898,85 +2172,67 @@
       const totalBytes = files.reduce((acc, f) => acc + (f.size || 0), 0);
       fileCountBadge.textContent = files.length + ' berkas';
       totalSizeBadge.textContent = 'Total: ' + formatSize(totalBytes);
+
+      // Petunjuk kontekstual & status tombol gabung
+      const isConvert = currentMode === 'pdf_to_word';
+      const hintText = document.getElementById('fileListHintText');
+      const mergeBtn = document.getElementById('mergeBtn');
+      if (isConvert) {
+        hintText.textContent = 'Klik "Konversi" pada satu berkas, atau konversi semuanya sekaligus di bawah.';
+      } else if (files.length < 2) {
+        hintText.textContent = 'Tambahkan minimal 1 berkas lagi untuk bisa menggabungkan.';
+      } else {
+        hintText.textContent = 'Seret ikon titik-titik untuk mengubah urutan. Urutan ini menentukan hasil gabungan.';
+      }
+      if (mergeBtn) mergeBtn.disabled = !isConvert && files.length < 2;
+
+      const prevCount = fileList._prevCount || 0;
+      fileList._prevCount = files.length;
       fileList.innerHTML = '';
 
-      let draggedFileListIndex = null;
+      const isDocx = currentMode === 'word_merge';
+      const closeIcon = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
       files.forEach((file, index) => {
         const li = document.createElement('li');
-        li.className = 'py-3.5 flex items-center justify-between gap-3 text-sm hover:bg-slate-50/80 px-2 rounded-xl transition-all ' + (currentMode !== 'pdf_to_word' ? 'cursor-grab active:cursor-grabbing' : '');
+        li.className = 'file-row sortable-item' + (index >= prevCount ? ' anim-in' : '');
+        li.dataset.sortIndex = index;
+        li.draggable = files.length > 1;
 
-        if (currentMode !== 'pdf_to_word') {
-          li.draggable = true;
-          li.ondragstart = (e) => {
-            draggedFileListIndex = index;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', index);
-            setTimeout(() => li.classList.add('opacity-40', 'bg-blue-50/50'), 0);
-          };
-          li.ondragover = (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-          };
-          li.ondragenter = (e) => {
-            e.preventDefault();
-            if (draggedFileListIndex !== null && draggedFileListIndex !== index) {
-              li.classList.add('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/30');
-            }
-          };
-          li.ondragleave = (e) => {
-            if (!li.contains(e.relatedTarget)) {
-              li.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/30');
-            }
-          };
-          li.ondrop = (e) => {
-            e.preventDefault();
-            li.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/30');
-            if (draggedFileListIndex !== null && draggedFileListIndex !== undefined && draggedFileListIndex !== index) {
-              let list = currentMode === 'pdf_merge' ? pdfFiles : wordFiles;
-              const moved = list.splice(draggedFileListIndex, 1)[0];
-              list.splice(index, 0, moved);
-              renderList();
-            }
-            draggedFileListIndex = null;
-          };
-          li.ondragend = () => {
-            li.classList.remove('opacity-40', 'bg-blue-50/50');
-            document.querySelectorAll('#fileList li').forEach(item => {
-              item.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/30', 'opacity-40', 'bg-blue-50/50');
-            });
-            draggedFileListIndex = null;
-          };
-        }
-
-        let controls = '';
-        if (currentMode === 'pdf_to_word') {
-          controls = '<button onclick="convertSingleFile(' + index + ')" class="px-3 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl border border-blue-200">Konversi ke Word</button>' +
-                     '<button onclick="removeListItem(' + index + ')" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+        let controls;
+        if (isConvert) {
+          controls = '<button type="button" onclick="convertSingleFile(' + index + ')" draggable="false" class="btn-soft" style="color:#2563eb;border-color:#bfdbfe;background:#eff6ff">Konversi</button>';
         } else {
-          controls = '<button onclick="moveListItem(' + index + ', -1)" ' + (index === 0 ? 'disabled' : '') + ' class="p-1.5 rounded-lg hover:bg-slate-200 disabled:opacity-20 text-slate-600"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>' +
-                     '<button onclick="moveListItem(' + index + ', 1)" ' + (index === files.length - 1 ? 'disabled' : '') + ' class="p-1.5 rounded-lg hover:bg-slate-200 disabled:opacity-20 text-slate-600"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>' +
-                     '<button onclick="removeListItem(' + index + ')" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+          controls = '<button type="button" onclick="moveListItem(' + index + ', -1)" ' + (index === 0 ? 'disabled' : '') + ' draggable="false" class="icon-btn" title="Naikkan"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>' +
+                     '<button type="button" onclick="moveListItem(' + index + ', 1)" ' + (index === files.length - 1 ? 'disabled' : '') + ' draggable="false" class="icon-btn" title="Turunkan"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>';
         }
+        controls += '<button type="button" onclick="removeListItem(' + index + ')" draggable="false" class="icon-btn danger" title="Hapus berkas">' + closeIcon + '</button>';
 
-        const dragHandle = currentMode !== 'pdf_to_word'
-          ? '<span class="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 p-1" title="Tarik untuk memindahkan urutan berkas"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg></span>'
+        const handle = files.length > 1
+          ? '<span class="drag-handle" title="Tarik untuk memindahkan"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>'
           : '';
 
-        li.innerHTML = '<div class="flex items-center gap-2.5 truncate">' +
-                       dragHandle +
-                       '<span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold shrink-0">' + (index + 1) + '</span>' +
-                       '<div class="truncate">' +
-                       '<p class="font-medium text-slate-800 truncate">' + file.name + '</p>' +
+        li.innerHTML = '<div class="flex items-center gap-2.5 min-w-0">' + handle +
+                       '<span class="file-badge ' + (isDocx ? 'doc' : 'pdf') + '">' + (isDocx ? 'DOCX' : 'PDF') + '</span>' +
+                       '<div class="min-w-0">' +
+                       '<p class="font-semibold text-sm text-slate-800 truncate">' + escapeHtml(file.name) + '</p>' +
                        '<p class="text-xs text-slate-400">' + formatSize(file.size) + '</p>' +
-                       '</div>' +
-                       '</div>' +
-                       '<div class="flex items-center gap-1.5 shrink-0">' + controls + '</div>';
+                       '</div></div>' +
+                       '<div class="flex items-center gap-1 shrink-0">' +
+                       (isConvert ? '' : '<span class="order-chip mr-1" title="Urutan">' + (index + 1) + '</span>') +
+                       controls + '</div>';
         fileList.appendChild(li);
+      });
+
+      enableSortable(fileList, {
+        item: 'li',
+        onReorder: (order) => { applyOrder(currentFileArray(), order); renderList(); },
+        onCancel: () => renderList()
       });
     }
 
     window.moveListItem = function(index, dir) {
-      let list = currentMode === 'pdf_merge' ? pdfFiles : wordFiles;
+      let list = currentFileArray();
       const target = index + dir;
       if (target < 0 || target >= list.length) return;
       const tmp = list[index];
@@ -1986,10 +2242,9 @@
     };
 
     window.removeListItem = function(index) {
-      if (currentMode === 'pdf_merge') pdfFiles.splice(index, 1);
-      else if (currentMode === 'word_merge') wordFiles.splice(index, 1);
-      else convertPdfFiles.splice(index, 1);
-      renderList();
+      const row = document.querySelector('#fileList li[data-sort-index="' + index + '"]');
+      const commit = () => { currentFileArray().splice(index, 1); renderList(); };
+      if (row) { row.classList.add('anim-out'); setTimeout(commit, 180); } else commit();
     };
 
     const clearBtnEl = document.getElementById('clearAllBtn');
@@ -3001,60 +3256,10 @@
       organizePages.forEach((p, idx) => {
         const card = document.createElement('div');
         const isDel = p.isDeleted;
-        card.className = 'page-card relative bg-slate-50 border-2 rounded-2xl p-3 flex flex-col justify-between cursor-grab active:cursor-grabbing hover:shadow-md transition-all select-none ' + (isDel ? 'border-red-300 opacity-40 bg-red-50/40' : 'border-slate-200 bg-white');
-        card.draggable = true;
-        card.dataset.index = idx;
+        card.className = 'page-card sortable-item relative border-2 rounded-2xl p-3 flex flex-col justify-between cursor-grab hover:shadow-md select-none ' + (isDel ? 'border-red-300 opacity-50 bg-red-50/40' : 'border-slate-200 bg-white');
+        card.draggable = !isDel;
 
-        // HTML5 Drag and Drop events
-        card.ondragstart = (e) => {
-          draggedOrgIndex = idx;
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', idx);
-          setTimeout(() => {
-            card.classList.add('opacity-40', 'scale-95', 'border-blue-500', 'border-dashed');
-          }, 0);
-        };
-
-        card.ondragover = (e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-        };
-
-        card.ondragenter = (e) => {
-          e.preventDefault();
-          if (draggedOrgIndex !== null && draggedOrgIndex !== idx) {
-            card.classList.add('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.02]');
-          }
-        };
-
-        card.ondragleave = (e) => {
-          if (!card.contains(e.relatedTarget)) {
-            card.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.02]');
-          }
-        };
-
-        card.ondrop = (e) => {
-          e.preventDefault();
-          card.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.02]');
-          const fromIdx = draggedOrgIndex;
-          const toIdx = idx;
-          if (fromIdx !== null && fromIdx !== undefined && fromIdx !== toIdx) {
-            const moved = organizePages.splice(fromIdx, 1)[0];
-            organizePages.splice(toIdx, 0, moved);
-            renderOrganizeGrid();
-            updateOrganizeBadges();
-            showStatus('Urutan halaman berhasil dipindahkan!', 'success');
-          }
-          draggedOrgIndex = null;
-        };
-
-        card.ondragend = () => {
-          card.classList.remove('opacity-40', 'scale-95', 'border-blue-500', 'border-dashed');
-          document.querySelectorAll('.page-card').forEach(c => {
-            c.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'scale-[1.02]', 'opacity-40', 'scale-95', 'border-dashed');
-          });
-          draggedOrgIndex = null;
-        };
+        card.dataset.sortIndex = idx;
 
         // Header
         const top = document.createElement('div');
@@ -3106,6 +3311,12 @@
         }
         card.appendChild(act);
         grid.appendChild(card);
+      });
+
+      enableSortable(grid, {
+        item: '.page-card',
+        onReorder: (order) => { applyOrder(organizePages, order); renderOrganizeGrid(); updateOrganizeBadges(); },
+        onCancel: () => renderOrganizeGrid()
       });
     }
 
@@ -3405,6 +3616,44 @@
       }
     }
 
+    function setEditFontSize(size) {
+      currentEditFontSize = parseInt(size, 10) || 18;
+      const fsEl = document.getElementById('editFontSize');
+      if (fsEl && fsEl.value !== String(currentEditFontSize)) {
+        fsEl.value = String(currentEditFontSize);
+      }
+      if (selectedAnnotationId) {
+        const list = pageAnnotations[currentEditPage] || [];
+        const obj = list.find(o => o.id === selectedAnnotationId);
+        if (obj && (obj.type === 'text' || obj.type === 'note')) {
+          if (obj.fontSize !== currentEditFontSize) {
+            saveStateBeforeAction(currentEditPage);
+            obj.fontSize = currentEditFontSize;
+            renderObjectsLayer(currentEditPage);
+            syncPageCanvasLayer(currentEditPage);
+          }
+        }
+      }
+    }
+
+    function changeAnnotationFontSize(id, size) {
+      const newSize = parseInt(size, 10) || 18;
+      currentEditFontSize = newSize;
+      const fsEl = document.getElementById('editFontSize');
+      if (fsEl) fsEl.value = String(newSize);
+
+      const list = pageAnnotations[currentEditPage] || [];
+      const obj = list.find(o => o.id === id);
+      if (obj && (obj.type === 'text' || obj.type === 'note')) {
+        if (obj.fontSize !== newSize) {
+          saveStateBeforeAction(currentEditPage);
+          obj.fontSize = newSize;
+          renderObjectsLayer(currentEditPage);
+          syncPageCanvasLayer(currentEditPage);
+        }
+      }
+    }
+
     function clearEditCanvasCurrentPage() {
       const hasStrokes = pageFreehandStrokes[currentEditPage] && pageFreehandStrokes[currentEditPage].length > 0;
       const hasAnns = pageAnnotations[currentEditPage] && pageAnnotations[currentEditPage].length > 0;
@@ -3469,11 +3718,12 @@
       const isNote = obj.type === 'note';
       const bgStyle = isNote ? 'bg-amber-100 text-amber-950' : 'bg-white text-slate-900';
       const fontColor = isNote ? '#713f12' : (obj.color || '#dc2626');
+      const editFontSize = obj.fontSize || (isNote ? 12 : 18);
 
       item.innerHTML = `
         <textarea id="active_inline_editor_${id}"
           class="w-full h-full p-1.5 font-bold border-2 border-[#2563eb] rounded-lg shadow-lg focus:outline-none resize-none box-border ${bgStyle} leading-normal"
-          style="font-size: ${obj.fontSize || 18}px; color: ${fontColor};"
+          style="font-size: ${editFontSize}px; color: ${fontColor};"
           placeholder="Ketik teks...">${escapeHtml(obj.text || '')}</textarea>
         <div class="absolute -bottom-6 left-0 text-[10px] bg-slate-800 text-white px-2 py-0.5 rounded shadow z-40 select-none whitespace-nowrap">
           Tekan Enter untuk selesai
@@ -3544,9 +3794,11 @@
         } else if (obj.type === 'circle') {
           innerContent = `<div class="w-full h-full pointer-events-none" style="border: ${obj.strokeWidth}px solid ${obj.color}; border-radius: 9999px; box-sizing: border-box;"></div>`;
         } else if (obj.type === 'note') {
-          innerContent = `<div class="w-full h-full bg-amber-100 border border-amber-300 rounded-lg p-2 shadow-sm flex flex-col select-none cursor-move overflow-hidden box-border pointer-events-none"><div class="flex items-center gap-1 text-[9px] font-bold text-amber-800 uppercase tracking-wider mb-1 border-b border-amber-200/80 pb-0.5"><svg class="w-3 h-3 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Catatan</span></div><div class="flex-1 w-full text-xs text-amber-950 font-medium break-words overflow-y-auto leading-tight">${escapeHtml(obj.text || 'Catatan baru...')}</div></div>`;
+          const noteFs = obj.fontSize || 12;
+          innerContent = `<div class="w-full h-full bg-amber-100 border border-amber-300 rounded-lg p-2 shadow-sm flex flex-col select-none cursor-move overflow-hidden box-border pointer-events-none"><div class="flex items-center gap-1 text-[9px] font-bold text-amber-800 uppercase tracking-wider mb-1 border-b border-amber-200/80 pb-0.5"><svg class="w-3 h-3 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Catatan</span></div><div class="flex-1 w-full text-amber-950 font-medium break-words overflow-y-auto leading-snug" style="font-size: ${noteFs}px; line-height: 1.35;">${escapeHtml(obj.text || 'Catatan baru...')}</div></div>`;
         } else if (obj.type === 'text') {
-          innerContent = `<div class="w-full h-full flex items-center px-2 font-bold select-none cursor-move overflow-hidden text-left" style="color: ${obj.color}; font-size: ${obj.fontSize || 18}px; line-height: 1.2; word-break: break-word;">${escapeHtml(obj.text || 'Teks Baru')}</div>`;
+          const textFs = obj.fontSize || 18;
+          innerContent = `<div class="w-full h-full flex items-center px-2 font-bold select-none cursor-move overflow-hidden text-left" style="color: ${obj.color}; font-size: ${textFs}px; line-height: 1.2; word-break: break-word;">${escapeHtml(obj.text || 'Teks Baru')}</div>`;
         } else if (obj.type === 'image') {
           innerContent = `<img src="${obj.imageUrl}" class="w-full h-full object-contain pointer-events-none select-none rounded" draggable="false" />`;
         }
@@ -3555,6 +3807,11 @@
         if (isSelected) {
           const isNearTop = (obj.y < 35);
           const tbPos = isNearTop ? '-bottom-8' : '-top-8';
+          const currentObjFs = obj.fontSize || (obj.type === 'note' ? 12 : 18);
+          const fsOptions = [10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48]
+            .map(sz => `<option value="${sz}" ${sz === currentObjFs ? 'selected' : ''}>${sz}px</option>`)
+            .join('');
+
           handlesHtml += `
             <div class="floating-obj-toolbar absolute ${tbPos} left-0 flex items-center gap-1 bg-white border border-slate-300 rounded-lg shadow-md px-1.5 py-0.5 z-30 select-none">
               <div class="drag-grip flex items-center gap-1 text-[11px] font-semibold text-slate-700 cursor-move pr-1.5 border-r border-slate-200" title="Tahan dan geser untuk memindahkan">
@@ -3562,6 +3819,12 @@
                 <span>Geser</span>
               </div>
               ${(obj.type === 'text' || obj.type === 'note') ? `
+                <div class="flex items-center gap-0.5 px-1 border-r border-slate-200" title="Ukuran Font">
+                  <span class="text-[10px] font-bold text-slate-500">A</span>
+                  <select class="obj-font-size-select text-[11px] font-semibold text-slate-700 bg-transparent border-0 outline-none cursor-pointer py-0.5">
+                    ${fsOptions}
+                  </select>
+                </div>
                 <button type="button" class="edit-text-btn text-[11px] font-semibold text-[#2563eb] hover:text-blue-800 hover:bg-blue-50 flex items-center gap-1 px-1.5 py-0.5 rounded cursor-pointer" title="Klik untuk mengubah tulisan">
                   <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   <span>Edit</span>
@@ -3593,6 +3856,16 @@
           });
         }
 
+        const fontSelect = item.querySelector('.obj-font-size-select');
+        if (fontSelect) {
+          fontSelect.addEventListener('change', (e) => {
+            e.stopPropagation();
+            changeAnnotationFontSize(obj.id, e.target.value);
+          });
+          fontSelect.addEventListener('mousedown', (e) => e.stopPropagation());
+          fontSelect.addEventListener('click', (e) => e.stopPropagation());
+        }
+
         item.addEventListener('dblclick', (e) => {
           if (obj.type === 'text' || obj.type === 'note') {
             e.stopPropagation();
@@ -3603,6 +3876,7 @@
         item.addEventListener('mousedown', (e) => {
           if (e.target.closest('.delete-obj-btn')) return;
           if (e.target.closest('.edit-text-btn')) return;
+          if (e.target.closest('.obj-font-size-select')) return;
 
           if (e.target.closest('.resize-handle-btn')) {
             isResizingObject = true;
@@ -3620,6 +3894,12 @@
           if (editingAnnotationId === obj.id) return;
 
           selectedAnnotationId = obj.id;
+          if (obj.type === 'text' || obj.type === 'note') {
+            const fs = obj.fontSize || (obj.type === 'note' ? 12 : 18);
+            currentEditFontSize = fs;
+            const fsEl = document.getElementById('editFontSize');
+            if (fsEl) fsEl.value = String(fs);
+          }
           isDraggingObject = true;
           activeDragId = obj.id;
           dragStartX = e.clientX;
@@ -3675,7 +3955,7 @@
               height: h,
               color: currentEditColor,
               strokeWidth: currentEditStrokeWidth,
-              fontSize: 18,
+              fontSize: currentEditTool === 'note' ? (currentEditFontSize === 18 ? 12 : currentEditFontSize) : currentEditFontSize,
               text: currentEditTool === 'text' ? 'Teks Baru' : (currentEditTool === 'note' ? 'Catatan baru...' : '')
             };
 
@@ -3912,17 +4192,21 @@
           ctx.fillRect(obj.x, obj.y, obj.width, 18);
           ctx.fillStyle = '#854d0e';
           ctx.font = 'bold 9px sans-serif';
-          ctx.fillText('CATATAN', obj.x + 6, obj.y + 12);
-
-          ctx.fillStyle = '#713f12';
-          ctx.font = '12px sans-serif';
-          drawWrappedText(ctx, obj.text || '', obj.x + 8, obj.y + 34, obj.width - 16, 16);
-        } else if (obj.type === 'text') {
-          ctx.fillStyle = obj.color || '#dc2626';
-          ctx.font = `bold ${obj.fontSize || 18}px sans-serif`;
           ctx.textBaseline = 'top';
-          const offsetY = Math.max(0, ((obj.height || 42) - (obj.fontSize || 18) * 1.2) / 2);
-          drawWrappedText(ctx, obj.text || '', obj.x + 8, obj.y + offsetY, Math.max(obj.width - 16, 50), (obj.fontSize || 18) * 1.25);
+          ctx.fillText('CATATAN', obj.x + 6, obj.y + 4);
+
+          const noteFs = obj.fontSize || 12;
+          ctx.fillStyle = '#713f12';
+          ctx.font = `${noteFs}px sans-serif`;
+          ctx.textBaseline = 'top';
+          drawWrappedText(ctx, obj.text || '', obj.x + 8, obj.y + 24, obj.width - 16, noteFs * 1.35);
+        } else if (obj.type === 'text') {
+          const textFs = obj.fontSize || 18;
+          ctx.fillStyle = obj.color || '#dc2626';
+          ctx.font = `bold ${textFs}px sans-serif`;
+          ctx.textBaseline = 'top';
+          const offsetY = Math.max(0, ((obj.height || 42) - textFs * 1.2) / 2);
+          drawWrappedText(ctx, obj.text || '', obj.x + 8, obj.y + offsetY, Math.max(obj.width - 16, 50), textFs * 1.25);
         } else if (obj.type === 'image' && obj.imageElement) {
           ctx.drawImage(obj.imageElement, obj.x, obj.y, obj.width, obj.height);
         }
@@ -4038,6 +4322,8 @@
     window.setEditTool = setEditTool;
     window.setEditColor = setEditColor;
     window.setEditStrokeWidth = setEditStrokeWidth;
+    window.setEditFontSize = setEditFontSize;
+    window.changeAnnotationFontSize = changeAnnotationFontSize;
     window.clearEditCanvasCurrentPage = clearEditCanvasCurrentPage;
     window.deleteAnnotation = deleteAnnotation;
     window.startEditingAnnotation = startEditingAnnotation;
@@ -4716,6 +5002,8 @@
           const scalePercent = (parseInt(document.getElementById('watermarkImageScale')?.value) || 40) / 100;
           const imgBaseWidth = wmCanvasWidth * 0.45 * scalePercent;
           liveImg.style.width = Math.round(imgBaseWidth) + 'px';
+          liveImg.style.maxWidth = 'none';
+          liveImg.style.maxHeight = 'none';
           liveImg.style.height = 'auto';
           const thumb = document.getElementById('wmImageThumbnail');
           if (thumb && thumb.src && !thumb.classList.contains('hidden')) {
@@ -4725,6 +5013,12 @@
           }
         }
       }
+
+      // Pastikan ukuran kotak selalu stabil dan tidak tertekan margin/tepi canvas
+      box.style.width = 'max-content';
+      box.style.height = 'max-content';
+      box.style.maxWidth = 'none';
+      box.style.maxHeight = 'none';
 
       // Opacity and rotation (CSS rotate(-angle) aligns with PDFLib counter-clockwise rotation)
       box.style.opacity = opacity;
@@ -4805,6 +5099,10 @@
         wmDragStartY = clientY;
         wmInitialLeft = box.offsetLeft;
         wmInitialTop = box.offsetTop;
+        box.style.width = 'max-content';
+        box.style.height = 'max-content';
+        box.style.maxWidth = 'none';
+        box.style.maxHeight = 'none';
         box.classList.add('ring-2', 'ring-blue-500', 'bg-blue-500/20');
         if (e.preventDefault && e.cancelable) e.preventDefault();
       }
@@ -5918,6 +6216,7 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+      if (typeof setStep === 'function') setStep(3);
     }
 
     let toastTimeout = null;
@@ -6057,6 +6356,8 @@
       selectTool('pdf_to_word');
     }
 
+    buildToolUI();
+    renderSteppers();
     init();
   </script>
 </body>
