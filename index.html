@@ -532,6 +532,7 @@
           <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs" title="Ukuran Font Teks & Catatan">
             <span class="text-slate-500 font-medium">Font:</span>
             <select id="editFontSize" onchange="setEditFontSize(this.value)" class="bg-transparent font-semibold text-slate-700 outline-none cursor-pointer">
+              <option value="8">8px</option>
               <option value="10">10px</option>
               <option value="12">12px</option>
               <option value="14">14px</option>
@@ -3808,7 +3809,7 @@
           const isNearTop = (obj.y < 35);
           const tbPos = isNearTop ? '-bottom-8' : '-top-8';
           const currentObjFs = obj.fontSize || (obj.type === 'note' ? 12 : 18);
-          const fsOptions = [10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48]
+          const fsOptions = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48]
             .map(sz => `<option value="${sz}" ${sz === currentObjFs ? 'selected' : ''}>${sz}px</option>`)
             .join('');
 
