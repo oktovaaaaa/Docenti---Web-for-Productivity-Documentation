@@ -1676,6 +1676,17 @@
       if (currentWorkingPdfBytes && typeof saveWorkingSession === 'function') {
         saveWorkingSession();
       }
+
+      // Selalu arahkan kembali ke bagian paling atas halaman saat berganti alat / menu
+      const scrollToTop = () => {
+        try {
+          window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+        } catch (e) {
+          window.scrollTo(0, 0);
+        }
+      };
+      scrollToTop();
+      requestAnimationFrame(scrollToTop);
     }
 
     function showHeroStage() {
