@@ -129,6 +129,8 @@
     .tool-grid .tool-card:hover { transform: translateY(-2px); border-color: #93c5fd; box-shadow: 0 10px 24px -14px rgba(37,99,235,.45); }
     .tool-tile { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
     .tool-tile svg { width: 20px; height: 20px; }
+    .tool-tile img, .tool-img { width: 30px; height: 30px; object-fit: contain; display: block; }
+    .tool-tile.is-img-full img, .is-img-full .tool-img { width: 100%; height: 100%; }
     .tool-name { font-size: .875rem; font-weight: 600; color: var(--ink); line-height: 1.2; }
     .tool-desc { font-size: .75rem; color: var(--muted); margin-top: 2px; line-height: 1.35; }
 
@@ -715,23 +717,42 @@
       <!-- 2. Form Kompres PDF -->
       <div id="formCompress" class="space-y-4 hidden">
         <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Pilih Tingkat Kompresi:</label>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-          <label class="p-4 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
-            <input type="radio" name="compressLevel" value="extreme" class="text-blue-600">
-            <span class="font-bold text-slate-800 block mt-1">Kompresi Kuat (Ekstrem)</span>
-            <span class="text-slate-500 block text-[11px] mt-0.5">Kompresi maksimal untuk berkas scan & foto besar</span>
+        <div id="compressLevelGroup" class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+          <label class="compress-opt p-3 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+            <input type="radio" name="compressLevel" value="low" class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Kompresi Kuat</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">110 DPI · JPEG 45 — ukuran paling kecil</span>
           </label>
-          <label class="p-4 border-2 border-blue-600 rounded-2xl cursor-pointer transition-all block bg-blue-50/30">
-            <input type="radio" name="compressLevel" value="recommended" checked class="text-blue-600">
-            <span class="font-bold text-slate-800 block mt-1">Rekomendasi (Cerdas & Seimbang)</span>
-            <span class="text-slate-500 block text-[11px] mt-0.5">Mempertahankan ketajaman teks vektor & kompres gambar</span>
+          <label class="compress-opt p-3 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+            <input type="radio" name="compressLevel" value="medium" checked class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Rekomendasi</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">140 DPI · JPEG 60 — seimbang</span>
           </label>
-          <label class="p-4 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+          <label class="compress-opt p-3 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+            <input type="radio" name="compressLevel" value="high" class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Kualitas Tinggi</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">180 DPI · JPEG 75</span>
+          </label>
+          <label class="compress-opt p-3 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+            <input type="radio" name="compressLevel" value="very_high" class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Sangat Tinggi</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">210 DPI · JPEG 90</span>
+          </label>
+          <label class="compress-opt p-3 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
+            <input type="radio" name="compressLevel" value="ultra" class="text-blue-600">
+            <span class="font-bold text-slate-800 block mt-1">Ultra</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">240 DPI · JPEG 95 — nyaris tanpa beda</span>
+          </label>
+          <label class="compress-opt p-3 border rounded-2xl cursor-pointer hover:border-slate-400 transition-all block bg-slate-50">
             <input type="radio" name="compressLevel" value="lossless" class="text-blue-600">
-            <span class="font-bold text-slate-800 block mt-1">Optimasi Struktur (Lossless)</span>
-            <span class="text-slate-500 block text-[11px] mt-0.5">Membersihkan metadata tanpa penurunan kualitas</span>
+            <span class="font-bold text-slate-800 block mt-1">Tanpa Kehilangan</span>
+            <span class="text-slate-500 block text-[11px] mt-0.5">Hanya optimasi struktur & stream</span>
           </label>
         </div>
+        <label class="flex items-start gap-2 text-xs text-slate-600 cursor-pointer">
+          <input type="checkbox" id="compressKeepText" checked class="mt-0.5 text-blue-600">
+          <span><strong>Pertahankan teks digital</strong> — halaman berteks tidak diubah jadi gambar, sehingga teks tetap tajam &amp; bisa dicari/di-copy. Matikan untuk kompresi maksimal.</span>
+        </label>
         <div id="compressResultBox" class="hidden p-4 rounded-2xl text-xs space-y-1">
           <p id="compressResultTitle" class="font-bold text-sm"></p>
           <p id="compressResultDetails"></p>
@@ -1450,24 +1471,32 @@
       { id: 'optimize', label: 'Optimasi', bg: '#ecfdf5', fg: '#059669', tools: ['pdf_compress', 'pdf_repair'] }
     ];
     const TOOL_META = {
-      pdf_to_word:     { name: 'PDF ke Word', desc: 'Ubah PDF jadi dokumen .docx yang bisa diedit', icon: 'doc' },
+      pdf_to_word:     { name: 'PDF ke Word', desc: 'Ubah PDF jadi dokumen .docx yang bisa diedit', icon: 'doc', img: 'assets/icons/pdf2word.png' },
       word_merge:      { name: 'Gabungkan Word', desc: 'Satukan beberapa file .docx jadi satu', icon: 'docPlus' },
-      pdf_merge:       { name: 'Gabungkan PDF', desc: 'Satukan banyak PDF, atur urutan dengan seret', icon: 'merge' },
-      pdf_split:       { name: 'Pisahkan PDF', desc: 'Ambil halaman tertentu atau pecah per N halaman', icon: 'split' },
+      pdf_merge:       { name: 'Gabungkan PDF', desc: 'Satukan banyak PDF, atur urutan dengan seret', icon: 'merge', img: 'assets/icons/merge.png' },
+      pdf_split:       { name: 'Pisahkan PDF', desc: 'Ambil halaman tertentu atau pecah per N halaman', icon: 'split', img: 'assets/icons/split.png' },
       pdf_organize:    { name: 'Hapus & Atur Halaman', desc: 'Susun ulang, putar, atau buang halaman', icon: 'grid' },
-      pdf_rotate:      { name: 'Putar PDF', desc: 'Putar halaman 90, 180, atau 270 derajat', icon: 'rotate' },
+      pdf_rotate:      { name: 'Putar PDF', desc: 'Putar halaman 90, 180, atau 270 derajat', icon: 'rotate', img: 'assets/icons/rotate.png' },
       pdf_edit:        { name: 'Edit & Coret PDF', desc: 'Tambah teks, kotak, coretan, atau gambar', icon: 'edit' },
       pdf_page_number: { name: 'Nomor Halaman', desc: 'Beri nomor otomatis di setiap halaman', icon: 'hash' },
       pdf_watermark:   { name: 'Tanda Air', desc: 'Sisipkan teks atau gambar watermark', icon: 'drop' },
       pdf_esign:       { name: 'Tanda Tangan', desc: 'Bubuhkan tanda tangan digital di PDF', icon: 'sign' },
-      pdf_protect:     { name: 'Proteksi Sandi', desc: 'Kunci PDF dengan kata sandi', icon: 'lock' },
+      pdf_protect:     { name: 'Proteksi Sandi', desc: 'Kunci PDF dengan kata sandi', icon: 'lock', img: 'assets/icons/protect.png', imgFull: true },
       pdf_unlock:      { name: 'Buka PDF Terkunci', desc: 'Hapus sandi dari PDF', icon: 'unlock' },
-      pdf_compress:    { name: 'Kompres PDF', desc: 'Perkecil ukuran file agar mudah dikirim', icon: 'compress' },
-      pdf_repair:      { name: 'Perbaiki PDF', desc: 'Pulihkan PDF yang rusak atau tak bisa dibuka', icon: 'wrench' }
+      pdf_compress:    { name: 'Kompres PDF', desc: 'Perkecil ukuran file agar mudah dikirim', icon: 'compress', img: 'assets/icons/compress.png' },
+      pdf_repair:      { name: 'Perbaiki PDF', desc: 'Pulihkan PDF yang rusak atau tak bisa dibuka', icon: 'wrench', img: 'assets/icons/repair.png' }
     };
     function groupOfTool(id) { return TOOL_GROUPS.find(g => g.tools.includes(id)); }
+    // Ikon gambar (dari SafePDF, versi biru) atau ikon SVG bawaan
+    function toolIconHtml(id) {
+      const m = TOOL_META[id];
+      return m.img ? '<img class="tool-img" src="' + m.img + '" alt="" loading="lazy" draggable="false">' : svgIcon(m.icon);
+    }
     function toolTileHtml(id) {
       const g = groupOfTool(id), m = TOOL_META[id];
+      if (m.img) {
+        return '<span class="tool-tile' + (m.imgFull ? ' is-img-full' : '') + '" style="background:#eff6ff">' + toolIconHtml(id) + '</span>';
+      }
       return '<span class="tool-tile" style="background:' + g.bg + ';color:' + g.fg + '">' + svgIcon(m.icon) + '</span>';
     }
     function toolCardHtml(id) {
@@ -1525,9 +1554,10 @@
       if (inWorkspace) {
         const m = TOOL_META[currentMode], g = groupOfTool(currentMode);
         const icon = document.getElementById('wsIcon');
-        icon.style.background = g.bg;
+        icon.style.background = m.img ? '#eff6ff' : g.bg;
         icon.style.color = g.fg;
-        icon.innerHTML = svgIcon(m.icon);
+        icon.classList.toggle('is-img-full', !!m.imgFull);
+        icon.innerHTML = toolIconHtml(currentMode);
         document.getElementById('wsTitle').textContent = TOOLS[currentMode].title;
         document.getElementById('wsSubtitle').textContent = TOOLS[currentMode].subtitle;
         setStep(2);
@@ -4749,14 +4779,118 @@
     }
 
     // Compress PDF
+    // Sorot kartu tingkat kompresi yang dipilih
+    function refreshCompressLevelCards() {
+      document.querySelectorAll('#compressLevelGroup .compress-opt').forEach(card => {
+        const input = card.querySelector('input');
+        const on = !!(input && input.checked);
+        card.classList.toggle('border-2', on);
+        card.classList.toggle('border-blue-600', on);
+        card.classList.toggle('bg-blue-50/30', on);
+        card.classList.toggle('bg-slate-50', !on);
+      });
+    }
+    document.addEventListener('change', e => {
+      if (e.target && e.target.name === 'compressLevel') refreshCompressLevelCards();
+    });
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', refreshCompressLevelCards);
+    } else {
+      refreshCompressLevelCards();
+    }
+
+    const COMPRESS_LEVEL_LABELS = {
+      low: 'Kompresi Kuat', medium: 'Rekomendasi', high: 'Kualitas Tinggi',
+      very_high: 'Sangat Tinggi', ultra: 'Ultra', lossless: 'Tanpa Kehilangan'
+    };
+    const COMPRESS_METHOD_LABELS = {
+      struktur: 'optimasi struktur & stream (lossless)',
+      gambar: 'kompresi gambar, teks tetap vektor',
+      raster: 'render ulang halaman (metode SafePDF)',
+      asli: 'berkas asli dipertahankan'
+    };
+
+    // Engine kompres server (port SafePDF, PyMuPDF). Mengembalikan null jika server tidak tersedia.
+    async function compressPdfViaServer(bytes, level, keepText) {
+      const endpoints = [];
+      if (window.location.protocol.startsWith('http')) endpoints.push(window.location.origin + '/api/compress');
+      endpoints.push('http://127.0.0.1:5000/api/compress');
+      endpoints.push('http://localhost:5000/api/compress');
+
+      for (const ep of [...new Set(endpoints)]) {
+        try {
+          const fd = new FormData();
+          fd.append('file', new Blob([bytes], { type: 'application/pdf' }), 'dokumen.pdf');
+          fd.append('quality', level);
+          fd.append('keep_text', keepText ? '1' : '0');
+
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 180000);
+          const res = await fetch(ep, { method: 'POST', body: fd, signal: controller.signal });
+          clearTimeout(timer);
+
+          const ctype = res.headers.get('Content-Type') || '';
+          if (res.ok && ctype.includes('application/pdf')) {
+            const out = new Uint8Array(await res.arrayBuffer());
+            if (out.length > 0) {
+              return { bytes: out, method: res.headers.get('X-Compress-Method') || '' };
+            }
+          }
+        } catch (e) {
+          // coba endpoint berikutnya
+        }
+      }
+      return null;
+    }
+
+    function showCompressResult(initialSize, finalSize, note) {
+      const reduction = Math.max(0, Math.round(((initialSize - finalSize) / initialSize) * 100));
+      const resBox = document.getElementById('compressResultBox');
+      const resTitle = document.getElementById('compressResultTitle');
+      const resDetails = document.getElementById('compressResultDetails');
+      if (resBox) resBox.classList.remove('hidden');
+
+      if (finalSize < initialSize) {
+        if (resBox) resBox.className = 'p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-2xl text-xs space-y-1';
+        if (resTitle) resTitle.textContent = 'Berhasil Mengompres PDF!';
+        if (resDetails) {
+          resDetails.innerHTML = 'Ukuran awal: <strong>' + formatSize(initialSize) + '</strong> &rarr; Ukuran baru: <strong>' + formatSize(finalSize) + '</strong> (Hemat <strong>' + reduction + '%</strong>).' + (note ? ' Metode: ' + note + '.' : '');
+        }
+        showStatus('Selesai mengompres PDF! Berhasil menghemat ' + reduction + '% ukuran berkas.', 'success');
+      } else {
+        if (resBox) resBox.className = 'p-4 bg-blue-50 text-blue-800 border border-blue-200 rounded-2xl text-xs space-y-1';
+        if (resTitle) resTitle.textContent = 'Dokumen Anda Sudah Sangat Optimal!';
+        if (resDetails) {
+          resDetails.innerHTML = 'Berkas ini (<strong>' + formatSize(initialSize) + '</strong>) tidak bisa diperkecil lagi pada tingkat ini. Coba tingkat kompresi yang lebih kuat atau matikan opsi "Pertahankan teks digital".';
+        }
+        showStatus('Dokumen sudah berada pada ukuran paling efisien untuk tingkat kompresi ini.', 'success');
+      }
+    }
+
     async function applyCompressPdf() {
       const levelRadio = document.querySelector('input[name="compressLevel"]:checked');
-      const level = levelRadio ? levelRadio.value : 'recommended';
-      showStatus('Menganalisis dan mengompres dokumen PDF (' + level + ')... Mohon tunggu.');
+      const level = levelRadio ? levelRadio.value : 'medium';
+      const keepTextEl = document.getElementById('compressKeepText');
+      const keepText = keepTextEl ? keepTextEl.checked : true;
+      showStatus('Mengompres dokumen PDF (' + (COMPRESS_LEVEL_LABELS[level] || level) + ')... Mohon tunggu.');
 
       try {
         const initialBytes = getWorkingPdfBytesCopy();
         const initialSize = initialBytes.length || currentWorkingPdf.size;
+
+        // 1. Engine utama: server (port SafePDF)
+        const serverResult = await compressPdfViaServer(initialBytes, level, keepText);
+        if (serverResult) {
+          const useServer = serverResult.bytes.length < initialSize;
+          const outBytes = useServer ? serverResult.bytes : initialBytes;
+          showCompressResult(initialSize, outBytes.length, useServer ? COMPRESS_METHOD_LABELS[serverResult.method] : '');
+          triggerDownload(new Blob([outBytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
+          return;
+        }
+
+        // 2. Cadangan: kompresi di browser (jika server tidak berjalan)
+        showStatus('Server kompres tidak tersedia, memakai mode kompres di browser...');
+        const fallbackLevel = level === 'lossless' ? 'lossless' : ((level === 'low' || !keepText) ? 'extreme' : 'recommended');
 
         // 1. Detect if document contains native digital text (Vector PDF)
         let totalTextChars = 0;
@@ -4796,11 +4930,11 @@
         }
 
         // Step B: For scanned pages or image-heavy PDFs (DO NOT rasterize digital text PDFs unless extreme mode on huge files)
-        if (!hasDigitalText || (level === 'extreme' && initialSize > 2.5 * 1024 * 1024)) {
+        if (fallbackLevel !== 'lossless' && (!hasDigitalText || !keepText || (fallbackLevel === 'extreme' && initialSize > 2.5 * 1024 * 1024))) {
           try {
             showStatus('Mengompresi elemen gambar halaman scan...');
-            const quality = level === 'extreme' ? 0.45 : 0.65;
-            const scale = level === 'extreme' ? 0.95 : 1.25;
+            const quality = fallbackLevel === 'extreme' ? 0.5 : 0.7;
+            const scale = fallbackLevel === 'extreme' ? 1.5 : 1.95;
 
             const rasterPdf = await PDFLib.PDFDocument.create();
             for (let i = 1; i <= numPages; i++) {
@@ -4837,29 +4971,7 @@
           }
         }
 
-        const finalSize = bestSize;
-        const reduction = Math.max(0, Math.round(((initialSize - finalSize) / initialSize) * 100));
-
-        const resBox = document.getElementById('compressResultBox');
-        const resTitle = document.getElementById('compressResultTitle');
-        const resDetails = document.getElementById('compressResultDetails');
-        if (resBox) resBox.classList.remove('hidden');
-
-        if (reduction > 0) {
-          if (resBox) resBox.className = 'p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-2xl text-xs space-y-1';
-          if (resTitle) resTitle.textContent = 'Berhasil Mengompres PDF!';
-          if (resDetails) {
-            resDetails.innerHTML = 'Ukuran awal: <strong>' + formatSize(initialSize) + '</strong> &rarr; Ukuran baru: <strong>' + formatSize(finalSize) + '</strong> (Hemat <strong>' + reduction + '%</strong>). Kualitas teks vektor tetap 100% tajam.';
-          }
-          showStatus('Selesai mengompres PDF! Berhasil menghemat ' + reduction + '% ukuran berkas.', 'success');
-        } else {
-          if (resBox) resBox.className = 'p-4 bg-blue-50 text-blue-800 border border-blue-200 rounded-2xl text-xs space-y-1';
-          if (resTitle) resTitle.textContent = 'Dokumen Anda Sudah Sangat Optimal!';
-          if (resDetails) {
-            resDetails.innerHTML = 'Berkas ini (<strong>' + formatSize(initialSize) + '</strong>) sudah merupakan dokumen teks vektor yang sangat efisien. Docenti mempertahankan kualitas 100% tajam dan mencegah pembengkakan ukuran.';
-          }
-          showStatus('Dokumen Anda sudah berada pada ukuran paling efisien. Kualitas teks dipertahankan tetap tajam.', 'success');
-        }
+        showCompressResult(initialSize, bestSize, 'mode browser');
 
         triggerDownload(new Blob([bestBytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
 

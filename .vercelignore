@@ -4,3 +4,6 @@ jalankan_docenti.bat
 __pycache__/
 *.pyc
 *.log
+
+# Sumber referensi SafePDF (tidak dipakai saat runtime)
+SafePDF-main/

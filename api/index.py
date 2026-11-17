@@ -16,6 +16,12 @@ except Exception as e:
     HAS_ENGINE = False
     ENGINE_ERROR = str(e)
 
+try:
+    from pdf_compress import compress_pdf
+    HAS_COMPRESS = True
+except Exception as e:
+    HAS_COMPRESS = False
+
 app = Flask(__name__)
 
 @app.after_request
@@ -23,7 +29,7 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, Content-Type"
+    response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, Content-Type, X-Original-Size, X-Compressed-Size, X-Compress-Method, X-Compress-Quality"
     return response
 
 @app.route("/api/health", methods=["GET", "OPTIONS"])
@@ -33,6 +39,7 @@ def health():
     return jsonify({
         "status": "ok",
         "engine": "pdf_to_word",
+        "compress_ready": HAS_COMPRESS,
         "ready": HAS_ENGINE,
         "message": "Docenti Cloud Engine Aktif (Vercel Serverless)" if HAS_ENGINE else f"Engine error: {ENGINE_ERROR}"
     })
@@ -85,3 +92,45 @@ def convert():
     except Exception as e:
         return jsonify({"error": f"Gagal mengonversi PDF: {str(e)}"}), 500
 
+@app.route("/api/compress", methods=["POST", "OPTIONS"])
+def compress():
+    if request.method == "OPTIONS":
+        return "", 200
+
+    if not HAS_COMPRESS:
+        return jsonify({"error": "Engine kompres PDF belum siap."}), 500
+
+    uploaded_file = request.files.get("file") or request.files.get("pdf")
+    if uploaded_file is not None:
+        orig_name = uploaded_file.filename or "dokumen.pdf"
+        pdf_bytes = uploaded_file.read()
+    else:
+        pdf_bytes = request.data
+        orig_name = urllib.parse.unquote(request.headers.get("X-File-Name", "") or "dokumen.pdf")
+
+    if not pdf_bytes:
+        return jsonify({"error": "Berkas PDF tidak ditemukan atau kosong."}), 400
+
+    quality = (request.form.get("quality") or request.args.get("quality") or "medium").strip()
+    keep_text_raw = (request.form.get("keep_text") or request.args.get("keep_text") or "1").strip().lower()
+    keep_text = keep_text_raw not in ("0", "false", "no", "off")
+
+    try:
+        result, info = compress_pdf(pdf_bytes, quality=quality, keep_text=keep_text)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Gagal mengompres PDF: {str(e)}"}), 500
+
+    base_name = os.path.splitext(orig_name)[0]
+    response = send_file(
+        io.BytesIO(result),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=f"{base_name}_compressed.pdf",
+    )
+    response.headers["X-Original-Size"] = str(info["original_size"])
+    response.headers["X-Compressed-Size"] = str(info["compressed_size"])
+    response.headers["X-Compress-Method"] = info["method"]
+    response.headers["X-Compress-Quality"] = info["quality"]
+    return response
