@@ -4810,13 +4810,14 @@
       asli: 'berkas asli dipertahankan'
     };
 
-    // Engine kompres server (port SafePDF, PyMuPDF). Mengembalikan null jika server tidak tersedia.
+    // Engine kompres server (port SafePDF, PyMuPDF). Melempar error jika server tidak tersedia.
     async function compressPdfViaServer(bytes, level, keepText) {
       const endpoints = [];
       if (window.location.protocol.startsWith('http')) endpoints.push(window.location.origin + '/api/compress');
       endpoints.push('http://127.0.0.1:5000/api/compress');
       endpoints.push('http://localhost:5000/api/compress');
 
+      let lastError = 'Server kompres tidak tersedia. Jalankan Docenti lewat jalankan_docenti.bat lalu coba lagi.';
       for (const ep of [...new Set(endpoints)]) {
         try {
           const fd = new FormData();
@@ -4836,11 +4837,16 @@
               return { bytes: out, method: res.headers.get('X-Compress-Method') || '' };
             }
           }
+          if (res.status === 413) {
+            lastError = 'Ukuran berkas terlalu besar untuk server online. Jalankan Docenti lewat jalankan_docenti.bat untuk berkas besar.';
+          } else if (!res.ok) {
+            try { lastError = (await res.json()).error || lastError; } catch (e) { /* abaikan */ }
+          }
         } catch (e) {
           // coba endpoint berikutnya
         }
       }
-      return null;
+      throw new Error(lastError);
     }
 
     function showCompressResult(initialSize, finalSize, note) {
@@ -4878,102 +4884,12 @@
         const initialBytes = getWorkingPdfBytesCopy();
         const initialSize = initialBytes.length || currentWorkingPdf.size;
 
-        // 1. Engine utama: server (port SafePDF)
+        // Engine kompres SafePDF (server)
         const serverResult = await compressPdfViaServer(initialBytes, level, keepText);
-        if (serverResult) {
-          const useServer = serverResult.bytes.length < initialSize;
-          const outBytes = useServer ? serverResult.bytes : initialBytes;
-          showCompressResult(initialSize, outBytes.length, useServer ? COMPRESS_METHOD_LABELS[serverResult.method] : '');
-          triggerDownload(new Blob([outBytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
-          return;
-        }
-
-        // 2. Cadangan: kompresi di browser (jika server tidak berjalan)
-        showStatus('Server kompres tidak tersedia, memakai mode kompres di browser...');
-        const fallbackLevel = level === 'lossless' ? 'lossless' : ((level === 'low' || !keepText) ? 'extreme' : 'recommended');
-
-        // 1. Detect if document contains native digital text (Vector PDF)
-        let totalTextChars = 0;
-        const numPages = currentWorkingPdfDoc ? currentWorkingPdfDoc.numPages : 1;
-        for (let i = 1; i <= Math.min(numPages, 10); i++) {
-          const page = await currentWorkingPdfDoc.getPage(i);
-          const tc = await page.getTextContent();
-          totalTextChars += (tc.items || []).reduce((acc, it) => acc + (it.str ? it.str.length : 0), 0);
-        }
-        const hasDigitalText = totalTextChars > 30;
-
-        let bestBytes = initialBytes;
-        let bestSize = initialSize;
-
-        // Step A: Structural & Object Stream Compression (Always preserves 100% Vector Font Sharpness)
-        try {
-          const srcDoc = await safeLoadPdfDocument(initialBytes);
-          const cleanDoc = await PDFLib.PDFDocument.create();
-          const pages = await cleanDoc.copyPages(srcDoc, srcDoc.getPageIndices());
-          pages.forEach(p => cleanDoc.addPage(p));
-
-          // Strip heavy orphaned metadata
-          cleanDoc.setTitle('');
-          cleanDoc.setAuthor('');
-          cleanDoc.setSubject('');
-          cleanDoc.setKeywords([]);
-          cleanDoc.setProducer('Docenti');
-          cleanDoc.setCreator('Docenti');
-
-          const structBytes = await cleanDoc.save({ useObjectStreams: true, addDefaultPage: false });
-          if (structBytes && structBytes.length < bestSize) {
-            bestBytes = structBytes;
-            bestSize = structBytes.length;
-          }
-        } catch (eStruct) {
-          console.warn('Structural optimization error:', eStruct);
-        }
-
-        // Step B: For scanned pages or image-heavy PDFs (DO NOT rasterize digital text PDFs unless extreme mode on huge files)
-        if (fallbackLevel !== 'lossless' && (!hasDigitalText || !keepText || (fallbackLevel === 'extreme' && initialSize > 2.5 * 1024 * 1024))) {
-          try {
-            showStatus('Mengompresi elemen gambar halaman scan...');
-            const quality = fallbackLevel === 'extreme' ? 0.5 : 0.7;
-            const scale = fallbackLevel === 'extreme' ? 1.5 : 1.95;
-
-            const rasterPdf = await PDFLib.PDFDocument.create();
-            for (let i = 1; i <= numPages; i++) {
-              const page = await currentWorkingPdfDoc.getPage(i);
-              const vp = page.getViewport({ scale: scale });
-
-              const canvas = document.createElement('canvas');
-              canvas.width = vp.width;
-              canvas.height = vp.height;
-              const ctx = canvas.getContext('2d');
-              await page.render({ canvasContext: ctx, viewport: vp }).promise;
-
-              const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
-              const jpegBytes = await fetch(jpegDataUrl).then(r => r.arrayBuffer());
-              const embeddedJpg = await rasterPdf.embedJpg(jpegBytes);
-
-              const newPage = rasterPdf.addPage([page.view[2] - page.view[0], page.view[3] - page.view[1]]);
-              newPage.drawImage(embeddedJpg, {
-                x: 0,
-                y: 0,
-                width: newPage.getWidth(),
-                height: newPage.getHeight()
-              });
-            }
-
-            const rasterBytes = await rasterPdf.save({ useObjectStreams: true });
-            // Strict check: Only accept rasterization if it is ACTUALLY smaller than the current best!
-            if (rasterBytes && rasterBytes.length < bestSize) {
-              bestBytes = rasterBytes;
-              bestSize = rasterBytes.length;
-            }
-          } catch (eRaster) {
-            console.warn('Raster optimization error:', eRaster);
-          }
-        }
-
-        showCompressResult(initialSize, bestSize, 'mode browser');
-
-        triggerDownload(new Blob([bestBytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
+        const useServer = serverResult.bytes.length < initialSize;
+        const outBytes = useServer ? serverResult.bytes : initialBytes;
+        showCompressResult(initialSize, outBytes.length, useServer ? COMPRESS_METHOD_LABELS[serverResult.method] : '');
+        triggerDownload(new Blob([outBytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
 
       } catch (err) {
         showStatus('Gagal mengompres PDF: ' + err.message, 'error');
