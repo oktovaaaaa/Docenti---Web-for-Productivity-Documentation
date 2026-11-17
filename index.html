@@ -753,6 +753,7 @@
           <input type="checkbox" id="compressKeepText" checked class="mt-0.5 text-blue-600">
           <span><strong>Pertahankan teks digital</strong> — halaman berteks tidak diubah jadi gambar, sehingga teks tetap tajam &amp; bisa dicari/di-copy. Matikan untuk kompresi maksimal.</span>
         </label>
+        <p class="text-[11px] text-slate-400">Maksimal 100 MB. Berkas besar dikompres langsung di browser Anda (tidak diunggah); pemakaian pertama mengunduh engine ±28 MB.</p>
         <div id="compressResultBox" class="hidden p-4 rounded-2xl text-xs space-y-1">
           <p id="compressResultTitle" class="font-bold text-sm"></p>
           <p id="compressResultDetails"></p>
@@ -4810,15 +4811,30 @@
       asli: 'berkas asli dipertahankan'
     };
 
-    // Engine kompres server (port SafePDF, PyMuPDF). Melempar error jika server tidak tersedia.
+    // Engine kompres SafePDF (pdf_compress.py) dijalankan di dua tempat:
+    //  - Server (Flask lokal / Vercel): cepat, tapi Vercel menolak request > ~4,5 MB.
+    //  - Browser (compress-worker.js, PyMuPDF WebAssembly): tanpa upload, sampai 100 MB.
+    const COMPRESS_MAX_BYTES = 100 * 1024 * 1024;
+    const COMPRESS_ONLINE_SERVER_MAX_BYTES = 4.3 * 1024 * 1024;
+
+    function isLocalDocentiHost() {
+      const h = window.location.hostname;
+      return h === 'localhost' || h === '127.0.0.1' || h === '';
+    }
+
+    // Kompres lewat server. Melempar error jika server tidak tersedia / menolak.
     async function compressPdfViaServer(bytes, level, keepText) {
       const endpoints = [];
-      if (window.location.protocol.startsWith('http')) endpoints.push(window.location.origin + '/api/compress');
-      endpoints.push('http://127.0.0.1:5000/api/compress');
-      endpoints.push('http://localhost:5000/api/compress');
+      if (window.location.protocol.startsWith('http')) {
+        endpoints.push(window.location.origin + '/api/compress');
+      } else {
+        // Dibuka langsung dari file (file://): coba server lokal Docenti
+        endpoints.push('http://127.0.0.1:5000/api/compress');
+        endpoints.push('http://localhost:5000/api/compress');
+      }
 
       let lastError = 'Server kompres tidak tersedia. Jalankan Docenti lewat jalankan_docenti.bat lalu coba lagi.';
-      for (const ep of [...new Set(endpoints)]) {
+      for (const ep of endpoints) {
         try {
           const fd = new FormData();
           fd.append('file', new Blob([bytes], { type: 'application/pdf' }), 'dokumen.pdf');
@@ -4837,9 +4853,7 @@
               return { bytes: out, method: res.headers.get('X-Compress-Method') || '' };
             }
           }
-          if (res.status === 413) {
-            lastError = 'Ukuran berkas terlalu besar untuk server online. Jalankan Docenti lewat jalankan_docenti.bat untuk berkas besar.';
-          } else if (!res.ok) {
+          if (!res.ok) {
             try { lastError = (await res.json()).error || lastError; } catch (e) { /* abaikan */ }
           }
         } catch (e) {
@@ -4847,6 +4861,48 @@
         }
       }
       throw new Error(lastError);
+    }
+
+    // Kompres di browser memakai Web Worker (engine yang sama, via Pyodide).
+    let compressWorker = null;
+    let compressJobId = 0;
+    function compressPdfInBrowser(bytes, level, keepText) {
+      return new Promise((resolve, reject) => {
+        if (!compressWorker) compressWorker = new Worker('compress-worker.js');
+        const worker = compressWorker;
+        const id = ++compressJobId;
+
+        const cleanup = () => {
+          worker.removeEventListener('message', onMessage);
+          worker.removeEventListener('error', onError);
+        };
+        const onMessage = (e) => {
+          const msg = e.data || {};
+          if (msg.id !== id) return;
+          if (msg.type === 'status') {
+            showStatus(msg.stage === 'loading'
+              ? 'Menyiapkan engine kompres di browser (hanya pertama kali, ±28 MB)... Mohon tunggu.'
+              : 'Mengompres PDF di browser Anda (berkas tidak diunggah)... Mohon tunggu.');
+          } else if (msg.type === 'done') {
+            cleanup();
+            resolve({ bytes: new Uint8Array(msg.bytes), method: (msg.info && msg.info.method) || '' });
+          } else if (msg.type === 'error') {
+            cleanup();
+            reject(new Error(msg.message || 'Engine kompres di browser gagal.'));
+          }
+        };
+        const onError = () => {
+          cleanup();
+          worker.terminate();
+          if (compressWorker === worker) compressWorker = null;
+          reject(new Error('Engine kompres di browser gagal dimuat. Periksa koneksi internet lalu coba lagi.'));
+        };
+        worker.addEventListener('message', onMessage);
+        worker.addEventListener('error', onError);
+
+        const copy = bytes.slice();
+        worker.postMessage({ id, bytes: copy.buffer, quality: level, keepText }, [copy.buffer]);
+      });
     }
 
     function showCompressResult(initialSize, finalSize, note) {
@@ -4884,11 +4940,30 @@
         const initialBytes = getWorkingPdfBytesCopy();
         const initialSize = initialBytes.length || currentWorkingPdf.size;
 
-        // Engine kompres SafePDF (server)
-        const serverResult = await compressPdfViaServer(initialBytes, level, keepText);
-        const useServer = serverResult.bytes.length < initialSize;
-        const outBytes = useServer ? serverResult.bytes : initialBytes;
-        showCompressResult(initialSize, outBytes.length, useServer ? COMPRESS_METHOD_LABELS[serverResult.method] : '');
+        if (initialSize > COMPRESS_MAX_BYTES) {
+          throw new Error('Ukuran maksimal 100 MB (berkas ini ' + formatSize(initialSize) + ').');
+        }
+
+        const canUseBrowserEngine = typeof Worker !== 'undefined' && window.location.protocol.startsWith('http');
+        const useServerFirst = isLocalDocentiHost() || !canUseBrowserEngine || initialSize <= COMPRESS_ONLINE_SERVER_MAX_BYTES;
+
+        let result = null;
+        let serverError = null;
+        if (useServerFirst) {
+          try {
+            result = await compressPdfViaServer(initialBytes, level, keepText);
+          } catch (e) {
+            serverError = e;
+          }
+        }
+        if (!result) {
+          if (!canUseBrowserEngine) throw serverError || new Error('Server kompres tidak tersedia.');
+          result = await compressPdfInBrowser(initialBytes, level, keepText);
+        }
+
+        const reduced = result.bytes.length < initialSize;
+        const outBytes = reduced ? result.bytes : initialBytes;
+        showCompressResult(initialSize, outBytes.length, reduced ? COMPRESS_METHOD_LABELS[result.method] : '');
         triggerDownload(new Blob([outBytes], { type: 'application/pdf' }), document.getElementById('singleOutputFileName').value, '.pdf');
 
       } catch (err) {
