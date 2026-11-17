@@ -2046,6 +2046,8 @@
     const DOCENTI_DB_NAME = 'docenti_offline_db';
     const DOCENTI_DB_VERSION = 1;
     const DOCENTI_STORE_NAME = 'working_session';
+    // Berkas >= 20 MB tidak disimpan ke cache browser: hilang saat halaman di-refresh
+    const SESSION_PERSIST_MAX_BYTES = 20 * 1024 * 1024;
 
     function getSessionDB() {
       return new Promise((resolve, reject) => {
@@ -2075,6 +2077,11 @@
     async function saveWorkingSession() {
       try {
         if (!currentWorkingPdfBytes || currentWorkingPdfBytes.length === 0) return;
+        if (currentWorkingPdfBytes.length >= SESSION_PERSIST_MAX_BYTES) {
+          // Jangan simpan berkas besar, dan hapus sesi lama agar tidak muncul file sebelumnya
+          await clearWorkingSession();
+          return;
+        }
         const db = await getSessionDB();
         const tx = db.transaction(DOCENTI_STORE_NAME, 'readwrite');
         const store = tx.objectStore(DOCENTI_STORE_NAME);
@@ -2139,11 +2146,18 @@
         const db = await getSessionDB();
         const tx = db.transaction(DOCENTI_STORE_NAME, 'readonly');
         const store = tx.objectStore(DOCENTI_STORE_NAME);
-        return await new Promise((resolve, reject) => {
+        const record = await new Promise((resolve, reject) => {
           const req = store.get('active_session');
           req.onsuccess = () => resolve(req.result || null);
           req.onerror = () => reject(req.error);
         });
+        // Sesi berkas besar yang sempat tersimpan sebelumnya: buang, jangan dipulihkan
+        const recordSize = record && record.bytes ? (record.bytes.length || record.bytes.byteLength || 0) : 0;
+        if (record && Math.max(recordSize, record.size || 0) >= SESSION_PERSIST_MAX_BYTES) {
+          await clearWorkingSession();
+          return null;
+        }
+        return record;
       } catch (err) {
         console.warn('Gagal memulihkan sesi dokumen dari IndexedDB:', err);
         return null;
