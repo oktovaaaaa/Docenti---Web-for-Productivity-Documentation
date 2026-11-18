@@ -218,6 +218,47 @@
     .icon-btn { padding: .4rem; border-radius: 8px; color: #64748b; cursor: pointer; transition: background .15s ease, color .15s ease; }
     .icon-btn:hover { background: #f1f5f9; color: var(--ink); }
     .icon-btn:disabled { opacity: .25; cursor: default; }
+
+    /* ---------- JPG <-> PDF ---------- */
+    .seg { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .seg-opt { position: relative; }
+    .seg-opt input { position: absolute; opacity: 0; pointer-events: none; }
+    .seg-opt span {
+      display: inline-flex; align-items: center; gap: .4rem; padding: .55rem .9rem; border: 1px solid var(--line); border-radius: 12px;
+      background: #fff; font-size: .8rem; font-weight: 600; color: #475569; cursor: pointer; transition: all .15s ease;
+    }
+    .seg-opt span:hover { border-color: #93c5fd; }
+    .seg-opt input:checked + span { border-color: var(--brand); background: var(--brand-50); color: var(--brand); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .seg-opt input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: 2px; }
+    .opt-label { display: block; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: .5rem; }
+    .img-card {
+      position: relative; border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: .6rem;
+      display: flex; flex-direction: column; gap: .5rem; transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .img-card[draggable="true"] { cursor: grab; }
+    .img-card:hover { border-color: #cbd5e1; box-shadow: 0 6px 18px -12px rgba(15,23,42,.25); }
+    .img-frame { aspect-ratio: 3 / 4; background: #f8fafc; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .img-frame img, .img-frame canvas { max-width: 100%; max-height: 100%; object-fit: contain; display: block; background: #fff; box-shadow: 0 1px 3px rgba(15,23,42,.15); transition: transform .25s ease; }
+    .img-frame .thumb-loading { width: 18px; height: 18px; border: 2px solid #cbd5e1; border-top-color: #2563eb; border-radius: 50%; animation: thumbspin .8s linear infinite; }
+    .img-actions { position: absolute; top: .9rem; right: .9rem; display: flex; gap: .3rem; opacity: 0; transition: opacity .15s ease; }
+    .img-card:hover .img-actions, .img-card:focus-within .img-actions { opacity: 1; }
+    @media (hover: none) { .img-actions { opacity: 1; } }
+    .img-act {
+      width: 30px; height: 30px; border-radius: 9px; background: rgba(255,255,255,.96); border: 1px solid var(--line);
+      display: grid; place-items: center; color: #475569; cursor: pointer; box-shadow: 0 2px 6px -2px rgba(15,23,42,.2); transition: color .15s ease, border-color .15s ease;
+    }
+    .img-act svg { width: 15px; height: 15px; }
+    .img-act:hover { color: var(--brand); border-color: #93c5fd; }
+    .img-act.danger:hover { color: #dc2626; border-color: #fecaca; }
+    .page-pick { cursor: pointer; }
+    .page-pick.is-selected { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+    .page-pick:not(.is-selected) .img-frame { opacity: .55; }
+    .pick-check {
+      position: absolute; top: .9rem; left: .9rem; width: 22px; height: 22px; border-radius: 999px; border: 2px solid #cbd5e1;
+      background: #fff; display: grid; place-items: center; color: transparent; transition: all .15s ease;
+    }
+    .pick-check svg { width: 12px; height: 12px; }
+    .page-pick.is-selected .pick-check { background: var(--brand); border-color: var(--brand); color: #fff; }
     .icon-btn.danger:hover { background: #fef2f2; color: #dc2626; }
 
     .page-card { transition: transform .15s ease, box-shadow .15s ease, opacity .2s ease, border-color .2s ease; }
@@ -1298,6 +1339,149 @@
       </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- SECTION F: JPG KE PDF                       -->
+    <!-- ========================================== -->
+    <div id="jpgToPdfSection" class="card view-anim p-5 sm:p-7 space-y-6 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div class="flex items-center gap-3 flex-wrap">
+          <h2 class="font-bold text-slate-900 text-base sm:text-lg">Gambar Terpilih</h2>
+          <span id="imgCountBadge" class="bg-blue-50 text-blue-700 text-xs px-2.5 py-0.5 rounded-full font-semibold">0 gambar</span>
+          <span id="imgTotalSize" class="text-xs text-slate-400 hidden sm:inline">Total: 0 KB</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="triggerHeroFileInput()" class="btn-soft" title="Tambah gambar lainnya">
+            <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span>Tambah gambar</span>
+          </button>
+          <button onclick="openDeleteConfirmModal()" class="btn-danger-soft" title="Hapus seluruh gambar dari daftar">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <span>Hapus semua</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-2">
+        <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Seret kartu gambar untuk mengubah urutan halaman. Arahkan kursor ke gambar untuk memutar atau menghapusnya.</span>
+      </p>
+
+      <ul id="imgGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[520px] overflow-y-auto p-1 -m-1"></ul>
+
+      <div class="grid gap-5 md:grid-cols-2 bg-slate-50 border border-slate-200/70 rounded-2xl p-4 sm:p-5">
+        <div>
+          <span class="opt-label">Ukuran halaman</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="imgPageSize" value="a4" checked><span>A4</span></label>
+            <label class="seg-opt"><input type="radio" name="imgPageSize" value="letter"><span>Letter</span></label>
+            <label class="seg-opt"><input type="radio" name="imgPageSize" value="fit"><span>Sesuai gambar</span></label>
+          </div>
+        </div>
+        <div>
+          <span class="opt-label">Orientasi</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="imgOrientation" value="auto" checked><span>Otomatis</span></label>
+            <label class="seg-opt"><input type="radio" name="imgOrientation" value="portrait"><span>Potret</span></label>
+            <label class="seg-opt"><input type="radio" name="imgOrientation" value="landscape"><span>Lanskap</span></label>
+          </div>
+        </div>
+        <div>
+          <span class="opt-label">Margin</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="imgMargin" value="none"><span>Tanpa</span></label>
+            <label class="seg-opt"><input type="radio" name="imgMargin" value="small" checked><span>Kecil</span></label>
+            <label class="seg-opt"><input type="radio" name="imgMargin" value="large"><span>Besar</span></label>
+          </div>
+        </div>
+        <div>
+          <span class="opt-label">Hasil</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="imgOutputMode" value="merge" checked><span>Satu PDF</span></label>
+            <label class="seg-opt"><input type="radio" name="imgOutputMode" value="separate"><span>PDF per gambar (ZIP)</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex-1 max-w-sm w-full">
+          <label for="imgOutputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama file hasil</label>
+          <input type="text" id="imgOutputFileName" value="hasil_gambar.pdf" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
+        </div>
+        <button id="jpgToPdfBtn" onclick="convertImagesToPdf()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 btn-primary">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span id="jpgToPdfBtnText">Konversi ke PDF & Unduh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION G: PDF KE JPG                       -->
+    <!-- ========================================== -->
+    <div id="pdfToJpgSection" class="card view-anim p-5 sm:p-7 space-y-6 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div class="min-w-0">
+          <h2 id="p2jDocTitle" class="font-bold text-slate-900 text-base sm:text-lg truncate max-w-md">Dokumen PDF</h2>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span id="p2jDocSize" class="text-xs text-slate-400 font-medium">0 KB</span>
+            <span id="p2jBadgeTotal" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">0 halaman</span>
+            <span id="p2jBadgeSelected" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">0 dipilih</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="triggerHeroFileInput()" class="btn-soft" title="Pilih berkas PDF lain untuk dikerjakan">
+            <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            <span>Pilih PDF Lain</span>
+          </button>
+          <button onclick="openDeleteConfirmModal()" class="btn-danger-soft" title="Hapus berkas ini dan bersihkan memori penyimpanan browser">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <span>Hapus PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <p class="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-2">
+          <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Klik halaman untuk memilih atau membatalkan. Halaman yang dipilih akan diubah menjadi gambar.</span>
+        </p>
+        <div class="flex items-center gap-2 shrink-0">
+          <button type="button" onclick="setAllPdfJpgPages(true)" class="btn-soft" style="padding:.5rem .85rem">Pilih semua</button>
+          <button type="button" onclick="setAllPdfJpgPages(false)" class="btn-soft" style="padding:.5rem .85rem">Kosongkan</button>
+        </div>
+      </div>
+
+      <ul id="p2jGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[520px] overflow-y-auto p-1 -m-1"></ul>
+
+      <div class="grid gap-5 md:grid-cols-2 bg-slate-50 border border-slate-200/70 rounded-2xl p-4 sm:p-5">
+        <div>
+          <span class="opt-label">Format gambar</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="p2jFormat" value="jpg" checked><span>JPG</span></label>
+            <label class="seg-opt"><input type="radio" name="p2jFormat" value="png"><span>PNG</span></label>
+          </div>
+        </div>
+        <div>
+          <span class="opt-label">Kualitas (resolusi)</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="p2jDpi" value="96"><span>Normal &middot; 96 DPI</span></label>
+            <label class="seg-opt"><input type="radio" name="p2jDpi" value="150" checked><span>Tinggi &middot; 150 DPI</span></label>
+            <label class="seg-opt"><input type="radio" name="p2jDpi" value="300"><span>Cetak &middot; 300 DPI</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex-1 max-w-sm w-full">
+          <label for="p2jOutputName" class="block text-xs font-semibold text-slate-500 mb-1">Nama dasar file hasil</label>
+          <input type="text" id="p2jOutputName" value="halaman" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
+        </div>
+        <button id="pdfToJpgBtn" onclick="convertPdfToImages()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 btn-primary">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span id="pdfToJpgBtnText">Konversi ke Gambar & Unduh</span>
+        </button>
+      </div>
+    </div>
+
   </main>
 
   <!-- Footer -->
@@ -1358,6 +1542,22 @@
         accept: '.pdf,application/pdf',
         multiple: true,
         type: 'multi_pdf'
+      },
+      jpg_to_pdf: {
+        title: 'JPG ke PDF',
+        subtitle: 'Ubah foto dan gambar (JPG, PNG, WEBP) menjadi satu dokumen PDF rapi dengan ukuran halaman dan margin pilihan.',
+        btnLabel: 'Pilih gambar',
+        accept: '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp',
+        multiple: true,
+        type: 'multi_image'
+      },
+      pdf_to_jpg: {
+        title: 'PDF ke JPG',
+        subtitle: 'Ubah setiap halaman PDF menjadi gambar JPG atau PNG berkualitas tinggi, langsung di perangkat Anda.',
+        btnLabel: 'Pilih file PDF',
+        accept: '.pdf,application/pdf',
+        multiple: false,
+        type: 'single_pdf'
       },
       word_merge: {
         title: 'Gabungkan Dokumen Word',
@@ -1460,12 +1660,16 @@
       lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
       unlock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
       wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
-      check: '<polyline points="20 6 9 17 4 12"/>'
+      check: '<polyline points="20 6 9 17 4 12"/>',
+      image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+      fileImage: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="10" cy="12" r="1.5"/><path d="m20 17-3.1-3.1a2 2 0 0 0-2.8 0L8 20"/>',
+      download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+      x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
     };
     const svgIcon = (name, cls = '', sw = 2) => '<svg class="' + cls + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round">' + ICONS[name] + '</svg>';
 
     const TOOL_GROUPS = [
-      { id: 'convert', label: 'Konversi', bg: '#eff6ff', fg: '#2563eb', tools: ['pdf_to_word', 'word_merge'] },
+      { id: 'convert', label: 'Konversi', bg: '#eff6ff', fg: '#2563eb', tools: ['pdf_to_word', 'jpg_to_pdf', 'pdf_to_jpg', 'word_merge'] },
       { id: 'pages', label: 'Atur halaman', bg: '#f5f3ff', fg: '#7c3aed', tools: ['pdf_merge', 'pdf_split', 'pdf_organize', 'pdf_rotate'] },
       { id: 'edit', label: 'Edit & tandai', bg: '#ecfeff', fg: '#0891b2', tools: ['pdf_edit', 'pdf_page_number', 'pdf_watermark', 'pdf_esign'] },
       { id: 'secure', label: 'Keamanan', bg: '#fffbeb', fg: '#d97706', tools: ['pdf_protect', 'pdf_unlock'] },
@@ -1473,6 +1677,8 @@
     ];
     const TOOL_META = {
       pdf_to_word:     { name: 'PDF ke Word', desc: 'Ubah PDF jadi dokumen .docx yang bisa diedit', icon: 'doc', img: 'assets/icons/pdf2word.png' },
+      jpg_to_pdf:      { name: 'JPG ke PDF', desc: 'Ubah foto & gambar jadi satu dokumen PDF', icon: 'image' },
+      pdf_to_jpg:      { name: 'PDF ke JPG', desc: 'Ubah tiap halaman PDF jadi gambar JPG/PNG', icon: 'fileImage' },
       word_merge:      { name: 'Gabungkan Word', desc: 'Satukan beberapa file .docx jadi satu', icon: 'docPlus' },
       pdf_merge:       { name: 'Gabungkan PDF', desc: 'Satukan banyak PDF, atur urutan dengan seret', icon: 'merge', img: 'assets/icons/merge.png' },
       pdf_split:       { name: 'Pisahkan PDF', desc: 'Ambil halaman tertentu atau pecah per N halaman', icon: 'split', img: 'assets/icons/split.png' },
@@ -1640,6 +1846,7 @@
     let pdfFiles = [];
     let wordFiles = [];
     let convertPdfFiles = [];
+    let imageFiles = []; // JPG ke PDF: { id, file, url, rotation }
 
     // Current working single PDF file
     let currentWorkingPdf = null;
@@ -1706,7 +1913,7 @@
 
       const isHttpProcessed = toolId === 'pdf_to_word';
       document.getElementById('heroPrivacy').textContent = isHttpProcessed ? 'Gratis \u00b7 Tanpa daftar' : 'Gratis \u00b7 Diproses di perangkat Anda';
-      const fmt = tool.type === 'multi_word' ? 'Format: Word (.docx)' : 'Format: PDF';
+      const fmt = tool.type === 'multi_word' ? 'Format: Word (.docx)' : (tool.type === 'multi_image' ? 'Format: JPG, PNG, WEBP' : 'Format: PDF');
       document.getElementById('heroFormatHint').textContent = fmt + (tool.multiple ? ' \u00b7 bisa pilih lebih dari satu file' : '');
       document.getElementById('dropOverlayHint').textContent = tool.multiple ? 'File akan langsung ditambahkan ke daftar' : 'File akan langsung dibuka';
 
@@ -1714,7 +1921,8 @@
       const hasFiles = (tool.type === 'multi_pdf' && currentMode === 'pdf_merge' && pdfFiles.length > 0) ||
                        (tool.type === 'multi_word' && wordFiles.length > 0) ||
                        (tool.type === 'multi_pdf' && currentMode === 'pdf_to_word' && convertPdfFiles.length > 0) ||
-                       (tool.type !== 'multi_pdf' && tool.type !== 'multi_word' && currentWorkingPdf !== null);
+                       (tool.type === 'multi_image' && imageFiles.length > 0) ||
+                       (tool.type !== 'multi_pdf' && tool.type !== 'multi_word' && tool.type !== 'multi_image' && currentWorkingPdf !== null);
 
       if (!hasFiles) {
         showHeroStage();
@@ -1744,6 +1952,8 @@
       document.getElementById('editPdfSection').classList.add('hidden');
       document.getElementById('singlePdfActionSection').classList.add('hidden');
       document.getElementById('esignSection').classList.add('hidden');
+      document.getElementById('jpgToPdfSection').classList.add('hidden');
+      document.getElementById('pdfToJpgSection').classList.add('hidden');
       syncToolChrome(false);
       renderSteppers();
     }
@@ -1755,11 +1965,21 @@
       document.getElementById('editPdfSection').classList.add('hidden');
       document.getElementById('singlePdfActionSection').classList.add('hidden');
       document.getElementById('esignSection').classList.add('hidden');
+      document.getElementById('jpgToPdfSection').classList.add('hidden');
+      document.getElementById('pdfToJpgSection').classList.add('hidden');
 
       const tool = TOOLS[currentMode];
       syncToolChrome(true);
 
-      if (tool.type === 'multi_pdf' || tool.type === 'multi_word') {
+      if (tool.type === 'multi_image') {
+        document.getElementById('jpgToPdfSection').classList.remove('hidden');
+        renderImageGrid();
+
+      } else if (currentMode === 'pdf_to_jpg') {
+        document.getElementById('pdfToJpgSection').classList.remove('hidden');
+        if (currentWorkingPdf) initPdfToJpgSection();
+
+      } else if (tool.type === 'multi_pdf' || tool.type === 'multi_word') {
         document.getElementById('fileListCard').classList.remove('hidden');
         document.getElementById('mergeActionContainer').classList.toggle('hidden', currentMode === 'pdf_to_word');
         document.getElementById('convertActionContainer').classList.toggle('hidden', currentMode !== 'pdf_to_word');
@@ -1925,6 +2145,7 @@
       pdfFiles = [];
       wordFiles = [];
       convertPdfFiles = [];
+      clearImageFiles();
       showHeroStage();
       showStatus('Dokumen dan memori penyimpanan sesi berhasil dihapus!', 'success');
     }
@@ -2005,6 +2226,18 @@
           return;
         }
         wordFiles.push(...docxList);
+        renderActiveToolWorkspace();
+
+      } else if (tool.type === 'multi_image') {
+        const imgs = files.filter(isSupportedImageFile);
+        if (imgs.length === 0) {
+          showStatus('Silakan pilih berkas gambar JPG, PNG, atau WEBP', 'error');
+          return;
+        }
+        addImageFiles(imgs);
+        if (imgs.length < files.length) {
+          showStatus((files.length - imgs.length) + ' berkas dilewati karena bukan gambar JPG/PNG/WEBP', 'error');
+        }
         renderActiveToolWorkspace();
 
       } else if (tool.type === 'multi_pdf') {
@@ -2171,6 +2404,8 @@
       try {
         const rawBuf = await file.arrayBuffer();
         currentWorkingPdfBytes = new Uint8Array(rawBuf);
+        // Thumbnail cache dikunci per nomor halaman: kosongkan saat berganti dokumen
+        if (typeof pageThumbCache !== 'undefined') pageThumbCache.clear();
 
         // Try loading with PDF.js for visual rendering
         try {
@@ -6568,6 +6803,386 @@
     }
 
     // ==========================================
+    // 9b. KONVERSI GAMBAR: JPG KE PDF & PDF KE JPG
+    // ==========================================
+    const IMG_PAGE_SIZES = { a4: [595.28, 841.89], letter: [612, 792] };
+    const IMG_MARGINS = { none: 0, small: 20, large: 42 };
+    const PDF_MAX_PAGE_PT = 14400; // batas ukuran halaman PDF
+    let imageIdSeq = 0;
+
+    function radioValue(name, fallback) {
+      const el = document.querySelector('input[name="' + name + '"]:checked');
+      return el ? el.value : fallback;
+    }
+    function canvasToBlobAsync(canvas, mime, quality) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('Gagal membuat gambar dari kanvas')), mime, quality);
+      });
+    }
+    function loadImageElement(url) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Gambar tidak dapat dibaca'));
+        img.src = url;
+      });
+    }
+    function stripExt(name) { return String(name || '').replace(/\.[^.]+$/, ''); }
+
+    function isSupportedImageFile(f) {
+      return /^image\/(jpeg|png|webp)$/i.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name);
+    }
+    function addImageFiles(files) {
+      files.forEach(file => {
+        imageFiles.push({ id: ++imageIdSeq, file, url: URL.createObjectURL(file), rotation: 0 });
+      });
+      if (imageFiles.length && imageFiles.length === files.length) {
+        document.getElementById('imgOutputFileName').value = stripExt(files[0].name) + '.pdf';
+      }
+    }
+    function clearImageFiles() {
+      imageFiles.forEach(it => URL.revokeObjectURL(it.url));
+      imageFiles = [];
+    }
+    function removeImageItem(idx) {
+      const [it] = imageFiles.splice(idx, 1);
+      if (it) URL.revokeObjectURL(it.url);
+      if (imageFiles.length === 0) { showHeroStage(); return; }
+      renderImageGrid();
+    }
+    function rotateImageItem(idx) {
+      const it = imageFiles[idx];
+      if (!it) return;
+      it.rotation = (it.rotation + 90) % 360;
+      const img = document.querySelector('#imgGrid [data-sort-index="' + idx + '"] img');
+      if (img) applyImagePreviewRotation(img, it.rotation);
+    }
+    // Putar pratinjau dan perkecil agar gambar yang diputar 90/270 tetap muat di bingkai
+    function applyImagePreviewRotation(img, rot) {
+      let scale = 1;
+      const frame = img.parentElement;
+      if (rot % 180 && img.naturalWidth && frame && frame.clientWidth) {
+        const W = frame.clientWidth, H = frame.clientHeight;
+        const s0 = Math.min(1, W / img.naturalWidth, H / img.naturalHeight); // ukuran tampil (tanpa diperbesar)
+        const dw = img.naturalWidth * s0, dh = img.naturalHeight * s0;
+        scale = Math.min(1, W / dh, H / dw); // setelah diputar, lebar <-> tinggi bertukar
+      }
+      img.style.transform = 'rotate(' + rot + 'deg) scale(' + scale.toFixed(3) + ')';
+    }
+
+    function renderImageGrid() {
+      const grid = document.getElementById('imgGrid');
+      if (!grid) return;
+      const total = imageFiles.reduce((s, it) => s + it.file.size, 0);
+      document.getElementById('imgCountBadge').textContent = imageFiles.length + ' gambar';
+      document.getElementById('imgTotalSize').textContent = 'Total: ' + formatSize(total);
+      document.getElementById('jpgToPdfBtn').disabled = imageFiles.length === 0;
+
+      grid.innerHTML = imageFiles.map((it, i) => {
+        const name = escapeHtml(it.file.name);
+        return '<li class="img-card sortable-item" draggable="true" data-sort-index="' + i + '">' +
+          '<div class="img-frame"><img src="' + it.url + '" alt="' + name + '" draggable="false" data-rot="' + it.rotation + '" onload="applyImagePreviewRotation(this, Number(this.dataset.rot))"></div>' +
+          '<div class="flex items-center gap-2 min-w-0"><span class="order-chip">' + (i + 1) + '</span>' +
+          '<span class="min-w-0"><span class="block text-xs font-semibold text-slate-700 truncate" title="' + name + '">' + name + '</span>' +
+          '<span class="block text-[11px] text-slate-400">' + formatSize(it.file.size) + '</span></span></div>' +
+          '<div class="img-actions">' +
+            '<button type="button" class="img-act" title="Putar 90°" aria-label="Putar gambar" onclick="rotateImageItem(' + i + ')">' + svgIcon('rotate') + '</button>' +
+            '<button type="button" class="img-act danger" title="Hapus gambar" aria-label="Hapus gambar" onclick="removeImageItem(' + i + ')">' + svgIcon('x', '', 2.5) + '</button>' +
+          '</div></li>';
+      }).join('');
+
+      enableSortable(grid, {
+        item: '.img-card',
+        onReorder: (order) => { applyOrder(imageFiles, order); renderImageGrid(); },
+        onCancel: () => renderImageGrid()
+      });
+    }
+
+    // Membaca tag orientasi EXIF dari JPEG (1 = normal)
+    function getJpegOrientation(bytes) {
+      try {
+        const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        if (v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return 1;
+        let off = 2;
+        while (off + 4 <= v.byteLength) {
+          const marker = v.getUint16(off);
+          if ((marker & 0xFF00) !== 0xFF00 || marker === 0xFFDA) break;
+          const len = v.getUint16(off + 2);
+          if (marker === 0xFFE1 && off + 10 <= v.byteLength && v.getUint32(off + 4) === 0x45786966) {
+            const t = off + 10;
+            const little = v.getUint16(t) === 0x4949;
+            const ifd = t + v.getUint32(t + 4, little);
+            if (ifd + 2 > v.byteLength) return 1;
+            const n = v.getUint16(ifd, little);
+            for (let i = 0; i < n; i++) {
+              const e = ifd + 2 + i * 12;
+              if (e + 12 > v.byteLength) break;
+              if (v.getUint16(e, little) === 0x0112) return v.getUint16(e + 8, little) || 1;
+            }
+            return 1;
+          }
+          off += 2 + len;
+        }
+      } catch (_) {}
+      return 1;
+    }
+
+    // Sisipkan gambar ke PDF: JPEG/PNG asli dipakai langsung (tanpa penurunan kualitas),
+    // selain itu (WEBP, diputar, atau EXIF berotasi) digambar ulang lewat kanvas.
+    async function embedImageItem(pdfDoc, it) {
+      const bytes = new Uint8Array(await it.file.arrayBuffer());
+      const isJpg = bytes[0] === 0xFF && bytes[1] === 0xD8;
+      const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47;
+      if (it.rotation === 0) {
+        if (isJpg && getJpegOrientation(bytes) === 1) { try { return await pdfDoc.embedJpg(bytes); } catch (_) {} }
+        if (isPng) { try { return await pdfDoc.embedPng(bytes); } catch (_) {} }
+      }
+      const img = await loadImageElement(it.url); // browser sudah menerapkan orientasi EXIF
+      const w = img.naturalWidth, h = img.naturalHeight;
+      const swap = it.rotation % 180 !== 0;
+      const canvas = document.createElement('canvas');
+      canvas.width = swap ? h : w;
+      canvas.height = swap ? w : h;
+      const ctx = canvas.getContext('2d');
+      if (!isPng) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(it.rotation * Math.PI / 180);
+      ctx.drawImage(img, -w / 2, -h / 2);
+      const blob = await canvasToBlobAsync(canvas, isPng ? 'image/png' : 'image/jpeg', 0.92);
+      canvas.width = canvas.height = 0;
+      const out = new Uint8Array(await blob.arrayBuffer());
+      return isPng ? await pdfDoc.embedPng(out) : await pdfDoc.embedJpg(out);
+    }
+
+    function addImagePage(pdfDoc, embedded, opts) {
+      const iw = embedded.width, ih = embedded.height;
+      const m = IMG_MARGINS[opts.margin] || 0;
+      let pw, ph, dw, dh;
+      if (opts.size === 'fit') {
+        // 96 DPI -> point, dibatasi ukuran maksimal halaman PDF
+        const s = Math.min(0.75, (PDF_MAX_PAGE_PT - 2 * m) / iw, (PDF_MAX_PAGE_PT - 2 * m) / ih);
+        dw = iw * s; dh = ih * s;
+        pw = dw + 2 * m; ph = dh + 2 * m;
+      } else {
+        [pw, ph] = IMG_PAGE_SIZES[opts.size] || IMG_PAGE_SIZES.a4;
+        const landscape = opts.orientation === 'landscape' || (opts.orientation === 'auto' && iw > ih);
+        if (landscape) [pw, ph] = [ph, pw];
+        const s = Math.min((pw - 2 * m) / iw, (ph - 2 * m) / ih);
+        dw = iw * s; dh = ih * s;
+      }
+      const page = pdfDoc.addPage([pw, ph]);
+      page.drawImage(embedded, { x: (pw - dw) / 2, y: (ph - dh) / 2, width: dw, height: dh });
+    }
+
+    async function convertImagesToPdf() {
+      if (imageFiles.length === 0) { showStatus('Tambahkan minimal 1 gambar terlebih dahulu', 'error'); return; }
+      const btn = document.getElementById('jpgToPdfBtn');
+      const btnText = document.getElementById('jpgToPdfBtnText');
+      const opts = {
+        size: radioValue('imgPageSize', 'a4'),
+        orientation: radioValue('imgOrientation', 'auto'),
+        margin: radioValue('imgMargin', 'small')
+      };
+      const separate = radioValue('imgOutputMode', 'merge') === 'separate' && imageFiles.length > 1;
+      const outName = (document.getElementById('imgOutputFileName').value || 'hasil_gambar.pdf').trim();
+      btn.disabled = true;
+      btnText.textContent = 'Memproses...';
+      try {
+        if (separate) {
+          const zip = new JSZip();
+          const used = new Set();
+          for (let i = 0; i < imageFiles.length; i++) {
+            showStatus('Mengonversi gambar ' + (i + 1) + ' dari ' + imageFiles.length + '...');
+            const doc = await PDFLib.PDFDocument.create();
+            addImagePage(doc, await embedImageItem(doc, imageFiles[i]), opts);
+            let base = stripExt(imageFiles[i].file.name) || ('gambar_' + (i + 1));
+            let name = base + '.pdf', n = 2;
+            while (used.has(name)) name = base + '_' + (n++) + '.pdf';
+            used.add(name);
+            zip.file(name, await doc.save());
+          }
+          showStatus('Menyiapkan berkas ZIP...');
+          const blob = await zip.generateAsync({ type: 'blob' });
+          triggerDownload(blob, stripExt(outName) + '.zip', '.zip');
+          showStatus(imageFiles.length + ' gambar berhasil diubah menjadi PDF terpisah (ZIP)!', 'success');
+        } else {
+          const doc = await PDFLib.PDFDocument.create();
+          for (let i = 0; i < imageFiles.length; i++) {
+            showStatus('Menyisipkan gambar ' + (i + 1) + ' dari ' + imageFiles.length + '...');
+            addImagePage(doc, await embedImageItem(doc, imageFiles[i]), opts);
+          }
+          showStatus('Menyimpan dokumen PDF...');
+          const bytes = await doc.save();
+          triggerDownload(new Blob([bytes], { type: 'application/pdf' }), outName, '.pdf');
+          showStatus(imageFiles.length + ' gambar berhasil diubah menjadi PDF!', 'success');
+        }
+      } catch (err) {
+        console.error(err);
+        showStatus('Gagal mengonversi gambar: ' + (err.message || 'Periksa kembali berkas gambar'), 'error');
+      } finally {
+        btn.disabled = imageFiles.length === 0;
+        btnText.textContent = 'Konversi ke PDF & Unduh';
+      }
+    }
+
+    // ---------- PDF KE JPG ----------
+    let p2jSelected = new Set();
+    let p2jDocRef = null;
+    let p2jObserver = null;
+
+    function initPdfToJpgSection() {
+      const doc = currentWorkingPdfDoc;
+      document.getElementById('p2jDocTitle').textContent = currentWorkingPdf.name;
+      document.getElementById('p2jDocSize').textContent = formatSize(currentWorkingPdf.size);
+      if (!doc) return;
+      document.getElementById('p2jBadgeTotal').textContent = doc.numPages + ' halaman';
+      if (p2jDocRef !== doc) {
+        p2jDocRef = doc;
+        p2jSelected = new Set(Array.from({ length: doc.numPages }, (_, i) => i));
+        document.getElementById('p2jOutputName').value = stripExt(currentWorkingPdf.name) || 'halaman';
+        renderPdfToJpgGrid();
+      }
+      updatePdfToJpgSelectionUI();
+    }
+
+    function renderPdfToJpgGrid() {
+      const grid = document.getElementById('p2jGrid');
+      const doc = currentWorkingPdfDoc;
+      if (p2jObserver) p2jObserver.disconnect();
+      if (!doc) { grid.innerHTML = ''; return; }
+      let html = '';
+      for (let i = 0; i < doc.numPages; i++) {
+        html += '<li class="img-card page-pick" data-page="' + i + '" role="checkbox" tabindex="0" aria-checked="true" onclick="togglePdfJpgPage(' + i + ')" onkeydown="if(event.key===\' \'||event.key===\'Enter\'){event.preventDefault();togglePdfJpgPage(' + i + ');}">' +
+          '<span class="pick-check">' + svgIcon('check', '', 3.5) + '</span>' +
+          '<div class="img-frame"><span class="thumb-loading"></span></div>' +
+          '<div class="flex items-center justify-between gap-2"><span class="text-xs font-semibold text-slate-700">Halaman ' + (i + 1) + '</span></div>' +
+          '<div class="img-actions">' +
+            '<button type="button" class="img-act" title="Unduh halaman ini saja" aria-label="Unduh halaman ' + (i + 1) + '" onclick="event.stopPropagation();downloadSinglePdfJpgPage(' + i + ')">' + svgIcon('download') + '</button>' +
+          '</div></li>';
+      }
+      grid.innerHTML = html;
+
+      // Render thumbnail secara malas (hanya yang terlihat) agar PDF besar tetap ringan
+      p2jObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const li = entry.target;
+          p2jObserver.unobserve(li);
+          const frame = li.querySelector('.img-frame');
+          const canvas = document.createElement('canvas');
+          renderThumb(Number(li.dataset.page), canvas).then(() => {
+            if (doc !== currentWorkingPdfDoc || !canvas.width) return;
+            frame.innerHTML = '';
+            frame.appendChild(canvas);
+          });
+        });
+      }, { root: grid, rootMargin: '200px' });
+      grid.querySelectorAll('.page-pick').forEach(li => p2jObserver.observe(li));
+    }
+
+    function updatePdfToJpgSelectionUI() {
+      document.querySelectorAll('#p2jGrid .page-pick').forEach(li => {
+        const on = p2jSelected.has(Number(li.dataset.page));
+        li.classList.toggle('is-selected', on);
+        li.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+      const n = p2jSelected.size;
+      document.getElementById('p2jBadgeSelected').textContent = n + ' dipilih';
+      document.getElementById('pdfToJpgBtn').disabled = n === 0;
+    }
+    function togglePdfJpgPage(i) {
+      if (p2jSelected.has(i)) p2jSelected.delete(i); else p2jSelected.add(i);
+      updatePdfToJpgSelectionUI();
+    }
+    function setAllPdfJpgPages(on) {
+      const total = currentWorkingPdfDoc ? currentWorkingPdfDoc.numPages : 0;
+      p2jSelected = new Set(on ? Array.from({ length: total }, (_, i) => i) : []);
+      updatePdfToJpgSelectionUI();
+    }
+
+    async function renderPdfPageToImageBlob(pageIndex, dpi, format) {
+      const page = await currentWorkingPdfDoc.getPage(pageIndex + 1);
+      let scale = dpi / 72;
+      let vp = page.getViewport({ scale });
+      const MAX_PIXELS = 30e6; // batas aman kanvas browser
+      if (vp.width * vp.height > MAX_PIXELS) {
+        scale *= Math.sqrt(MAX_PIXELS / (vp.width * vp.height));
+        vp = page.getViewport({ scale });
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.floor(vp.width);
+      canvas.height = Math.floor(vp.height);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      const blob = await canvasToBlobAsync(canvas, format === 'png' ? 'image/png' : 'image/jpeg', 0.92);
+      canvas.width = canvas.height = 0;
+      if (page.cleanup) page.cleanup();
+      return blob;
+    }
+
+    function pdfJpgFileName(base, pageIndex, total, ext) {
+      const pad = String(total).length;
+      return base + '_' + String(pageIndex + 1).padStart(pad, '0') + ext;
+    }
+
+    async function downloadSinglePdfJpgPage(pageIndex) {
+      if (!currentWorkingPdfDoc) return;
+      const format = radioValue('p2jFormat', 'jpg');
+      const ext = format === 'png' ? '.png' : '.jpg';
+      const base = (document.getElementById('p2jOutputName').value || 'halaman').trim();
+      try {
+        showStatus('Mengonversi halaman ' + (pageIndex + 1) + '...');
+        const blob = await renderPdfPageToImageBlob(pageIndex, Number(radioValue('p2jDpi', '150')), format);
+        triggerDownload(blob, pdfJpgFileName(base, pageIndex, currentWorkingPdfDoc.numPages, ext), ext);
+        showStatus('Halaman ' + (pageIndex + 1) + ' berhasil diunduh sebagai ' + ext.slice(1).toUpperCase() + '!', 'success');
+      } catch (err) {
+        console.error(err);
+        showStatus('Gagal mengonversi halaman: ' + (err.message || 'Kesalahan tidak diketahui'), 'error');
+      }
+    }
+
+    async function convertPdfToImages() {
+      if (!currentWorkingPdfDoc) { showStatus('Pilih berkas PDF terlebih dahulu', 'error'); return; }
+      const pages = Array.from(p2jSelected).sort((a, b) => a - b);
+      if (pages.length === 0) { showStatus('Pilih minimal 1 halaman untuk dikonversi', 'error'); return; }
+      const format = radioValue('p2jFormat', 'jpg');
+      const dpi = Number(radioValue('p2jDpi', '150'));
+      const ext = format === 'png' ? '.png' : '.jpg';
+      const base = (document.getElementById('p2jOutputName').value || 'halaman').trim();
+      const total = currentWorkingPdfDoc.numPages;
+      const btn = document.getElementById('pdfToJpgBtn');
+      const btnText = document.getElementById('pdfToJpgBtnText');
+      btn.disabled = true;
+      btnText.textContent = 'Memproses...';
+      try {
+        if (pages.length === 1) {
+          showStatus('Mengonversi halaman ' + (pages[0] + 1) + '...');
+          const blob = await renderPdfPageToImageBlob(pages[0], dpi, format);
+          triggerDownload(blob, pdfJpgFileName(base, pages[0], total, ext), ext);
+        } else {
+          const zip = new JSZip();
+          for (let k = 0; k < pages.length; k++) {
+            showStatus('Mengonversi halaman ' + (k + 1) + ' dari ' + pages.length + '...');
+            const blob = await renderPdfPageToImageBlob(pages[k], dpi, format);
+            zip.file(pdfJpgFileName(base, pages[k], total, ext), blob);
+          }
+          showStatus('Menyiapkan berkas ZIP...');
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          triggerDownload(zipBlob, base + '_' + format + '.zip', '.zip');
+        }
+        showStatus(pages.length + ' halaman berhasil diubah menjadi ' + ext.slice(1).toUpperCase() + '!', 'success');
+      } catch (err) {
+        console.error(err);
+        showStatus('Gagal mengonversi PDF ke gambar: ' + (err.message || 'Kesalahan tidak diketahui'), 'error');
+      } finally {
+        btn.disabled = p2jSelected.size === 0;
+        btnText.textContent = 'Konversi ke Gambar & Unduh';
+      }
+    }
+
+    // ==========================================
     // 10. COMMON HELPERS
     // ==========================================
     function triggerDownload(blob, filename, requiredExt) {
@@ -6646,7 +7261,9 @@
             lastModified: saved.lastModified || Date.now()
           });
 
-          const targetMode = saved.mode && TOOLS[saved.mode] ? saved.mode : 'pdf_watermark';
+          let targetMode = saved.mode && TOOLS[saved.mode] ? saved.mode : 'pdf_watermark';
+          // Sesi yang tersimpan selalu berupa 1 PDF; mode JPG ke PDF tidak bisa memakainya
+          if (targetMode === 'jpg_to_pdf') targetMode = 'pdf_to_jpg';
           selectTool(targetMode);
 
           if (saved.wmSettings && targetMode === 'pdf_watermark') {
