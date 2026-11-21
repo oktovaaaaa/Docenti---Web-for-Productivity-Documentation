@@ -1551,6 +1551,42 @@
         multiple: true,
         type: 'multi_image'
       },
+      word_to_pdf: {
+        title: 'Word ke PDF',
+        subtitle: 'Ubah dokumen Microsoft Word (.docx) menjadi PDF yang rapi dan siap dibagikan, langsung di perangkat Anda.',
+        btnLabel: 'Pilih file Word',
+        accept: '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        formatHint: 'Format: Word (.docx)',
+        multiple: true,
+        type: 'multi_office'
+      },
+      ppt_to_pdf: {
+        title: 'PowerPoint ke PDF',
+        subtitle: 'Ubah presentasi PowerPoint (.pptx) menjadi PDF, satu slide per halaman, langsung di perangkat Anda.',
+        btnLabel: 'Pilih file PowerPoint',
+        accept: '.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        formatHint: 'Format: PowerPoint (.pptx)',
+        multiple: true,
+        type: 'multi_office'
+      },
+      excel_to_pdf: {
+        title: 'Excel ke PDF',
+        subtitle: 'Ubah lembar kerja Excel menjadi PDF yang muat selebar kertas, dengan pilihan ukuran halaman dan orientasi.',
+        btnLabel: 'Pilih file Excel',
+        accept: '.xlsx,.xlsm,.xls,.xlsb,.ods,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv',
+        formatHint: 'Format: Excel (.xlsx, .xls), .ods, .csv',
+        multiple: true,
+        type: 'multi_office'
+      },
+      html_to_pdf: {
+        title: 'HTML ke PDF',
+        subtitle: 'Ubah berkas HTML atau kode HTML yang Anda tempel menjadi dokumen PDF dengan ukuran kertas pilihan.',
+        btnLabel: 'Pilih file HTML',
+        accept: '.html,.htm,text/html',
+        formatHint: 'Format: HTML (.html, .htm)',
+        multiple: true,
+        type: 'multi_office'
+      },
       pdf_to_jpg: {
         title: 'PDF ke JPG',
         subtitle: 'Ubah setiap halaman PDF menjadi gambar JPG atau PNG berkualitas tinggi, langsung di perangkat Anda.',
@@ -1664,13 +1700,18 @@
       image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
       fileImage: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="10" cy="12" r="1.5"/><path d="m20 17-3.1-3.1a2 2 0 0 0-2.8 0L8 20"/>',
       download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+      word: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="7.5 12 9.25 18 12 14 14.75 18 16.5 12"/>',
+      slides: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/><path d="M10 13V7h2.5a2 2 0 0 1 0 4H10"/>',
+      sheet: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/>',
+      globe: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
       x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
     };
     const svgIcon = (name, cls = '', sw = 2) => '<svg class="' + cls + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round">' + ICONS[name] + '</svg>';
 
     const TOOL_GROUPS = [
-      { id: 'convert', label: 'Konversi', bg: '#eff6ff', fg: '#2563eb', tools: ['pdf_to_word', 'jpg_to_pdf', 'pdf_to_jpg', 'word_merge'] },
-      { id: 'pages', label: 'Atur halaman', bg: '#f5f3ff', fg: '#7c3aed', tools: ['pdf_merge', 'pdf_split', 'pdf_organize', 'pdf_rotate'] },
+      { id: 'convert', label: 'Konversi dari PDF', bg: '#eff6ff', fg: '#2563eb', tools: ['pdf_to_word', 'pdf_to_jpg'] },
+      { id: 'to_pdf', label: 'Konversi ke PDF', bg: '#eff6ff', fg: '#2563eb', tools: ['jpg_to_pdf', 'word_to_pdf', 'ppt_to_pdf', 'excel_to_pdf', 'html_to_pdf'] },
+      { id: 'pages', label: 'Gabung & atur halaman', bg: '#f5f3ff', fg: '#7c3aed', tools: ['pdf_merge', 'word_merge', 'pdf_split', 'pdf_organize', 'pdf_rotate'] },
       { id: 'edit', label: 'Edit & tandai', bg: '#ecfeff', fg: '#0891b2', tools: ['pdf_edit', 'pdf_page_number', 'pdf_watermark', 'pdf_esign'] },
       { id: 'secure', label: 'Keamanan', bg: '#fffbeb', fg: '#d97706', tools: ['pdf_protect', 'pdf_unlock'] },
       { id: 'optimize', label: 'Optimasi', bg: '#ecfdf5', fg: '#059669', tools: ['pdf_compress', 'pdf_repair'] }
@@ -1679,6 +1720,10 @@
       pdf_to_word:     { name: 'PDF ke Word', desc: 'Ubah PDF jadi dokumen .docx yang bisa diedit', icon: 'doc', img: 'assets/icons/pdf2word.png' },
       jpg_to_pdf:      { name: 'JPG ke PDF', desc: 'Ubah foto & gambar jadi satu dokumen PDF', icon: 'image' },
       pdf_to_jpg:      { name: 'PDF ke JPG', desc: 'Ubah tiap halaman PDF jadi gambar JPG/PNG', icon: 'fileImage' },
+      word_to_pdf:     { name: 'Word ke PDF', desc: 'Ubah dokumen .docx jadi PDF siap kirim', icon: 'word', bg: '#eff6ff', fg: '#2563eb' },
+      ppt_to_pdf:      { name: 'PowerPoint ke PDF', desc: 'Ubah slide presentasi .pptx jadi PDF', icon: 'slides', bg: '#fff1ec', fg: '#ea580c' },
+      excel_to_pdf:    { name: 'Excel ke PDF', desc: 'Ubah lembar kerja .xlsx atau .csv jadi PDF', icon: 'sheet', bg: '#ecfdf5', fg: '#059669' },
+      html_to_pdf:     { name: 'HTML ke PDF', desc: 'Ubah berkas atau kode HTML jadi PDF', icon: 'globe', bg: '#fffbeb', fg: '#d97706' },
       word_merge:      { name: 'Gabungkan Word', desc: 'Satukan beberapa file .docx jadi satu', icon: 'docPlus' },
       pdf_merge:       { name: 'Gabungkan PDF', desc: 'Satukan banyak PDF, atur urutan dengan seret', icon: 'merge', img: 'assets/icons/merge.png' },
       pdf_split:       { name: 'Pisahkan PDF', desc: 'Ambil halaman tertentu atau pecah per N halaman', icon: 'split', img: 'assets/icons/split.png' },
@@ -1704,7 +1749,7 @@
       if (m.img) {
         return '<span class="tool-tile' + (m.imgFull ? ' is-img-full' : '') + '" style="background:#eff6ff">' + toolIconHtml(id) + '</span>';
       }
-      return '<span class="tool-tile" style="background:' + g.bg + ';color:' + g.fg + '">' + svgIcon(m.icon) + '</span>';
+      return '<span class="tool-tile" style="background:' + (m.bg || g.bg) + ';color:' + (m.fg || g.fg) + '">' + svgIcon(m.icon) + '</span>';
     }
     function toolCardHtml(id) {
       const m = TOOL_META[id];
@@ -1761,8 +1806,8 @@
       if (inWorkspace) {
         const m = TOOL_META[currentMode], g = groupOfTool(currentMode);
         const icon = document.getElementById('wsIcon');
-        icon.style.background = m.img ? '#eff6ff' : g.bg;
-        icon.style.color = g.fg;
+        icon.style.background = m.img ? '#eff6ff' : (m.bg || g.bg);
+        icon.style.color = m.fg || g.fg;
         icon.classList.toggle('is-img-full', !!m.imgFull);
         icon.innerHTML = toolIconHtml(currentMode);
         document.getElementById('wsTitle').textContent = TOOLS[currentMode].title;
@@ -1913,7 +1958,8 @@
 
       const isHttpProcessed = toolId === 'pdf_to_word';
       document.getElementById('heroPrivacy').textContent = isHttpProcessed ? 'Gratis \u00b7 Tanpa daftar' : 'Gratis \u00b7 Diproses di perangkat Anda';
-      const fmt = tool.type === 'multi_word' ? 'Format: Word (.docx)' : (tool.type === 'multi_image' ? 'Format: JPG, PNG, WEBP' : 'Format: PDF');
+      const fmt = tool.formatHint || (tool.type === 'multi_word' ? 'Format: Word (.docx)' : (tool.type === 'multi_image' ? 'Format: JPG, PNG, WEBP' : 'Format: PDF'));
+      document.getElementById('heroPasteHtml').classList.toggle('hidden', toolId !== 'html_to_pdf');
       document.getElementById('heroFormatHint').textContent = fmt + (tool.multiple ? ' \u00b7 bisa pilih lebih dari satu file' : '');
       document.getElementById('dropOverlayHint').textContent = tool.multiple ? 'File akan langsung ditambahkan ke daftar' : 'File akan langsung dibuka';
 
@@ -1922,7 +1968,8 @@
                        (tool.type === 'multi_word' && wordFiles.length > 0) ||
                        (tool.type === 'multi_pdf' && currentMode === 'pdf_to_word' && convertPdfFiles.length > 0) ||
                        (tool.type === 'multi_image' && imageFiles.length > 0) ||
-                       (tool.type !== 'multi_pdf' && tool.type !== 'multi_word' && tool.type !== 'multi_image' && currentWorkingPdf !== null);
+                       (tool.type === 'multi_office' && o2pHasFiles(toolId)) ||
+                       (tool.type !== 'multi_pdf' && tool.type !== 'multi_word' && tool.type !== 'multi_image' && tool.type !== 'multi_office' && currentWorkingPdf !== null);
 
       if (!hasFiles) {
         showHeroStage();
@@ -1954,6 +2001,7 @@
       document.getElementById('esignSection').classList.add('hidden');
       document.getElementById('jpgToPdfSection').classList.add('hidden');
       document.getElementById('pdfToJpgSection').classList.add('hidden');
+      document.getElementById('officeToPdfSection').classList.add('hidden');
       syncToolChrome(false);
       renderSteppers();
     }
@@ -1967,11 +2015,16 @@
       document.getElementById('esignSection').classList.add('hidden');
       document.getElementById('jpgToPdfSection').classList.add('hidden');
       document.getElementById('pdfToJpgSection').classList.add('hidden');
+      document.getElementById('officeToPdfSection').classList.add('hidden');
 
       const tool = TOOLS[currentMode];
       syncToolChrome(true);
 
-      if (tool.type === 'multi_image') {
+      if (tool.type === 'multi_office') {
+        document.getElementById('officeToPdfSection').classList.remove('hidden');
+        o2pRenderSection();
+
+      } else if (tool.type === 'multi_image') {
         document.getElementById('jpgToPdfSection').classList.remove('hidden');
         renderImageGrid();
 
@@ -2146,6 +2199,7 @@
       wordFiles = [];
       convertPdfFiles = [];
       clearImageFiles();
+      if (!o2pBusy) o2pClearAll();
       showHeroStage();
       showStatus('Dokumen dan memori penyimpanan sesi berhasil dihapus!', 'success');
     }
@@ -2219,7 +2273,11 @@
 
       const tool = TOOLS[currentMode];
 
-      if (tool.type === 'multi_word') {
+      if (tool.type === 'multi_office') {
+        if (o2pBusy) { showStatus('Tunggu hingga konversi yang sedang berjalan selesai', 'error'); return; }
+        if (o2pAddFiles(files)) renderActiveToolWorkspace();
+
+      } else if (tool.type === 'multi_word') {
         const docxList = files.filter(f => f.name.toLowerCase().endsWith('.docx'));
         if (docxList.length === 0) {
           showStatus('Silakan pilih berkas dokumen Microsoft Word (.docx)', 'error');
