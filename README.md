@@ -39,6 +39,15 @@ Aplikasi web statis modern berbasis browser dengan antarmuka minimalis, elegan, 
   * **Visual HD Mode:** Mengubah tiap halaman PDF menjadi grafis vektor resolusi tinggi di dalam Word untuk menjaga kemiripan layout 100%.
 * **Gabungkan Microsoft Word (.docx):** Menggabungkan beberapa berkas Word menjadi satu dokumen utuh dengan pemisah halaman (*page break*) otomatis.
 
+### 2b. Konversi ke PDF (diproses di browser)
+* **JPG ke PDF:** Foto/gambar (JPG, PNG, WEBP) menjadi satu PDF dengan ukuran halaman, orientasi, dan margin pilihan.
+* **Word ke PDF (.docx):** Dirender dengan `docx-preview`, ukuran halaman mengikuti dokumen asli.
+* **PowerPoint ke PDF (.pptx):** Dirender dengan `pptx-preview`, satu slide per halaman.
+* **Excel ke PDF (.xlsx, .xls, .ods, .csv):** Dibaca dengan SheetJS. Setiap lembar dimulai di halaman baru, diperkecil agar muat selebar kertas, dan dipotong di batas baris.
+* **HTML ke PDF:** Unggah berkas `.html` atau tempel kode HTML. Skrip di dalamnya tidak dijalankan (iframe ber-*sandbox*).
+* Semua alat di atas bisa memproses banyak berkas sekaligus (satu PDF gabungan atau ZIP), dengan kualitas 150/200/300 DPI. Logikanya ada di `office-to-pdf.js`, dan pustaka (`html2canvas`, `docx-preview`, `pptx-preview`, `xlsx`) baru dimuat saat alat dipakai.
+* **Batasan:** Hasil PDF berupa gambar per halaman, jadi teksnya tidak bisa dipilih/dicari. Format lama (.doc, .ppt) belum didukung, dan font yang tidak terpasang diganti font lain.
+
 ### 3. Edit & Tambah Elemen
 * **Edit & Coret PDF (Kanvas Interaktif):** Tambahkan teks catatan, coretan pensil bebas, bentuk geometris (kotak), memo, dan stempel langsung di atas halaman PDF.
 * **Tambahkan Nomor Halaman:** Penomoran otomatis dengan pilihan posisi dan format angka kustom.

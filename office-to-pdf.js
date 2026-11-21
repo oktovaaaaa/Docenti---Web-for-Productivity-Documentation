@@ -27,7 +27,7 @@ const O2P_TOOLS = {
     kind: 'ppt', app: 'Microsoft PowerPoint', exts: ['pptx'], legacy: ['ppt', 'pps', 'pot', 'odp'],
     listTitle: 'Presentasi Terpilih', formatLabel: 'presentasi PowerPoint (.pptx)',
     libs: ['html2canvas', 'pptx'],
-    note: 'Setiap slide menjadi satu halaman PDF. Animasi, transisi, dan video tidak ikut, dan beberapa efek (bayangan, 3D, SmartArt rumit) bisa tampil lebih sederhana. Hasil berupa gambar per slide, sehingga teksnya tidak bisa diblok atau dicari.'
+    note: 'Setiap slide menjadi satu halaman PDF. Animasi, transisi, dan video tidak ikut, sedangkan grafik dan beberapa efek (bayangan, 3D, SmartArt rumit) bisa tampil lebih sederhana. Hasil berupa gambar per slide, sehingga teksnya tidak bisa diblok atau dicari.'
   },
   excel_to_pdf: {
     kind: 'excel', app: 'Microsoft Excel', exts: ['xlsx', 'xlsm', 'xls', 'xlsb', 'ods', 'csv'], legacy: [],
@@ -580,9 +580,90 @@ async function o2pWordToPdf(file, pdfDoc, opts, progress) {
 // ---------------------------------------------------------------------------
 // POWERPOINT (.pptx)
 // ---------------------------------------------------------------------------
+const O2P_NS_C = 'http://schemas.openxmlformats.org/drawingml/2006/chart';
+const O2P_NS_A = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+
+function o2pChildNS(el, ns, name) {
+  for (const c of el.children) if (c.namespaceURI === ns && c.localName === name) return c;
+  return null;
+}
+
+// Rapikan XML grafik (salinan di memori) agar pptx-preview menampilkannya seperti PowerPoint:
+// - judul grafik mengikuti aturan PowerPoint (bukan teks bawaan pustaka "图表标题")
+// - seri batang/garis tanpa warna eksplisit diberi warna tema accent1..accent6
+async function o2pNormalizePptx(buf) {
+  try {
+    const zip = await JSZip.loadAsync(buf);
+    const names = Object.keys(zip.files).filter(n => /^ppt\/charts\/chart[^/]*\.xml$/i.test(n));
+    let changed = false;
+    for (const name of names) {
+      const dom = new DOMParser().parseFromString(await zip.file(name).async('string'), 'application/xml');
+      if (dom.getElementsByTagName('parsererror').length) continue;
+      const chart = dom.getElementsByTagNameNS(O2P_NS_C, 'chart')[0];
+      if (!chart) continue;
+      const mk = (ns, tag) => dom.createElementNS(ns, (ns === O2P_NS_C ? 'c:' : 'a:') + tag);
+      const sers = Array.from(dom.getElementsByTagNameNS(O2P_NS_C, 'ser'));
+      const seriesName = (ser) => {
+        const tx = ser && o2pChildNS(ser, O2P_NS_C, 'tx');
+        const v = tx && tx.getElementsByTagNameNS(O2P_NS_C, 'v')[0];
+        return v ? v.textContent.trim() : '';
+      };
+      let dirty = false;
+
+      let title = o2pChildNS(chart, O2P_NS_C, 'title');
+      const atd = o2pChildNS(chart, O2P_NS_C, 'autoTitleDeleted');
+      const autoDeleted = atd && /^(1|true)$/i.test(atd.getAttribute('val') || '');
+      let text = null;
+      if (title && !o2pChildNS(title, O2P_NS_C, 'tx')) text = (sers.length === 1 && seriesName(sers[0])) || 'Judul Bagan';
+      else if (!title) text = (!autoDeleted && sers.length === 1 && seriesName(sers[0])) || ' ';
+      if (text !== null) {
+        if (!title) { title = mk(O2P_NS_C, 'title'); chart.insertBefore(title, chart.firstChild); }
+        const tx = mk(O2P_NS_C, 'tx'), rich = mk(O2P_NS_C, 'rich'), p = mk(O2P_NS_A, 'p'), r = mk(O2P_NS_A, 'r'), t = mk(O2P_NS_A, 't');
+        t.textContent = text;
+        r.appendChild(t); p.appendChild(r);
+        rich.appendChild(mk(O2P_NS_A, 'bodyPr')); rich.appendChild(p);
+        tx.appendChild(rich);
+        title.insertBefore(tx, title.firstChild);
+        dirty = true;
+      }
+
+      sers.forEach((ser, i) => {
+        const type = ser.parentNode.localName;
+        const isBar = /^bar(3D)?Chart$/.test(type), isLine = /^line(3D)?Chart$/.test(type);
+        if (!isBar && !isLine) return;
+        let spPr = o2pChildNS(ser, O2P_NS_C, 'spPr');
+        const ln = spPr && o2pChildNS(spPr, O2P_NS_A, 'ln');
+        if (isBar ? (spPr && o2pChildNS(spPr, O2P_NS_A, 'solidFill')) : (ln && o2pChildNS(ln, O2P_NS_A, 'solidFill'))) return;
+        if (!spPr) {
+          spPr = mk(O2P_NS_C, 'spPr');
+          const after = Array.from(ser.children).find(c => !['idx', 'order', 'tx'].includes(c.localName));
+          ser.insertBefore(spPr, after || null);
+        }
+        const fill = mk(O2P_NS_A, 'solidFill'), clr = mk(O2P_NS_A, 'schemeClr');
+        clr.setAttribute('val', 'accent' + ((i % 6) + 1));
+        fill.appendChild(clr);
+        if (isBar) {
+          spPr.insertBefore(fill, spPr.firstChild);
+        } else {
+          let line = ln;
+          if (!line) { line = mk(O2P_NS_A, 'ln'); line.setAttribute('w', '28575'); spPr.appendChild(line); }
+          line.insertBefore(fill, line.firstChild);
+        }
+        dirty = true;
+      });
+
+      if (dirty) { zip.file(name, new XMLSerializer().serializeToString(dom)); changed = true; }
+    }
+    return changed ? await zip.generateAsync({ type: 'arraybuffer' }) : buf;
+  } catch (err) {
+    console.warn('Grafik PPTX tidak dinormalisasi:', err);
+    return buf;
+  }
+}
+
 async function o2pPptToPdf(file, pdfDoc, opts, progress) {
   progress('membaca presentasi...');
-  const buf = await file.arrayBuffer();
+  const buf = await o2pNormalizePptx(await file.arrayBuffer());
   const W = 960;
   const frame = await o2pCreateFrame(W + 40);
   try {
@@ -669,7 +750,8 @@ function o2pFreezeColumns(XLSX, ws, table, range) {
     const info = cols[range.s.c + i];
     let setW = 0;
     if (info) setW = info.wpx || (info.wch ? info.wch * 7 + 5 : 0) || (info.width ? info.width * 7 + 5 : 0);
-    return Math.round(Math.min(480, Math.max(w, setW || 0, 28)));
+    // +2 px: cegah teks pas-pasan terpotong ke baris baru karena pembulatan subpiksel
+    return Math.ceil(Math.min(480, Math.max(w + 2, setW || 0, 28)));
   });
   const cg = doc.createElement('colgroup');
   widths.forEach(w => { const col = doc.createElement('col'); col.style.width = w + 'px'; cg.appendChild(col); });

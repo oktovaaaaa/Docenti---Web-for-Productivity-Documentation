@@ -264,6 +264,10 @@
     .page-card { transition: transform .15s ease, box-shadow .15s ease, opacity .2s ease, border-color .2s ease; }
     .page-card:hover { transform: translateY(-2px); }
 
+    /* html2canvas (Word/Excel/PPT/HTML ke PDF) mengukur baseline font dengan <img> 1x1 di <body> halaman ini.
+       Preflight Tailwind (img { display:block }) membuat ukurannya salah sehingga teks hasil render turun. */
+    body > div > img[src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"] { display: inline !important; max-width: none !important; }
+
     .sig-font-1 { font-family: 'Dancing Script', cursive, 'Brush Script MT'; }
     .sig-font-2 { font-family: 'Caveat', cursive, 'Segoe Script'; }
   </style>
@@ -368,6 +372,13 @@
         </button>
         <p class="mt-4 text-sm text-slate-500">atau <strong class="text-slate-700">seret &amp; lepas</strong> file ke sini</p>
         <p id="heroFormatHint" class="mt-1 text-xs text-slate-400">Format: PDF</p>
+      </div>
+
+      <div id="heroPasteHtml" class="hidden -mt-6 text-center">
+        <button type="button" onclick="o2pOpenPaste()" class="btn-soft">
+          <svg class="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>Tidak punya berkas? Tempel kode HTML</span>
+        </button>
       </div>
 
       <div data-stepper="1"></div>
@@ -1482,6 +1493,126 @@
       </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- SECTION H: WORD / POWERPOINT / EXCEL / HTML KE PDF -->
+    <!-- (logika di office-to-pdf.js)                -->
+    <!-- ========================================== -->
+    <div id="officeToPdfSection" class="card view-anim p-5 sm:p-7 space-y-6 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div class="flex items-center gap-3 flex-wrap">
+          <h2 id="o2pListTitle" class="font-bold text-slate-900 text-base sm:text-lg">Dokumen Terpilih</h2>
+          <span id="o2pCountBadge" class="bg-blue-50 text-blue-700 text-xs px-2.5 py-0.5 rounded-full font-semibold">0 berkas</span>
+          <span id="o2pTotalSize" class="text-xs text-slate-400 hidden sm:inline">Total: 0 KB</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="triggerHeroFileInput()" class="btn-soft" title="Tambah berkas lainnya">
+            <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            <span>Tambah berkas</span>
+          </button>
+          <button onclick="openDeleteConfirmModal()" class="btn-danger-soft" title="Hapus seluruh berkas dari daftar">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <span>Hapus semua</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-2">
+        <svg class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span id="o2pHintText">Atur opsi di bawah, lalu klik tombol konversi.</span>
+      </p>
+
+      <ul id="o2pList" class="space-y-2 max-h-[420px] overflow-y-auto p-1 -m-1"></ul>
+
+      <div data-o2p-kinds="html" class="hidden space-y-2">
+        <label for="o2pHtmlCode" class="opt-label">Tempel kode HTML</label>
+        <textarea id="o2pHtmlCode" rows="7" spellcheck="false" placeholder="<!doctype html>&#10;<html>&#10;  <body>&#10;    <h1>Judul</h1>&#10;  </body>&#10;</html>" class="w-full px-3.5 py-2.5 text-xs font-mono border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] text-slate-800"></textarea>
+        <div class="flex justify-end">
+          <button type="button" onclick="o2pAddPastedHtml()" class="btn-soft">Tambahkan ke daftar</button>
+        </div>
+      </div>
+
+      <div class="grid gap-5 md:grid-cols-2 bg-slate-50 border border-slate-200/70 rounded-2xl p-4 sm:p-5">
+        <div data-o2p-kinds="excel html">
+          <span class="opt-label">Ukuran halaman</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="o2pPageSize" value="a4" checked><span>A4</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pPageSize" value="letter"><span>Letter</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pPageSize" value="legal"><span>Legal</span></label>
+          </div>
+        </div>
+        <div data-o2p-kinds="excel html">
+          <span class="opt-label">Orientasi</span>
+          <div class="seg">
+            <label class="seg-opt" data-o2p-kinds="excel"><input type="radio" name="o2pOrientation" value="auto" checked><span>Otomatis</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pOrientation" value="portrait"><span>Potret</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pOrientation" value="landscape"><span>Lanskap</span></label>
+          </div>
+        </div>
+        <div data-o2p-kinds="excel html">
+          <span class="opt-label">Margin</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="o2pMargin" value="none"><span>Tanpa</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pMargin" value="small" checked><span>Kecil</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pMargin" value="large"><span>Besar</span></label>
+          </div>
+        </div>
+        <div data-o2p-kinds="html">
+          <span class="opt-label">Lebar tampilan halaman</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="o2pViewport" value="paper" checked><span>Sesuai kertas</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pViewport" value="1280"><span>Desktop</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pViewport" value="768"><span>Tablet</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pViewport" value="390"><span>Ponsel</span></label>
+          </div>
+        </div>
+        <div data-o2p-kinds="excel">
+          <span class="opt-label">Lembar kerja</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="o2pSheets" value="all" checked><span>Semua lembar</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pSheets" value="first"><span>Lembar pertama saja</span></label>
+          </div>
+        </div>
+        <div data-o2p-kinds="excel">
+          <span class="opt-label">Garis kisi</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="o2pGrid" value="show" checked><span>Tampilkan</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pGrid" value="hide"><span>Sembunyikan</span></label>
+          </div>
+        </div>
+        <div>
+          <span class="opt-label">Kualitas</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="o2pQuality" value="standard"><span>Standar &middot; 150 DPI</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pQuality" value="high" checked><span>Tinggi &middot; 200 DPI</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pQuality" value="max"><span>Cetak &middot; 300 DPI</span></label>
+          </div>
+        </div>
+        <div id="o2pOutputModeGroup">
+          <span class="opt-label">Hasil</span>
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="o2pOutputMode" value="merge" checked><span>Satu PDF gabungan</span></label>
+            <label class="seg-opt"><input type="radio" name="o2pOutputMode" value="separate"><span>PDF per berkas (ZIP)</span></label>
+          </div>
+        </div>
+      </div>
+
+      <p class="flex items-start gap-2 text-xs text-amber-900 bg-amber-50 border border-amber-200/70 rounded-xl px-3 py-2">
+        <svg class="w-4 h-4 text-amber-600 shrink-0 mt-px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span id="o2pNoteText"></span>
+      </p>
+
+      <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex-1 max-w-sm w-full">
+          <label for="o2pOutputFileName" class="block text-xs font-semibold text-slate-500 mb-1">Nama file hasil</label>
+          <input type="text" id="o2pOutputFileName" value="hasil.pdf" oninput="o2pOutNames[this.dataset.mode] = this.value" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563eb] font-medium text-slate-800">
+        </div>
+        <button id="o2pConvertBtn" onclick="o2pConvert()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 btn-primary">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span id="o2pConvertBtnText">Konversi ke PDF & Unduh</span>
+        </button>
+      </div>
+    </div>
+
   </main>
 
   <!-- Footer -->
@@ -1503,6 +1634,9 @@
       </div>
     </div>
   </footer>
+
+  <!-- Word / PowerPoint / Excel / HTML ke PDF (pustaka dimuat saat dibutuhkan) -->
+  <script src="office-to-pdf.js"></script>
 
   <!-- SCRIPT LOGIC -->
   <script>
